@@ -1,0 +1,1353 @@
+﻿@using KuyumHesapWeb.Core.Feature.BarcodeFeature.GetAllMain
+@model GetAllMainQueryResponse
+@{
+    ViewData["Title"] = "Index";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Barkodlama Sayfası</title>
+    <!-- Tailwind CSS CDN'i -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        // Tailwind config: v_new'den animasyonlar ve v_old'dan renkler birleştirildi
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'rolex-green': '#4C9779',
+                        'rolex-green-border': 'rgba(76, 151, 121, 0.5)', // v_old'dan
+                        'list-item-bg': '#F0FAFA',
+                        'success': '#22c55e',
+                        'danger': '#ef4444',
+                        'secondary': '#6b7280',
+                        'info': '#3b82f6', // v_old'dan
+                    },
+                    keyframes: {
+                        'fade-in-out': { // v_new'den
+                            '0%': { opacity: '0', transform: 'translateY(10px)' },
+                            '10%': { opacity: '1', transform: 'translateY(0)' },
+                            '90%': { opacity: '1', transform: 'translateY(0)' },
+                            '100%': { opacity: '0', transform: 'translateY(10px)' },
+                        },
+                    },
+                    animation: {
+                        'fade-in-out': 'fade-in-out 3s ease-in-out forwards', // v_new'den
+                    },
+                }
+            }
+        }
+    </script>
+    <style>
+        /* v_new'den alınan kayan etiket stilleri */
+        .form-group {
+            position: relative;
+        }
+
+            .form-group .form-label {
+                position: absolute;
+                top: 0.85rem; /* p-2 padding'e göre ayarlandı */
+                left: 0.6rem;
+                color: #6b7280;
+                pointer-events: none;
+                transition: all 0.2s ease-in-out;
+                background-color: #f9fafb; /* bg-gray-50 */
+                padding: 0 0.25rem;
+                font-size: 0.875rem; /* 14px */
+            }
+
+        /* Inputlar için label arkaplanını ayarla (evre 1-4) */
+        .frame-bg .form-label {
+            background-color: #f9fafb; /* bg-gray-50 */
+        }
+
+        /* Resim alan label arkaplan (evre 5) */
+        .image-frame-bg .form-label {
+            background-color: #f9fafb; /* bg-gray-50 */
+        }
+
+        /* Input readonly ise label' her zaman yukarıda tut */
+        .form-group .form-input:read-only + .form-label,
+        .form-group .form-input:focus + .form-label,
+        .form-group .form-input:not(:placeholder-shown) + .form-label,
+        .form-group .form-input.has-value + .form-label {
+            top: -0.6rem;
+            left: 0.5rem;
+            font-size: 0.75rem; /* 12px */
+            color: #1f2937;
+        }
+
+        /* Readonly inputlar için özel arkaplan */
+        .form-input:read-only {
+            background-color: #f3f4f6; /* bg-gray-100 */
+        }
+
+        /* HAS bilgisi için stil */
+        #miktar-has-display,
+        #iscilik-has-display {
+            font-size: 0.7rem;
+            font-weight: 600;
+            padding: 0 0.25rem;
+            background: transparent;
+        }
+
+        /* Maliyet listesi item stilleri */
+        #maliyet-listesi > div {
+            transition: all 0.2s ease;
+        }
+
+            #maliyet-listesi > div:hover {
+                background-color: #f0fafa !important;
+                transform: translateX(4px);
+            }
+    </style>
+
+    <!-- SlimSelect CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/slim-select@2.8.1/dist/slimselect.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 p-5 font-sans">
+
+    <!-- Ana Konteyner: (v_old yap) -->
+    <div class="flex flex-col md:flex-row gap-5 w-full h-[calc(100vh-2.5rem)]">
+
+        <!-- Sol Sütun (Ürün Barkodlama) -->
+        <div class="flex flex-col flex-[3]">
+            <h2 class="text-lg font-semibold text-gray-700 mb-2 px-1 flex-shrink-0">Ürün Barkodlama</h2>
+            <!-- Panel -->
+            <div class="panel bg-white rounded-lg shadow-sm border border-rolex-green p-6 overflow-y-auto flex-grow">
+                <!-- Panel içi layout: Form ve Resim Alan -->
+                <div class="flex flex-col md:flex-row gap-6">
+
+                    <!-- Form Alan (Sol Taraf) -->
+                    <div class="flex-grow">
+                        <form id="barkod-form" class="space-y-4">
+                            <!-- 1. EVRE: ÜRÜN TEMEL BİLGİLER (v_old yap + v_new stil) -->
+                            <div class="border border-rolex-green-border rounded-md p-4 space-y-4 bg-gray-50 frame-bg">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div class="relative form-group">
+                                        <input type="text" id="product-id" class="form-input text-sm mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm peer" readonly placeholder=" ">
+                                        <label for="product-id" class="form-label">Ürün ID</label>
+                                    </div>
+                                    <div class="relative form-group">
+                                        <input type="text" id="product-barcode" class="form-input text-sm mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm peer" readonly placeholder=" ">
+                                        <label for="product-barcode" class="form-label">Barkod</label>
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div class="relative form-group">
+                                        <select id="product-type" class="form-input text-sm mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-rolex-green focus:border-rolex-green peer">
+                                            <option value="">Ürün Tipi Seçiniz...</option>
+                                            @foreach (var item in Model.getProductTypeQueries)
+                                            {
+                                                <option value=@item.Id>@item.ProductTypeName</option>
+                                            }
+
+
+                                        </select>
+                                        <label for="product-type" class="form-label">Ürün Tipi</label>
+                                    </div>
+                                    <div class="relative form-group">
+                                        <select id="toptanci-combo" class="form-input text-sm mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-rolex-green focus:border-rolex-green peer">
+                                            <option value="">Toptancı Seçiniz...</option>
+                                            @foreach (var item in Model.getPackerQueryResponses)
+                                            {
+
+                                                <option value=@item.Id>@item.AccountName</option>
+                                            }
+                                        </select>
+                                        <label for="toptanci-combo" class="form-label">Toptancı</label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 2. EVRE: GRUP VE MALİYET OLUŞTURMA (v_old yap + v_new stil) -->
+                            <!-- BU EVRE MODAL'A TAŞINDI -->
+                            <!-- 3. EVRE: ÜRÜN LİSTESİ (v_old yap) -->
+                            <div class="border border-rolex-green-border rounded-md p-4 bg-gray-50 frame-bg relative">
+                                <span class="absolute -top-3 left-3 text-sm font-normal bg-gray-50 px-2">Ürün Listesi</span>
+                                <!-- YENİ EKLE DÜĞMESİ -->
+                                <button id="maliyet-listesi-ekle-btn" type="button" class="absolute top-2 right-3 px-4 py-1 bg-info text-white text-sm rounded-md shadow-sm hover:bg-opacity-90">Ekle</button>
+                                <div id="maliyet-listesi-container" class="max-h-48 overflow-y-auto pt-2">
+                                    <div id="maliyet-listesi" class="space-y-1 mt-1">
+                                        <!-- JS ile doldurulacak -->
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 3.5. EVRE: TAŞ BİLGİLERİ -->
+                            <div class="border border-rolex-green-border rounded-md p-4 bg-gray-50 frame-bg relative mt-4">
+                                <span class="absolute -top-3 left-3 text-sm font-normal bg-gray-50 px-2">Taş Bilgileri</span>
+                                <button id="tas-ekle-btn" type="button" class="absolute top-2 right-3 px-4 py-1 bg-info text-white text-sm rounded-md shadow-sm hover:bg-opacity-90">Ekle</button>
+                                <div class="pt-2">
+                                    <div id="tas-bilgileri-listesi" class="text-xs text-gray-500 text-center p-2">Taş bilgisi eklenmedi.</div>
+                                </div>
+                            </div>
+
+                            <!-- Ta Bilgisi Ekle Modal - BURADAN TAŞINDI -->
+                            <!-- 4. EVRE: FİYATLANDIRMA (v_old yap + v_new stil) -->
+                            <div class="border border-rolex-green-border rounded-md p-4 space-y-4 bg-gray-50 frame-bg">
+                                <!-- Maliyet ve Fiyat Satır -->
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div class="relative form-group">
+                                        <input type="text" id="maliyet-output" class="form-input text-sm mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm peer text-right" readonly placeholder=" ">
+                                        <label for="maliyet-output" class="form-label">Maliyet</label>
+                                    </div>
+                                    <div class="relative form-group">
+                                        <input type="text" id="satis-fiyati-input" placeholder=" " class="form-input text-sm mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm peer text-right">
+                                        <label for="satis-fiyati-input" class="form-label">Satış Fiyatı</label>
+                                    </div>
+                                    <div class="relative form-group">
+                                        <input type="text" id="etiket-fiyati-input" placeholder=" " class="form-input text-sm mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm peer text-right">
+                                        <label for="etiket-fiyati-input" class="form-label">Etiket Fiyatı</label>
+                                    </div>
+                                </div>
+
+                                <!-- Kar Yüzdeleri Satır (Yukarıda) -->
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div></div>
+                                    <div class="relative form-group flex items-center gap-2">
+                                        <span class="text-sm font-medium text-gray-600 whitespace-nowrap">% Kar (Maliyetten)</span>
+                                        <input type="number" id="satis-kar-yuzdesi" value="50" class="form-input text-sm block w-20 p-1 border border-gray-300 rounded-md shadow-sm peer text-right" placeholder=" ">
+                                    </div>
+                                    <div class="relative form-group flex items-center gap-2">
+                                        <span class="text-sm font-medium text-gray-600 whitespace-nowrap">% Kar (Sattan)</span>
+                                        <input type="number" id="etiket-kar-yuzdesi" value="50" class="form-input text-sm block w-20 p-1 border border-gray-300 rounded-md shadow-sm peer text-right" placeholder=" ">
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Resim Alan (Sağ Taraf) (v_old yap) -->
+                    <div class="flex flex-col items-center flex-shrink-0 md:w-1/3 space-y-4">
+                        <div class="w-full">
+                            <div class="w-full max-w-[800px] aspect-[4/3] bg-gray-200 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center mb-4">
+                                <img id="product-image" src="" alt="Ürün Resmi" class="hidden w-full h-full object-cover rounded-lg">
+                                <span id="image-placeholder" class="text-gray-500">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-16 h-16 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                                </span>
+                            </div>
+                            <div class="flex justify-center gap-2">
+                                <button type="button" id="cek-btn" class="px-6 py-2 bg-rolex-green text-white font-semibold rounded-lg hover:bg-opacity-90 shadow-sm text-sm">Çek</button>
+                                <button type="button" id="yukle-btn" class="px-6 py-2 bg-info text-white font-semibold rounded-lg hover:bg-opacity-90 shadow-sm text-sm">Yükle</button>
+                                <input type="file" id="image-upload-input" class="hidden" accept="image/*">
+                                <button type="button" id="resim-sil-btn" class="px-6 py-2 bg-danger text-white font-semibold rounded-lg hover:bg-opacity-90 shadow-sm text-sm">Sil</button>
+                            </div>
+                        </div>
+
+                        <!-- EK BİLGİLER VE ETİKETLER EVRESİ (v_old yap + v_new stil) -->
+                        <div class="w-full border border-rolex-green-border rounded-md p-4 space-y-4 bg-gray-50 flex flex-col flex-grow image-frame-bg">
+                            <div class="space-y-4">
+                                <div class="relative form-group">
+                                    <select id="alan1" class="form-input text-sm mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm peer">
+                                        <option value="">Model Seçiniz...</option>
+                                        <option value="Tekta Klasik">Tekta Klasik</option>
+                                        <option value="Beta Modern">Beta Modern</option>
+                                    </select>
+                                    <label for="alan1" class="form-label">Model</label>
+                                </div>
+                                <div class="relative form-group">
+                                    <select id="alan2" class="form-input text-sm mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm peer">
+                                        <option value="">Taş Bilgisi Seçiniz...</option>
+                                        <option value="Prlanta 0.2ct">Pırlanta 0.2ct</option>
+                                        <option value="Zirkon">Zirkon</option>
+                                        <option value="Yok">Yok</option>
+                                    </select>
+                                    <label for="alan2" class="form-label">Taş Bilgisi</label>
+                                </div>
+                            </div>
+                            <div class="flex flex-col flex-grow relative form-group">
+                                <!-- Etiketler için label' tags-container'nin önünde alındı -->
+                                <label for="tags-input" class="form-label" style="top: -0.6rem; left: 0.5rem; font-size: 0.75rem;">Etiketler</label>
+                                <div id="tags-container" class="mt-1 flex flex-wrap items-start content-start gap-2 p-2 border border-gray-300 rounded-md bg-white min-h-[84px] flex-grow">
+                                    <!-- Etiketler buraya gelmeyecek, input ile yöneteceğiz -->
+                                    <input type="text" id="tags-input" class="flex-grow outline-none p-1" placeholder="Etiket ekle...">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+            <!-- Butonlar (Panel Dışında) (v_old yap) -->
+            <div class="flex justify-end gap-2 mt-4 flex-shrink-0">
+                <div id="add-mode-buttons" class="flex gap-2">
+                    <button type="submit" form="barkod-form" id="ekle-btn" class="px-8 py-2 bg-success text-white font-semibold rounded-lg hover:bg-opacity-90 shadow-sm">EKLE</button>
+                    <button type="button" id="vazgec-ekle" class="px-8 py-2 bg-secondary text-white font-semibold rounded-lg hover:bg-opacity-90 shadow-sm">VAZGEÇ</button>
+                </div>
+                <div id="edit-mode-buttons" class="hidden flex flex-wrap gap-2 justify-end">
+                    <button type="submit" form="barkod-form" id="guncelle-btn" class="px-6 py-2 bg-rolex-green text-white font-semibold rounded-lg hover:bg-opacity-90 shadow-sm">GÜNCELLE</button>
+                    <button type="button" id="vazgec-guncelle" class="px-6 py-2 bg-secondary text-white font-semibold rounded-lg hover:bg-opacity-90 shadow-sm">VAZGEÇ</button>
+                    <button type="button" id="sil-btn" class="px-6 py-2 bg-danger text-white font-semibold rounded-lg hover:bg-opacity-90 shadow-sm">SİL</button>
+                    <button type="button" id="barkod-btn" class="px-6 py-2 bg-secondary text-white font-semibold rounded-lg hover:bg-opacity-90 shadow-sm">BARKOD</button>
+                    <button type="button" id="sertifika-btn" class="px-6 py-2 bg-info text-white font-semibold rounded-lg hover:bg-opacity-90 shadow-sm">SERTİFİKA</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sağ Sütun (Barkodlanan ürünlerin Listesi) (v_old yap) -->
+        <div class="flex flex-col flex-[2]">
+            <div class="flex justify-between items-center mb-2 px-1">
+                <h2 class="text-lg font-semibold text-gray-700 flex-shrink-0">Barkodlanan Ürünlerin Listesi</h2>
+                <div class="flex items-center gap-2">
+                    <button id="print-list-btn" class="px-4 py-1.5 bg-info text-white font-semibold rounded-lg hover:bg-opacity-90 shadow-sm text-sm flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-printer" viewBox="0 0 16 16"><path d="M2.5 8a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1z" /><path d="M5 1a2 2 0 0 0-2 2v2H2a2 2 0 0 0-2 2v3a2 2 0 0 0 2 2h1v1a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-1h1a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-1V3a2 2 0 0 0-2-2H5zM4 3a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2H4V3zm1 5a2 2 0 0 0-2 2v1H2a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v-1a2 2 0 0 0-2-2H5zm7 2v3a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1z" /></svg>
+                        Yazdır
+                    </button>
+                    <button id="printer-settings-btn" class="p-2 bg-secondary text-white font-semibold rounded-lg hover:bg-opacity-90 shadow-sm">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-gear-fill" viewBox="0 0 16 16"><path d="M9.405 1.05c-.413-1.4-2.397-1.4-2.81 0l-.1.34a1.464 1.464 0 0 1-2.105.872l-.31-.17c-1.283-.698-2.686.705-1.987 1.987l.169.311a1.464 1.464 0 0 1-.872 2.105l-.34.1c-1.4.413-1.4 2.397 0 2.81l.34.1a1.464 1.464 0 0 1 .872 2.105l-.17.31c-.698 1.283.705 2.686 1.987 1.987l.311-.169a1.464 1.464 0 0 1 2.105.872l.1.34c.413 1.4 2.397 1.4 2.81 0l.1-.34a1.464 1.464 0 0 1 2.105-.872l.31.17c1.283.698 2.686-.705-1.987-1.987l-.169-.311a1.464 1.464 0 0 1 .872 2.105l.34-.1c-1.4-.413-1.4-2.397 0-2.81l-.34-.1a1.464 1.464 0 0 1-.872-2.105l.17-.31c.698-1.283-.705-2.686-1.987-1.987l-.311.169a1.464 1.464 0 0 1-2.105-.872l-.1-.34zM8 10.93a2.929 2.929 0 1 1 0-5.86 2.929 2.929 0 0 1 0 5.858z" /></svg>
+                    </button>
+                </div>
+            </div>
+            <div class="panel bg-white rounded-lg shadow-sm border border-rolex-green p-4 flex flex-col flex-grow min-h-0">
+                <div id="print-status-bar" class="hidden p-2 mb-2 rounded-md text-white text-sm text-center"></div>
+                <div id="urun-listesi-container" class="flex-grow overflow-y-auto">
+                    <div id="urun-listesi" class="space-y-2">
+                        <!-- JS ile doldurulacak -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- YENİ MALİYET GRUP MODALİ -->
+    <div id="maliyet-modal" class="fixed inset-0 bg-black bg-opacity-40 z-50 hidden items-center justify-center">
+        <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-3xl relative">
+            <h3 class="text-base text-gray-800 mb-4">Maliyet Kalemi Ekle</h3>
+
+            <!-- TAŞINAN EVRE (2. EVRE) ARA YÜZ -->
+            <div class="space-y-4 bg-gray-50 frame-bg">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="relative form-group">
+                        <select id="stok-grubu-combo" class="form-input text-sm mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-rolex-green focus:border-rolex-green peer">
+                            @foreach (var item in Model.getStockGroupQueries)
+                            {
+                                <option value=@item.Id>@item.StockGroupName</option>
+
+                            }
+                        </select>
+                        <label for="stok-grubu-combo" class="form-label">Stok Grubu</label>
+                    </div>
+                    <div class="relative form-group">
+                        <select id="stok-tipleri-combo" class="form-input text-sm mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-rolex-green focus:border-rolex-green peer">
+                            @foreach (var item in Model.getStockTypeQueries)
+                            {
+                                <option value=@item.Id>@item.StockTypeName</option>
+
+                            }
+                        </select>
+                        <label for="stok-tipleri-combo" class="form-label">Stok Tipleri</label>
+                    </div>
+                    <div class="relative form-group">
+                        <select id="stok-detay-combo" class="form-input text-sm mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-rolex-green focus:border-rolex-green peer">
+                            @foreach (var item in Model.getStockQueries)
+                            {
+                                <option value=@item.Id>@item.StockName +" " + @item.MillRate + " " + @item.UnitName</option>
+
+                            }
+
+                            option.value = stok.stokID;
+                            option.textContent = stok.stokAdi;
+                            option.dataset.milyem = stok.milyem;
+                            option.dataset.birim = stok.birim;
+                        </select>
+                        <label for="stok-detay-combo" class="form-label">Ayar / Detay</label>
+                    </div>
+                </div>
+                <div id="stok-miktar-bilgi" class="mt-2 p-3 bg-white border border-gray-200 rounded-md text-sm text-gray-800 min-h-[40px]">
+                    <!-- Stok miktar buraya gelecek -->
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
+                    <div class="flex items-end gap-2">
+                        <div class="relative form-group flex-grow">
+                            <input type="text" id="miktar-input" placeholder=" " class="form-input text-sm mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm peer text-right">
+                            <label for="miktar-input" class="form-label">Miktar</label>
+                            <span id="miktar-has-display" class="absolute left-2 top-0.5 text-xs text-rolex-green"></span>
+                        </div>
+                        <div class="relative form-group w-auto">
+                            <select id="birim-combo" class="form-input text-sm mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm bg-gray-100 peer" disabled>
+                                <!-- JS ile doldurulacak -->
+                            </select>
+                            <label for="birim-combo" class="form-label">Birim</label>
+                        </div>
+                    </div>
+                    <div class="flex items-end gap-2">
+                        <div class="relative form-group flex-grow">
+                            <input type="text" id="iscilik-input" placeholder=" " class="form-input text-sm mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm peer text-right">
+                            <label for="iscilik-input" class="form-label">İşçilik</label>
+                            <span id="iscilik-has-display" class="absolute left-2 top-0.5 text-xs text-rolex-green"></span>
+                        </div>
+                        <div class="relative form-group flex-shrink-0">
+                            <select id="iscilik-tipi-combo" class="form-input text-sm mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm peer h-[42px]">
+                                <option value="Gram">Gram</option>
+                                <option value="Adet">Adet</option>
+                            </select>
+                            <label for="iscilik-tipi-combo" class="form-label">Tipi</label>
+                        </div>
+                        <!-- Bu buton modal içinde kalacak -->
+                        <button type="button" id="maliyet-ekle-btn" class="px-4 py-2 bg-info text-white font-semibold rounded-lg hover:bg-opacity-90 shadow-sm text-sm h-[42px]">EKLE</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal Kapatma Düğmesi -->
+            <div class="flex justify-end gap-2 mt-4">
+                <button type="button" id="maliyet-modal-kapat-btn" class="px-4 py-1 bg-secondary text-white rounded-md">Kapat</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Taş Bilgisi Ekle Modal (Doğru yere taşındı) -->
+    <div id="tas-modal" class="fixed inset-0 bg-black bg-opacity-40 z-50 hidden items-center justify-center">
+        <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-2xl relative">
+            <h3 class="text-base text-gray-800 mb-4">Taş Bilgisi Ekle</h3>
+            <form id="tas-form" class="space-y-3">
+                <div class="grid grid-cols-6 gap-3">
+                    <div class="form-group">
+                        <select id="tas-cinsi" class="form-input w-full p-2 border border-gray-300 rounded-md"></select>
+                    </div>
+                    <div class="form-group">
+                        <input type="number" id="tas-miktar" class="form-input w-full p-2 border border-gray-300 rounded-md" step="0.001" min="0" placeholder="Miktar" required>
+                    </div>
+                    <div class="form-group">
+                        <select id="tas-birim" class="form-input w-full p-2 border border-gray-300 rounded-md">
+                            <option value="Ct.">Ct.</option>
+                            <option value="Gr.">Gr.</option>
+                            <option value="Ad.">Ad.</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <select id="tas-renk" class="form-input w-full p-2 border border-gray-300 rounded-md"></select>
+                    </div>
+                    <div class="form-group">
+                        <select id="tas-saflik" class="form-input w-full p-2 border border-gray-300 rounded-md"></select>
+                    </div>
+                    <div class="form-group">
+                        <input type="number" id="tas-adet" class="form-input w-full p-2 border border-gray-300 rounded-md" min="0" step="1" placeholder="Adet" required>
+                    </div>
+                </div>
+                <div class="flex justify-end gap-2 mt-4">
+                    <button type="button" id="tas-modal-kapat" class="px-4 py-1 bg-secondary text-white rounded-md">Kapat</button>
+                    <button type="submit" class="px-4 py-1 bg-success text-white rounded-md">Ekle</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Onay Modal (v_old) -->
+    <div id="confirmation-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center">
+        <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-sm">
+            <h3 class="text-lg font-semibold text-gray-800 mb-4">Onay</h3>
+            <p class="text-gray-600 mb-6">Barkodlama ekranındaki kaydedilmemiş veriler silinecek. Onaylıyor musunuz?</p>
+            <div class="flex justify-end gap-4">
+                <button id="confirm-no" class="px-6 py-2 bg-secondary text-white font-semibold rounded-lg hover:bg-opacity-90 shadow-sm">Hayır</button>
+                <button id="confirm-yes" class="px-6 py-2 bg-rolex-green text-white font-semibold rounded-lg hover:bg-opacity-90 shadow-sm">Evet</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Web Kamera Modal (v_old) -->
+    <div id="camera-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center">
+        <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-2xl">
+            <video id="camera-stream" class="w-full rounded-md" autoplay></video>
+            <div class="flex justify-center gap-4 mt-4">
+                <button id="capture-btn" class="px-8 py-2 bg-rolex-green text-white font-semibold rounded-lg hover:bg-opacity-90 shadow-sm">Çek</button>
+                <button id="cancel-camera-btn" class="px-8 py-2 bg-secondary text-white font-semibold rounded-lg hover:bg-opacity-90 shadow-sm">İptal</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- İzin Modal (v_old) -->
+    <div id="permission-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center">
+        <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-sm text-center">
+            <h3 id="permission-title" class="text-lg font-semibold text-gray-800 mb-4">Kamera Erişimi Gerekli</h3>
+            <p id="permission-text" class="text-gray-600 mb-6">Bu özelliği kullanmak için lütfen tarayıcınızın adres çubuğundaki kamera simgesine tıklayarak izin verin.</p>
+            <button id="permission-ok-btn" class="px-8 py-2 bg-rolex-green text-white font-semibold rounded-lg hover:bg-opacity-90 shadow-sm">Anladım</button>
+        </div>
+    </div>
+
+    <!-- Yazıcı Ayar Modal (v_old) -->
+    <div id="printer-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center">
+        <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
+            <h3 class="text-lg font-semibold text-gray-800 mb-2">A Yazıcı Ayarları</h3>
+            <p class="text-sm text-gray-500 mb-4">Yazdırma işlemi için bu ayarları bir kez kaydetmeniz yeterlidir.</p>
+            <div class="space-y-4">
+                <div>
+                    <label for="printer-target" class="block text-sm font-medium text-gray-700">Yazıcı Paylaşım Adı veya IP Adresi</label>
+                    <input type="text" id="printer-target" placeholder="\\127.0.0.1\BarkodYazici veya 192.168.1.144" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm">
+                </div>
+                <div>
+                    <label for="printer-port" class="block text-sm font-medium text-gray-700">Port (Sadece A Yazıcı için)</label>
+                    <input type="number" id="printer-port" placeholder="9100" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm">
+                </div>
+            </div>
+            <div class="flex justify-end gap-4 mt-6">
+                <button id="cancel-print-btn" class="px-6 py-2 bg-secondary text-white font-semibold rounded-lg hover:bg-opacity-90 shadow-sm">İptal</button>
+                <button id="save-print-settings-btn" class="px-6 py-2 bg-rolex-green text-white font-semibold rounded-lg hover:bg-opacity-90 shadow-sm">Ayarları Kaydet</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Bildirim Konteyneri (v_new'den) -->
+    <div id="toast-container" class="fixed bottom-4 right-4 z-50"></div>
+
+
+    <script>
+                // v_old'dan alınan tam JS, v_new'den alınan özelliklerle ve API bağlantısı ile güncellendi
+                document.addEventListener('DOMContentLoaded', async () => {
+                    const token = localStorage.getItem('jwt_token');
+                    const API_BASE_URL = '@ViewBag.ApiBaseUrl/api/barkodlama';
+
+          let urunler = [];
+                    let maliyetListesi = [];
+                    let isFormDirty = false;
+            let nextProductIdToLoad = null;
+                    let stream = null;
+                    let currentMilyem = 0;
+               let currentAyar = '';
+           let currentBirim = 'Gram';
+                    let stokGruplariCache = []; // Stok gruplarını cache'lemek için
+
+                    // --- ELEMENT REFERANSLARI ---
+              const form = document.getElementById('barkod-form');
+                    const toptanciCombo = document.getElementById('toptanci-combo');
+             const productBarcode = document.getElementById('product-barcode');
+         // const generateBarcodeBtn = document.getElementById('generate-barcode-btn'); // FIX: Bu element HTML'de yok.
+                    const vazgecEkleBtn = document.getElementById('vazgec-ekle');
+             const stokGrubuCombo = document.getElementById('stok-grubu-combo');
+          const stokTipleriCombo = document.getElementById('stok-tipleri-combo');
+             const stokDetayCombo = document.getElementById('stok-detay-combo');
+             const stokMiktarBilgi = document.getElementById('stok-miktar-bilgi');
+            const cekBtn = document.getElementById('cek-btn');
+                    const yukleBtn = document.getElementById('yukle-btn');
+                const imageUploadInput = document.getElementById('image-upload-input');
+                 const productImage = document.getElementById('product-image');
+             const imagePlaceholder = document.getElementById('image-placeholder');
+            const resimSilBtn = document.getElementById('resim-sil-btn');
+             const miktarInput = document.getElementById('miktar-input');
+            const birimCombo = document.getElementById('birim-combo');
+                    const iscilikInput = document.getElementById('iscilik-input');
+           const miktarHasDisplay = document.getElementById('miktar-has-display');
+             const iscilikHasDisplay = document.getElementById('iscilik-has-display');
+          const iscilikTipiCombo = document.getElementById('iscilik-tipi-combo');
+                 const maliyetEkleBtn = document.getElementById('maliyet-ekle-btn');
+            const maliyetListesiEl = document.getElementById('maliyet-listesi');
+                  const maliyetOutput = document.getElementById('maliyet-output');
+                  const satisFiyatiInput = document.getElementById('satis-fiyati-input');
+             const etiketFiyatiInput = document.getElementById('etiket-fiyati-input');
+                const satisKarYuzdesiInput = document.getElementById('satis-kar-yuzdesi');
+                const etiketKarYuzdesiInput = document.getElementById('etiket-kar-yuzdesi');
+             const tagsContainer = document.getElementById('tags-container');
+                const tagsInput = document.getElementById('tags-input');
+            const addModeButtons = document.getElementById('add-mode-buttons');
+                    const editModeButtons = document.getElementById('edit-mode-buttons');
+           const urunListesiEl = document.getElementById('urun-listesi');
+        const confirmationModal = document.getElementById('confirmation-modal');
+                  const confirmYesBtn = document.getElementById('confirm-yes');
+              const confirmNoBtn = document.getElementById('confirm-no');
+                const cameraModal = document.getElementById('camera-modal');
+         const cameraStreamEl = document.getElementById('camera-stream');
+             const captureBtn = document.getElementById('capture-btn');
+                const cancelCameraBtn = document.getElementById('cancel-camera-btn');
+                    const permissionModal = document.getElementById('permission-modal');
+          const permissionTitle = document.getElementById('permission-title');
+                    const permissionText = document.getElementById('permission-text');
+         const permissionOkBtn = document.getElementById('permission-ok-btn');
+                    const printerModal = document.getElementById('printer-modal');
+                    const printListBtn = document.getElementById('print-list-btn');
+             const printerSettingsBtn = document.getElementById('printer-settings-btn');
+         const cancelPrintBtn = document.getElementById('cancel-print-btn');
+         const savePrintSettingsBtn = document.getElementById('save-print-settings-btn');
+                  const printStatusBar = document.getElementById('print-status-bar');
+                    const printerTargetInput = document.getElementById('printer-target');
+          const printerPortInput = document.getElementById('printer-port');
+                    const toastContainer = document.getElementById('toast-container');
+
+                    // --- YENİ MODAL ELEMENTLER ---
+                    const maliyetModal = document.getElementById('maliyet-modal');
+                    const maliyetListesiEkleBtn = document.getElementById('maliyet-listesi-ekle-btn');
+                    const maliyetModalKapatBtn = document.getElementById('maliyet-modal-kapat-btn');
+
+
+
+              // --- API HEADERS VE FONKSİYONLAR ---
+                    const getAuthHeaders = () => ({ 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` });
+
+                 const showToast = (message, type = 'success') => {
+                        const toast = document.createElement('div');
+                  toast.className = `p-3 rounded-md text-white text-sm shadow-lg animate-fade-in-out ${type === 'success' ? 'bg-rolex-green' : 'bg-danger'}`;
+        toast.textContent = message;
+           toastContainer.appendChild(toast);
+                   setTimeout(() => toast.remove(), 4000);
+            };
+
+                    function updateLabel(input) {
+              if (!input) return;
+                     if ((input.tagName === 'SELECT' && input.value) || (input.value && input.value !== '')) {
+         input.classList.add('has-value');
+             } else {
+                      input.classList.remove('has-value');
+                  }
+           }
+
+            function initializeFormPlaceholders() {
+             document.querySelectorAll('.form-input').forEach(input => {
+          if (input.tagName !== 'SELECT' && !input.placeholder) {
+            input.placeholder = " ";
+             }
+                     if (input.tagName === 'SELECT') {
+           input.addEventListener('change', () => updateLabel(input));
+                 updateLabel(input);
+               }
+                  });
+          }
+
+                    const numberFormatter = (locale, options) => {
+              const formatter = new Intl.NumberFormat(locale, options);
+                return {
+                         format: (number) => formatter.format(number),
+        parse: (str) => {
+               if (typeof str !== 'string') str = String(str);
+             const decimalSeparator = (1.1).toLocaleString(locale).substring(1, 2);
+             const thousandSeparator = (1000).toLocaleString(locale).substring(1, 2);
+            const cleanedStr = str.replace(new RegExp(`\\${thousandSeparator}`, 'g'), '').replace(decimalSeparator, '.');
+                   return parseFloat(cleanedStr);
+           }
+              };
+          };
+
+             const trFormatter2 = numberFormatter('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+         const trFormatter3 = numberFormatter('tr-TR', { minimumFractionDigits: 3, maximumFractionDigits: 3 });
+
+               function generateEan13() {
+             let digits = Array.from({length: 12}, () => Math.floor(Math.random() * 10)).join('');
+                let sumEven = 0, sumOdd = 0;
+              for (let i = 0; i < digits.length; i++) {
+          if (i % 2 === 0) { sumOdd += parseInt(digits[i], 10); }
+             else { sumEven += parseInt(digits[i], 10); }
+              }
+                     const checkDigit = (10 - ((sumOdd + (sumEven * 3)) % 10)) % 10;
+              return digits + checkDigit;
+         }
+
+            // --- API VERİ YÜKLEME ---
+                    const loadStokGruplari = async () => {
+               try {
+                      const response = await fetch(`${API_BASE_URL}/GetStokGruplari`, { headers: getAuthHeaders() });
+                if (!response.ok) throw new Error('Stok grupları yüklenemedi');
+                      const gruplar = await response.json();
+                      stokGruplariCache = gruplar; // Gelen veriyi cache'le
+
+              stokGrubuCombo.innerHTML = '';
+         gruplar.forEach(grup => {
+                const option = document.createElement('option');
+                      option.value = grup.stokGrupID;
+             option.textContent = grup.stokGrupAdi;
+               stokGrubuCombo.appendChild(option);
+           });
+
+             const madenGrubu = gruplar.find(g => g.stokGrupAdi === 'MADEN GRUBU');
+           if (madenGrubu) {
+               stokGrubuCombo.value = madenGrubu.stokGrupID;
+                       updateLabel(stokGrubuCombo);
+                       // Değişikliği manuel olarak tetikle ki diğer combolar yüklensin
+                       stokGrubuCombo.dispatchEvent(new Event('change'));
+              }
+              } catch (error) {
+                      showToast(error.message, 'danger');
+             }
+                    };
+
+         const loadStokTipleri = async (stokGrupID) => {
+            try {
+            const response = await fetch(`${API_BASE_URL}/GetStokTipleri?stokGrupID=${stokGrupID}`, { headers: getAuthHeaders() });
+          if (!response.ok) throw new Error('Stok tipleri yüklenemedi');
+               const tipler = await response.json();
+
+            stokTipleriCombo.innerHTML = '';
+                 tipler.forEach(tip => {
+               const option = document.createElement('option');
+                option.value = tip.stokTipID;
+                option.textContent = tip.stokTipAdi;
+                  stokTipleriCombo.appendChild(option);
+                      });
+
+                const altinTip = tipler.find(t => t.stokTipAdi === 'ALTIN');
+              if (altinTip) {
+                    stokTipleriCombo.value = altinTip.stokTipID;
+                   updateLabel(stokTipleriCombo);
+           await loadStoklar(altinTip.stokTipID);
+               }
+            } catch (error) {
+                  showToast(error.message, 'danger');
+             }
+                    };
+
+               const loadStoklar = async (stokTipID) => {
+             try {
+                  const response = await fetch(`${API_BASE_URL}/GetStoklar?stokTipID=${stokTipID}`, { headers: getAuthHeaders() });
+                  if (!response.ok) throw new Error('Stoklar yüklenemedi');
+           const stoklar = await response.json();
+
+                 stokDetayCombo.innerHTML = '';
+             stoklar.forEach(stok => {
+             const option = document.createElement('option');
+           option.value = stok.stokID;
+               option.textContent = stok.stokAdi;
+                      option.dataset.milyem = stok.milyem;
+         option.dataset.birim = stok.birim;
+                     stokDetayCombo.appendChild(option);
+                });
+
+               if (stoklar.length > 0) {
+                      stokDetayCombo.value = stoklar[0].stokID;
+              updateLabel(stokDetayCombo);
+            updateStokBilgisi();
+                 }
+            } catch (error) {
+         showToast(error.message, 'danger');
+                    }
+                    };
+
+
+
+            const updateStokBilgisi = () => {
+                const selected = stokDetayCombo.options[stokDetayCombo.selectedIndex];
+                if (selected && selected.value) {
+                    // Milyem değerini 1000'e böl (veritabanında 585 ise 0.585 olur)
+                    currentMilyem = parseFloat(selected.dataset.milyem || 0) / 1000;
+                    currentBirim = selected.dataset.birim || 'Gram';
+                    currentAyar = selected.textContent;
+
+                    birimCombo.innerHTML = `<option>${currentBirim}</option>`;
+                    updateLabel(birimCombo);
+
+                    // TODO: API'den gerçek stok miktarı eklenecek
+                    stokMiktarBilgi.innerHTML = `
+                        <div class="flex justify-between">
+                            <span><strong>Stok:</strong> 165,87 ${currentBirim}</span>
+                            <span><strong>İşçilik:</strong> 18,66 HAS</span>
+                        </div>
+                        <div class="text-xs text-rolex-green mt-1">
+                            <strong>Milyem:</strong> ${currentMilyem.toFixed(3)} (${(currentMilyem * 1000).toFixed(0)}/1000)
+                        </div>
+                    `;
+                }
+            };
+
+            const updatePrices = () => {
+                const maliyet = trFormatter2.parse(maliyetOutput.value) || 0;
+                const satisKarYuzdesi = parseFloat(satisKarYuzdesiInput.value) || 0;
+                const etiketKarYuzdesi = parseFloat(etiketKarYuzdesiInput.value) || 0;
+
+                // Satış fiyatı = Maliyet * (1 + Kar %)
+                const satisFiyati = maliyet * (1 + satisKarYuzdesi / 100);
+                satisFiyatiInput.value = trFormatter2.format(satisFiyati);
+                updateLabel(satisFiyatiInput);
+
+                // Etiket fiyatı = Satış fiyatı * (1 + Kar %)
+                const etiketFiyati = satisFiyati * (1 + etiketKarYuzdesi / 100);
+                etiketFiyatiInput.value = trFormatter2.format(etiketFiyati);
+                updateLabel(etiketFiyatiInput);
+            };
+
+
+            const calculateAndRenderMaliyet = () => {
+                const toplamMaliyet = maliyetListesi.reduce((acc, item) => {
+                    return acc + (item.miktarHas || 0) + (item.iscilikHas || 0);
+                }, 0);
+
+                maliyetOutput.value = trFormatter2.format(toplamMaliyet);
+                updateLabel(maliyetOutput);
+
+                // Sat ve etiket fiyatları güncelle
+                updatePrices();
+            };
+
+            const renderMaliyetListesi = () => {
+                maliyetListesiEl.innerHTML = '';
+
+                if (maliyetListesi.length === 0) {
+                    maliyetListesiEl.innerHTML = `<p class="text-xs text-gray-500 text-center p-2">Maliyet kalemi eklenmedi.</p>`;
+                } else {
+                    maliyetListesi.forEach((item, index) => {
+                        const row = document.createElement('div');
+                        row.className = 'flex justify-between items-center text-sm text-gray-800 px-2 py-1 rounded bg-white border-l-4 border-rolex-green';
+
+                        // Bilgi satırı oluştur
+                        let bilgiSatiri = `${item.ayar}`;
+
+                        if (item.miktar > 0) {
+                            bilgiSatiri += ` | ${trFormatter2.format(item.miktar)} ${item.birim}`;
+                            if (item.miktarHas > 0) {
+                                bilgiSatiri += ` (${trFormatter3.format(item.miktarHas)} HAS)`;
+                            }
+                        }
+
+                        if (item.iscilik > 0) {
+                            bilgiSatiri += ` | İşçilik: ${trFormatter3.format(item.iscilik)} ${item.iscilikTipi}`;
+                            if (item.iscilikHas > 0) {
+                                bilgiSatiri += ` (${trFormatter3.format(item.iscilikHas)} HAS)`;
+                            }
+                        }
+
+                        row.innerHTML = `
+                            <span class="flex-1">${bilgiSatiri}</span>
+                            <button type="button" data-index="${index}" class="maliyet-sil-btn text-red-500 hover:text-red-700 font-bold text-xs ml-4 flex-shrink-0">Sil</button>
+                        `;
+
+                        maliyetListesiEl.appendChild(row);
+                    });
+                }
+
+                // Toplamlar hesapla
+                calculateAndRenderMaliyet();
+            };
+
+
+                const switchToAddMode = () => {
+              addModeButtons.classList.remove('hidden');
+            editModeButtons.classList.add('hidden');
+           };
+
+                const switchToEditMode = () => {
+             addModeButtons.classList.add('hidden');
+                 editModeButtons.classList.remove('hidden');
+                };
+
+                const resetForm = () => {
+             form.reset();
+                 document.querySelectorAll('.form-input').forEach(input => {
+         updateLabel(input);
+           });
+
+                        satisKarYuzdesiInput.value = 50;
+              etiketKarYuzdesiInput.value = 50;
+                 document.getElementById('product-id').value = '';
+             productBarcode.value = generateEan13();
+              maliyetListesi = [];
+                      renderMaliyetListesi();
+                     resimSilBtn.click();
+
+                      // Cache'lenmiş stok gruplarını kullanarak formu sıfırla
+                      const madenGrubu = stokGruplariCache.find(g => g.stokGrupAdi === 'MADEN GRUBU');
+                      if (madenGrubu) {
+                          stokGrubuCombo.value = madenGrubu.stokGrupID;
+                          stokGrubuCombo.dispatchEvent(new Event('change'));
+                      }
+
+
+                      tagsContainer.querySelectorAll('.tag').forEach(tag => tag.remove());
+
+               isFormDirty = false;
+             switchToAddMode();
+                    };
+
+               const renderUrunListesi = () => {
+                    urunListesiEl.innerHTML = '';
+
+                    if (urunler.length === 0) {
+                        urunListesiEl.innerHTML = `<p class="text-sm text-gray-500 text-center p-4">Barkodlanan ürün listesi boş.</p>`;
+                        return;
+                    }
+
+            urunler.forEach(product => {
+              const item = document.createElement('div');
+               item.className = 'border border-rolex-green-border rounded-md p-3 cursor-pointer hover:shadow-md transition-shadow';
+            item.dataset.id = product.id;
+
+          const toplamGram = product.maliyetListesi.reduce((acc, item) => acc + (item.birim === 'Gram' ? item.miktar : 0), 0);
+                   const ayar = product.stokDetay || 'N/A';
+                   const model = product.alan1 || 'Belirtilmemiş';
+                  const tasBilgisi = product.alan2 || 'Yok';
+
+                item.innerHTML = `
+                <div class="w-full text-sm text-gray-700">
+                <div class="flex border-b border-gray-200 py-1.5">
+              <span class="font-semibold w-24 flex-shrink-0">Gram:</span>
+                  <span>${trFormatter2.format(toplamGram)} gr</span>
+                 </div>
+            <div class="flex border-b border-gray-200 py-1.5">
+                      <span class="font-semibold w-24 flex-shrink-0">Ayar:</span>
+           <span>${ayar}</span>
+                        </div>
+           <div class="flex border-b border-gray-200 py-1.5">
+          <span class="font-semibold w-24 flex-shrink-0">Model:</span>
+              <span class="truncate">${model}</span>
+             </div>
+              <div class="flex border-b border-gray-200 py-1.5">
+          <span class="font-semibold w-24 flex-shrink-0">Ürün Tipi:</span>
+              <span>${product.urunTipi}</span>
+                      </div>
+             <div class="flex py-1.5">
+                <span class="font-semibold w-24 flex-shrink-0">Taş Bilgisi:</span>
+                      <span class="truncate">${tasBilgisi}</span>
+                  </div>
+               </div>
+          `;
+
+              item.addEventListener('click', () => {
+        const productId = product.id;
+          if (isFormDirty) {
+               nextProductIdToLoad = productId;
+                 confirmationModal.classList.remove('hidden');
+                   confirmationModal.classList.add('flex');
+            } else {
+              populateForm(productId);
+            }
+              });
+               urunListesiEl.appendChild(item);
+            });
+             };
+
+                // --- EVENT LİSTENERLAR ---
+              form.addEventListener('input', () => { isFormDirty = true; });
+
+                    stokGrubuCombo.addEventListener('change', (e) => {
+               updateLabel(e.target);
+             loadStokTipleri(e.target.value);
+                    });
+
+                    stokTipleriCombo.addEventListener('change', (e) => {
+                        updateLabel(e.target);
+                      loadStoklar(e.target.value);
+                    });
+
+                    stokDetayCombo.addEventListener('change', (e) => {
+                 updateLabel(e.target);
+          updateStokBilgisi();
+                    });
+
+                // generateBarcodeBtn.addEventListener('click', () => { productBarcode.value = generateEan13(); }); // FIX: Bu element HTML'de yok.
+                    vazgecEkleBtn.addEventListener('click', resetForm);
+
+                // --- YENİ HESAPLAMA EVENTLER ---
+                    function updateIscilikCalculation() {
+                        const miktarValue = trFormatter2.parse(miktarInput.value) || 0;
+                        const iscilikValue = trFormatter3.parse(iscilikInput.value) || 0;
+                        const iscilikTipi = iscilikTipiCombo.value;
+
+                        if (iscilikValue > 0) {
+                            let iscilikHasValue = 0;
+
+                            if (iscilikTipi === 'Gram' && miktarValue > 0) {
+                                iscilikHasValue = miktarValue * iscilikValue;
+                                iscilikHasDisplay.textContent = `${trFormatter3.format(iscilikHasValue)} HAS`;
+                            } else if (iscilikTipi === 'Adet') {
+                                iscilikHasValue = iscilikValue;
+                                iscilikHasDisplay.textContent = `${trFormatter3.format(iscilikHasValue)} HAS`;
+                            } else {
+                                iscilikHasDisplay.textContent = '';
+                            }
+                        } else {
+                            iscilikHasDisplay.textContent = '';
+                        }
+                    }
+
+                    miktarInput.addEventListener('input', () => {
+                        const miktarValue = trFormatter2.parse(miktarInput.value) || 0;
+                        if (miktarValue > 0 && currentMilyem > 0 && currentBirim === 'Gram') {
+                            const miktarHasValue = miktarValue * currentMilyem;
+                            miktarHasDisplay.textContent = `${trFormatter3.format(miktarHasValue)} HAS`;
+                        } else {
+                            miktarHasDisplay.textContent = '';
+                        }
+                        updateIscilikCalculation();
+                    });
+
+                    iscilikInput.addEventListener('input', updateIscilikCalculation);
+                    iscilikTipiCombo.addEventListener('change', updateIscilikCalculation);
+
+
+                    maliyetEkleBtn.addEventListener('click', () => {
+                        const miktarValue = trFormatter2.parse(miktarInput.value) || 0;
+                        const iscilikValue = trFormatter3.parse(iscilikInput.value) || 0;
+                        const iscilikTipi = iscilikTipiCombo.value;
+
+                        if ((miktarValue <= 0 && iscilikValue <= 0) || !currentAyar) {
+                            showToast(currentAyar ? "Miktar veya işçilik giriniz." : "Lütfen bir stok detay (ayar) seçiniz.", "danger");
+                            return;
+                        }
+
+                        const miktarHas = (currentBirim === 'Gram') ? miktarValue * currentMilyem : 0;
+                        let iscilikHas = 0;
+                        if (iscilikTipi === 'Gram') {
+                            iscilikHas = miktarValue * iscilikValue;
+                        } else {
+                            iscilikHas = iscilikValue;
+                        }
+
+                        maliyetListesi.push({
+                            ayar: currentAyar,
+                            miktar: miktarValue,
+                            birim: currentBirim,
+                            miktarHas: miktarHas,
+                            iscilik: iscilikValue,
+                            iscilikTipi: iscilikTipi,
+                            iscilikHas: iscilikHas
+                        });
+                        renderMaliyetListesi();
+
+                        miktarInput.value = '';
+                        iscilikInput.value = '';
+                        miktarHasDisplay.textContent = '';
+                        iscilikHasDisplay.textContent = '';
+                        isFormDirty = true;
+
+                        maliyetModal.classList.add('hidden');
+                        maliyetModal.classList.remove('flex');
+                        showToast('Maliyet kalemi eklendi.', 'success');
+                    });
+
+             maliyetListesiEl.addEventListener('click', (e) => {
+             if (e.target.matches('button.maliyet-sil-btn')) {
+               const index = parseInt(e.target.dataset.index, 10);
+               maliyetListesi.splice(index, 1);
+                 renderMaliyetListesi();
+            isFormDirty = true;
+                        }
+                    });
+
+               [satisKarYuzdesiInput, etiketKarYuzdesiInput].forEach(input => { input.addEventListener('input', updatePrices); });
+                satisFiyatiInput.addEventListener('input', () => {
+                 const maliyet = trFormatter2.parse(maliyetOutput.value) || 0;
+          const satisFiyati = trFormatter2.parse(satisFiyatiInput.value) || 0;
+                if (maliyet > 0) {
+                    satisKarYuzdesiInput.value = (((satisFiyati / maliyet) - 1) * 100).toFixed(2);
+                      updatePrices();
+            }
+               });
+
+                 etiketFiyatiInput.addEventListener('input', () => {
+                    const satisFiyati = trFormatter2.parse(satisFiyatiInput.value) || 0;
+                   const etiketFiyati = trFormatter2.parse(etiketFiyatiInput.value) || 0;
+                 if (satisFiyati > 0) {
+                         etiketKarYuzdesiInput.value = (((etiketFiyati / satisFiyati) - 1) * 100).toFixed(2);
+               }
+                 });
+
+                    [satisFiyatiInput, etiketFiyatiInput, miktarInput, iscilikInput].forEach(input => {
+            input.addEventListener('blur', (e) => {
+             const value = trFormatter2.parse(e.target.value);
+                  e.target.value = isNaN(value) ? '' : trFormatter2.format(value);
+           updateLabel(e.target);
+                 });
+                  });
+
+                    tagsInput.addEventListener('keydown', (e) => {
+           if (e.key === 'Enter') {
+          e.preventDefault();
+                const tagText = tagsInput.value.trim();
+                 const existingTags = Array.from(tagsContainer.querySelectorAll('.tag span')).map(span => span.textContent.toLowerCase());
+                  if (tagText && existingTags.includes(tagText.toLowerCase())) {
+            showToast('Bu etiket zaten eklendi!', 'danger');
+               tagsInput.value = '';
+          return;
+            }
+                if (tagText) {
+             const tag = document.createElement('span');
+         tag.className = 'tag bg-rolex-green text-white text-sm font-medium px-2 py-1 rounded-full flex items-center gap-2';
+            tag.innerHTML = `<span>${tagText}</span><button type="button" class="remove-tag text-white opacity-75 hover:opacity-100">&times;</button>`;
+                tagsContainer.insertBefore(tag, tagsInput);
+                tagsInput.value = '';
+             isFormDirty = true;
+        }
+                  }
+              });
+
+              tagsContainer.addEventListener('click', (e) => {
+              if(e.target.classList.contains('remove-tag')) {
+            e.target.parentElement.remove();
+            isFormDirty = true;
+          }
+                    });
+
+                    // --- YENİ MODAL EVENT LISTENERLARI ---
+                    if (maliyetListesiEkleBtn && maliyetModal && maliyetModalKapatBtn) {
+                        maliyetListesiEkleBtn.addEventListener('click', () => {
+                            maliyetModal.classList.remove('hidden');
+                            maliyetModal.classList.add('flex');
+                        });
+
+                        maliyetModalKapatBtn.addEventListener('click', () => {
+                            maliyetModal.classList.add('hidden');
+                            maliyetModal.classList.remove('flex');
+                        });
+                    } else {
+                        console.error('Maliyet modal elementleri bulunamadı!');
+                    }
+
+
+                yukleBtn.addEventListener('click', () => { imageUploadInput.click(); });
+                    imageUploadInput.addEventListener('change', (event) => {
+                  const file = event.target.files[0];
+          if (file) {
+                const reader = new FileReader();
+            reader.onload = (e) => {
+                productImage.src = e.target.result;
+                      productImage.classList.remove('hidden');
+                     imagePlaceholder.classList.add('hidden');
+         isFormDirty = true;
+                 };
+                  reader.readAsDataURL(file);
+             }
+              });
+                  resimSilBtn.addEventListener('click', () => {
+                   productImage.src = '';
+                 productImage.classList.add('hidden');
+              imagePlaceholder.classList.remove('hidden');
+             imageUploadInput.value = '';
+                isFormDirty = true;
+                    });
+
+           async function startCamera() {
+                try {
+              stream = await navigator.mediaDevices.getUserMedia({ video: { width: 800, height: 600 } });
+                 cameraStreamEl.srcObject = stream;
+             cameraModal.classList.remove('hidden');
+                     cameraModal.classList.add('flex');
+              } catch (err) {
+          console.error("Kamera erişim hatası:", err);
+                let title = 'Bir Hata Oluştu';
+            let text = 'Kameraya erişilirken bir hata oluştu. Lütfen daha sonra tekrar deneyin.';
+             if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+                   title = 'Kamera Erişimi Gerekli';
+          text = 'Bu özelliği kullanmak için lütfen tarayıcınızın adres çubuğundaki kamera simgesine tıklayarak veya site ayarlarından izin verin.';
+               } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+             title = 'Kamera Bulunamadı';
+               text = 'Cihazınıza bağlı bir kamera bulunamadı.';
+                }
+                      permissionTitle.textContent = title;
+            permissionText.textContent = text;
+           permissionModal.classList.remove('hidden');
+             permissionModal.classList.add('flex');
+              }
+             }
+
+              function stopCamera() {
+                     if (stream) {
+               stream.getTracks().forEach(track => track.stop());
+                 }
+               cameraModal.classList.add('hidden');
+                 cameraModal.classList.remove('flex');
+                    }
+
+                    cekBtn.addEventListener('click', startCamera);
+                    cancelCameraBtn.addEventListener('click', stopCamera);
+          permissionOkBtn.addEventListener('click', () => {
+              permissionModal.classList.add('hidden');
+           permissionModal.classList.remove('flex');
+            });
+
+              captureBtn.addEventListener('click', () => {
+            const canvas = document.createElement('canvas');
+              canvas.width = cameraStreamEl.videoWidth;
+            canvas.height = cameraStreamEl.videoHeight;
+           const context = canvas.getContext('2d');
+            context.drawImage(cameraStreamEl, 0, 0, canvas.width, canvas.height);
+              productImage.src = canvas.toDataURL('image/jpeg');
+              productImage.classList.remove('hidden');
+               imagePlaceholder.classList.add('hidden');
+            isFormDirty = true;
+                        stopCamera();
+            });
+
+             function openPrinterSettings() {
+           printerTargetInput.value = localStorage.getItem('printerTarget') || '';
+                    printerPortInput.value = localStorage.getItem('printerPort') || '';
+                   printerModal.classList.remove('hidden');
+                        printerModal.classList.add('flex');
+                    }
+
+        printerSettingsBtn.addEventListener('click', openPrinterSettings);
+                    cancelPrintBtn.addEventListener('click', () => {
+               printerModal.classList.add('hidden');
+          printerModal.classList.remove('flex');
+              });
+
+                 savePrintSettingsBtn.addEventListener('click', () => {
+          const target = printerTargetInput.value;
+         const port = printerPortInput.value;
+                 if (!target) {
+                        showToast('Yazıcı hedefi (IP veya Paylaşım Adı) girmelisiniz.', 'danger');
+         return;
+              }
+           localStorage.setItem('printerTarget', target);
+                 localStorage.setItem('printerPort', port);
+               showToast('Yazıcı ayarları kaydedildi.', 'success');
+                 printerModal.classList.add('hidden');
+         printerModal.classList.remove('flex');
+          });
+
+             confirmYesBtn.addEventListener('click', () => {
+                if (nextProductIdToLoad !== null) {
+               nextProductIdToLoad = null;
+            }
+           confirmationModal.classList.add('hidden');
+           confirmationModal.classList.remove('flex');
+                });
+
+                    confirmNoBtn.addEventListener('click', () => {
+               nextProductIdToLoad = null;
+          confirmationModal.classList.add('hidden');
+             confirmationModal.classList.remove('flex');
+            });
+
+                 document.getElementById('vazgec-guncelle').addEventListener('click', resetForm);
+
+                // --- BAŞLANGIÇ: TÜM VERİLER YÜKLE ---
+        
+              });
+    </script>
+    <!-- SlimSelect JS dosyasını body kapanmadan hemen önce ekleyin -->
+    <script src="https://cdn.jsdelivr.net/npm/slim-select@2.8.1/dist/slimselect.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // SlimSelect yüklendi mi? Yüklenmediyse native select kullanılacak
+            const slimAvailable = typeof SlimSelect !== 'undefined';
+            if (!slimAvailable) {
+                console.warn('SlimSelect JS yüklenemedi, standart select elementleri kullanılacak.');
+            }
+
+            let tasBilgileri = [];
+            let tasCinsiSet = new Set();
+            let tasRenkSet = new Set();
+            let tasSaflikSet = new Set();
+
+            // Select element references
+            const tasCinsiEl = document.getElementById('tas-cinsi');
+            const tasRenkEl = document.getElementById('tas-renk');
+            const tasSaflikEl = document.getElementById('tas-saflik');
+
+            // SlimSelect init (if available)
+            let slimCinsi, slimRenk, slimSaflik;
+            if (slimAvailable && tasCinsiEl) {
+                slimCinsi = new SlimSelect({
+                    select: '#tas-cinsi',
+                    data: [],
+                    allowDeselect: true,
+                    showSearch: true,
+                    placeholder: 'Taş Cinsi',
+                    searchPlaceholder: 'Taş Cinsi Ara',
+                    addable: function(value) { return value; }
+                });
+            }
+            if (slimAvailable && tasRenkEl) {
+                slimRenk = new SlimSelect({
+                    select: '#tas-renk',
+                    data: [],
+                    allowDeselect: true,
+                    showSearch: true,
+                    placeholder: 'Renk',
+                    searchPlaceholder: 'Renk Ara',
+                    addable: function(value) { return value; }
+                });
+            }
+            if (slimAvailable && tasSaflikEl) {
+                slimSaflik = new SlimSelect({
+                    select: '#tas-saflik',
+                    data: [],
+                    allowDeselect: true,
+                    showSearch: true,
+                    placeholder: 'Saflık',
+                    searchPlaceholder: 'Saflık Ara',
+                    addable: function(value) { return value; }
+                });
+            }
+
+            // Safe helpers to work with SlimSelect or native selects
+            function getSelected(inst, el) {
+                if (inst && typeof inst.selected === 'function') return inst.selected();
+                if (el) return el.value;
+                return '';
+            }
+            function setSelected(inst, el, value) {
+                if (inst && typeof inst.setSelected === 'function') return inst.setSelected(value);
+                if (el) el.value = value || '';
+            }
+            function setData(inst, el, data) {
+                if (inst && typeof inst.setData === 'function') return inst.setData(data);
+                if (!el) return;
+                const currentValue = el.value;
+                el.innerHTML = ''; // Clear existing options
+                if (inst) el.innerHTML = '<option data-placeholder="true"></option>'; // For SlimSelect placeholder
+                data.forEach(d => {
+                    const opt = document.createElement('option');
+                    opt.value = d.value;
+                    opt.textContent = d.text;
+                    el.appendChild(opt);
+                });
+                el.value = currentValue; // try to restore previous value
+            }
+
+
+            const tasEkleBtn = document.getElementById('tas-ekle-btn');
+            const tasModal = document.getElementById('tas-modal');
+            const tasModalKapat = document.getElementById('tas-modal-kapat');
+            const tasForm = document.getElementById('tas-form');
+            const tasBilgileriListesi = document.getElementById('tas-bilgileri-listesi');
+
+            if (tasEkleBtn && tasModal && tasModalKapat && tasForm && tasBilgileriListesi) {
+                tasEkleBtn.addEventListener('click', function() {
+                    tasModal.classList.remove('hidden');
+                    tasModal.classList.add('flex');
+                });
+                tasModalKapat.addEventListener('click', function() {
+                    tasModal.classList.add('hidden');
+                    tasModal.classList.remove('flex');
+                    tasForm.reset();
+                    setSelected(slimCinsi, tasCinsiEl, '');
+                    setSelected(slimRenk, tasRenkEl, '');
+                    setSelected(slimSaflik, tasSaflikEl, '');
+                });
+                tasForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    const cinsi = getSelected(slimCinsi, tasCinsiEl);
+                    const miktar = document.getElementById('tas-miktar').value;
+                    const birim = document.getElementById('tas-birim').value;
+                    const renk = getSelected(slimRenk, tasRenkEl);
+                    const saflik = getSelected(slimSaflik, tasSaflikEl);
+                    const adet = document.getElementById('tas-adet').value;
+                    tasBilgileri.push({ cinsi, miktar, birim, renk, saflik, adet });
+                    // Setlere ekle
+                    if (cinsi) tasCinsiSet.add(cinsi);
+                    if (renk) tasRenkSet.add(renk);
+                    if (saflik) tasSaflikSet.add(saflik);
+                    updateSlimSelects();
+                    renderTasBilgileri();
+                    tasModal.classList.add('hidden');
+                    tasModal.classList.remove('flex');
+                    tasForm.reset();
+                    setSelected(slimCinsi, tasCinsiEl, '');
+                    setSelected(slimRenk, tasRenkEl, '');
+                    setSelected(slimSaflik, tasSaflikEl, '');
+                });
+                function updateSlimSelects() {
+                    setData(slimCinsi, tasCinsiEl, Array.from(tasCinsiSet).map(x => ({text:x, value:x})));
+                    setData(slimRenk, tasRenkEl, Array.from(tasRenkSet).map(x => ({text:x, value:x})));
+                    setData(slimSaflik, tasSaflikEl, Array.from(tasSaflikSet).map(x => ({text:x, value:x})));
+                }
+                function renderTasBilgileri() {
+                    if (tasBilgileri.length ===0) {
+                        tasBilgileriListesi.innerHTML = '<span class="text-xs text-gray-500">Taş bilgisi eklenmedi.</span>';
+                    } else {
+                        tasBilgileriListesi.innerHTML = '<table class="w-full text-xs text-left"><thead><tr><th class="py-1">Taş Cinsi</th><th>Miktar</th><th>Birim</th><th>Renk</th><th>Saflık</th><th>Adet</th></tr></thead><tbody>' +
+                        tasBilgileri.map(t => `<tr><td class=\"py-1\">${t.cinsi}</td><td>${t.miktar}</td><td>${t.birim}</td><td>${t.renk}</td><td>${t.saflik}</td><td>${t.adet}</td></tr>`).join('') +
+                        '</tbody></table>';
+                    }
+                }
+                // İlk başta SlimSelect'ler boş olmalı
+                updateSlimSelects();
+            } else {
+                console.warn('Taş modal elementlerinden biri bulunamadı, modal bağlanmadı.');
+            }
+        });
+    </script>
+
+</body>
+</html>
+
+

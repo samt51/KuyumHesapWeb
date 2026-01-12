@@ -1,0 +1,157 @@
+﻿@using KuyumHesapWeb.Core.Feature.MovementTypeFeature.Queries.GetAll
+@model List<GetAllMovementTypeQueryResponse>
+@{
+    ViewData["Title"] = "Index";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hareket Tipi Tanımlama</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'rolex-green': '#4C9779',
+                        'list-item-bg': '#F0FAFA',
+                        'success': '#22c55e',
+                        'danger': '#ef4444',
+                        'secondary': '#6b7280',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .form-group .form-label {
+            position: absolute;
+            top: 0.5rem;
+            left: 0.6rem;
+            color: #6b7280;
+            pointer-events: none;
+            transition: all 0.2s ease-in-out;
+            background-color: white;
+            padding: 0 0.25rem;
+            font-size: 0.875rem;
+        }
+
+        .form-group .form-input:focus + .form-label,
+        .form-group .form-input:not(:placeholder-shown) + .form-label,
+        .form-group .form-input.has-value + .form-label {
+            top: -0.6rem;
+            left: 0.5rem;
+            font-size: 0.75rem;
+            color: #1f2937;
+        }
+
+        .form-input:required:invalid {
+            color: #6b7280;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 p-3 overflow-hidden">
+
+    <div class="flex flex-col md:flex-row gap-4 w-full h-[calc(100vh-1.5rem)]">
+
+        <!-- SOL TARAF: FORM PANELİ -->
+        <!-- SAĞ TARAF: LİSTE PANELİ -->
+        <div class="flex flex-col flex-[2]">
+            <div class="panel bg-white rounded-lg shadow-sm border border-rolex-green p-3 flex flex-col flex-grow min-h-0">
+                <div class="flex items-center gap-2">
+                    <div class="relative">
+                        <a asp-controller="MovementType" asp-action="Create" class="px-6 py-1.5 bg-success text-white text-sm font-semibold rounded-md hover:bg-opacity-90 shadow-sm">EKLE</a>
+                    </div>
+        
+                   
+                </div>
+                <h2 class="text-lg font-semibold text-gray-800 mb-3 pb-2 border-b border-rolex-green flex-shrink-0">Hareket Tipleri Listesi</h2>
+                <div class="flex-grow overflow-y-auto">
+                    <div class="grid grid-cols-6 text-xs font-semibold text-gray-500 px-2 py-1.5 border-b sticky top-0 bg-white z-10">
+                        <span class="col-span-2">Hareket Adı</span>
+                        <span class="text-center">Kodu</span>
+                        <span class="text-center">G/C</span>
+                        <span class="text-center">S/C</span>
+                        <span class="text-right">İşlem</span>
+                    </div>
+                    <div id="item-list" class="space-y-1">
+
+                        @{
+                            var rowIndex = 0;
+                        }
+                        @foreach (var item in Model)
+                        {
+                            var rowClass = (rowIndex++ % 2 == 1) ? "bg-list-item-bg" : "bg-white";
+
+                            <div class="grid grid-cols-6 items-center p-2 rounded cursor-pointer hover:bg-gray-200 @rowClass"
+                                 data-id="@item.Id">
+
+                                <span class="col-span-2 font-medium text-gray-700 text-sm">@item.TransactionName</span>
+
+                                <span class="text-xs text-center">@item.TransactionCode</span>
+
+                                <span class="text-xs text-center font-semibold @(item.GC == 'G' ? "text-green-600" : "text-red-600")">
+                                    @item.GC
+                                </span>
+
+                                <span class="text-xs text-center font-semibold text-blue-600">@item.SC</span>
+
+                                <!-- İŞLEM -->
+                                <div class="flex justify-end gap-2">
+                                    <a href="/MovementType/Update/@item.Id"
+                                       class="w-8 h-8 inline-flex items-center justify-center rounded-md border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 shadow-sm"
+                                       title="Güncelle">
+                                        <i class="fas fa-pen text-xs"></i>
+                                    </a>
+
+                                    <button type="button"
+                                            class="w-8 h-8 inline-flex items-center justify-center rounded-md border border-red-200 bg-red-50 hover:bg-red-100 text-red-700 shadow-sm"
+                                            title="Sil"
+                                            data-id="@item.Id">
+                                        <i class="fas fa-trash text-xs"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        }
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast-container" class="fixed bottom-4 right-4 z-50"></div>
+    <div id="confirmation-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div class="mt-3 text-center">
+                <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
+                    <svg class="h-6 w-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                    </svg>
+                </div>
+                <h3 class="text-lg leading-6 font-medium text-gray-900 mt-2">Kaydı Sil</h3>
+                <div class="mt-2 px-7 py-3">
+                    <p id="modal-text" class="text-sm text-gray-500"></p>
+                </div>
+                <div class="items-center px-4 py-3">
+                    <button id="confirm-delete-btn" class="px-4 py-2 bg-red-500 text-white text-base font-medium rounded-md w-auto shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-300">
+                        Sil
+                    </button>
+                    <button id="cancel-delete-btn" class="px-4 py-2 bg-gray-200 text-gray-800 text-base font-medium rounded-md w-auto ml-2 shadow-sm hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300">
+                        Vazgeç
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+</body>
+</html>
+
+

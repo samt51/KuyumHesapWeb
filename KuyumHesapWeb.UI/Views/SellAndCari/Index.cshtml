@@ -1,0 +1,1053 @@
+﻿@using KuyumHesapWeb.Core.Feature.AccountFeature.Queries.GetAll
+@model List<GetAllAccountQueryResponse>
+@{
+    ViewData["Title"] = "Index";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+
+    <style>
+
+        :root {
+            --bg: #f7f8fc;
+            --card: #ffffff;
+            --text: #111827;
+            --muted: #6b7280;
+            --green: #1E8449;
+            --green-2: rgba(30,132,73,.18);
+            --green-border: rgba(30,132,73,.35);
+            --blue: #3B82F6;
+            --blue-2: rgba(59,130,246,.18);
+            --blue-border: rgba(59,130,246,.40);
+            --shadow: 0 6px 18px rgba(0,0,0,.06);
+            --shadow-sm: 0 2px 10px rgba(0,0,0,.05);
+            --radius-xl: 18px;
+            --radius-lg: 14px;
+            --radius-md: 12px;
+        }
+
+        html, body {
+            height: 100%;
+            overflow: hidden;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+        }
+
+        /* Kart & panel görünümü */
+        .theme-border {
+            border: 1px solid var(--green-border);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-sm);
+            background: var(--card);
+        }
+
+        .theme-border-50 {
+            border: 1px solid rgba(30,132,73,.22);
+            border-radius: var(--radius-lg);
+        }
+
+        body.cari-active .theme-border {
+            border-color: var(--blue-border);
+        }
+
+        body.cari-active .theme-border-50 {
+            border-color: rgba(59,130,246,.22);
+        }
+
+        /* Header */
+        header.theme-border,
+        header.bg-white {
+            border-radius: var(--radius-xl) !important;
+            box-shadow: var(--shadow-sm) !important;
+        }
+
+        /* Üst butonlar (CRM / Ekstre / Satış Listesi) */
+        header button {
+            height: 34px;
+            border-radius: 12px !important;
+            border: 1px solid #d1d5db !important;
+            background: #fff !important;
+            box-shadow: 0 1px 2px rgba(0,0,0,.04);
+            transition: transform .08s ease, box-shadow .2s ease, border-color .2s ease;
+        }
+
+            header button:hover {
+                box-shadow: 0 6px 14px rgba(0,0,0,.08);
+                transform: translateY(-1px);
+            }
+
+            header button:active {
+                transform: translateY(0);
+            }
+
+        /* Select’ler (SlimSelect yokken düzgün görünsün) */
+        #customer-select, #salesperson-select {
+            width: 100%;
+            height: 38px;
+            padding: 0 38px 0 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 12px;
+            background: #fff;
+            font-size: 14px;
+            font-weight: 600;
+            color: #111827;
+            outline: none;
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            box-shadow: 0 1px 2px rgba(0,0,0,.04);
+        }
+
+            #customer-select:focus, #salesperson-select:focus {
+                border-color: var(--green);
+                box-shadow: 0 0 0 3px var(--green-2);
+            }
+
+        body.cari-active #customer-select:focus,
+        body.cari-active #salesperson-select:focus {
+            border-color: var(--blue);
+            box-shadow: 0 0 0 3px var(--blue-2);
+        }
+
+        /* Select ok’u – customer-select kapsayan div’e bu class’i ver: app-shell-customer */
+        .app-shell-customer {
+            position: relative;
+        }
+
+            .app-shell-customer::after {
+                content: "▾";
+                position: absolute;
+                right: 12px;
+                top: 50%;
+                transform: translateY(-50%);
+                color: #6b7280;
+                pointer-events: none;
+                font-size: 14px;
+            }
+
+        /* Tarih input (fiş tarihi) */
+        #fis-tarihi {
+            height: 34px;
+            padding: 0 10px;
+            border-radius: 12px;
+            border: 1px solid #e5e7eb;
+            background: #fff;
+            box-shadow: 0 1px 2px rgba(0,0,0,.04);
+        }
+
+        /* Sol / orta / sağ panellerin iç çizgileri daha yumuşak */
+        .bg-white.rounded-xl {
+            border-radius: var(--radius-xl) !important;
+            box-shadow: var(--shadow-sm) !important;
+        }
+
+        /* Scrollbar (mevcut sınıfın aynısı) */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(17,24,39,.18);
+            border-radius: 10px;
+        }
+
+            .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+                background: rgba(17,24,39,.28);
+            }
+
+        /* =========================================================
+                                    SATIŞ / CARİ Toggle (2. görseldeki gibi yeşil kapsül + beyaz seçili)
+                                    HTML:
+                                    <input class="toggle-checkbox" ...> +
+                                    <label class="toggle-label">
+                                        ...
+                                        Span’ler: .toggle-text.toggle-satis ve .toggle-text.toggle-cari
+                                        ========================================================= */
+        .toggle-container {
+            width: 110px;
+            height: 38px;
+        }
+
+        .toggle-checkbox {
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .toggle-label {
+            height: 38px;
+            padding: 3px;
+            border-radius: 14px;
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            border: 1px solid rgba(30,132,73,.55);
+            background: var(--green);
+            box-shadow: 0 2px 10px rgba(0,0,0,.06);
+        }
+
+        body.cari-active .toggle-label {
+            background: var(--blue);
+            border-color: rgba(59,130,246,.55);
+        }
+
+        /* metinler */
+        .toggle-text {
+            flex: 1;
+            text-align: center;
+            padding: 7px 10px;
+            border-radius: 11px;
+            font-size: 13px;
+            font-weight: 800;
+            line-height: 1;
+            user-select: none;
+            color: rgba(255,255,255,.78);
+            transition: background .18s ease, color .18s ease, opacity .18s ease, box-shadow .18s ease;
+        }
+
+        /* default: checkbox kapalı => SATIŞ seçili */
+        .toggle-checkbox:not(:checked) + .toggle-label .toggle-satis {
+            background: #fff;
+            color: var(--green);
+            box-shadow: 0 1px 2px rgba(0,0,0,.12);
+        }
+
+        .toggle-checkbox:not(:checked) + .toggle-label .toggle-cari {
+            opacity: .65;
+        }
+
+        /* checkbox açık => CARİ seçili */
+        .toggle-checkbox:checked + .toggle-label .toggle-cari {
+            background: #fff;
+            color: var(--green); /* beyaz pill içi yazı yeşil kalsın */
+            box-shadow: 0 1px 2px rgba(0,0,0,.12);
+        }
+
+        .toggle-checkbox:checked + .toggle-label .toggle-satis {
+            opacity: .65;
+        }
+
+        /* cari-active modunda seçili yazı rengi mavi olsun istersen */
+        body.cari-active .toggle-checkbox:checked + .toggle-label .toggle-cari {
+            color: var(--blue);
+        }
+
+        body.cari-active .toggle-checkbox:not(:checked) + .toggle-label .toggle-satis {
+            color: var(--blue);
+        }
+
+        /* =========================================================
+                                        Sağdaki işlem butonları (Nakit Tahsilat, Ürün Alış, vb.)
+                                        ========================================================= */
+        .action-btn {
+            border-radius: 14px !important;
+            border: 1px solid rgba(30,132,73,.28) !important;
+            background: #fff !important;
+            box-shadow: 0 2px 10px rgba(0,0,0,.05);
+            transition: transform .08s ease, box-shadow .2s ease, border-color .2s ease;
+        }
+
+            .action-btn:hover {
+                transform: translateY(-1px);
+                box-shadow: 0 10px 18px rgba(0,0,0,.08);
+                border-color: rgba(30,132,73,.40) !important;
+            }
+
+        body.cari-active .action-btn {
+            border-color: rgba(59,130,246,.28) !important;
+        }
+
+            body.cari-active .action-btn:hover {
+                border-color: rgba(59,130,246,.40) !important;
+            }
+
+        /* ikon renkleri (senin mevcut .theme-icon-color ile uyumlu) */
+        .theme-icon-color.income {
+            color: #16a34a;
+        }
+
+        .theme-icon-color.expense {
+            color: #dc2626;
+        }
+
+        /* =========================================================
+                                        Alt sağ Kaydet / Yeni İşlem
+                                        ========================================================= */
+        #main-save-button {
+            background: #bbf7d0 !important;
+            border: 1px solid #86efac !important;
+            color: #14532d !important;
+            border-radius: 14px !important;
+            box-shadow: 0 2px 10px rgba(0,0,0,.05);
+        }
+
+            #main-save-button:hover {
+                filter: brightness(.98);
+                box-shadow: 0 10px 18px rgba(0,0,0,.08);
+            }
+
+        #main-reset-button {
+            background: #e5e7eb !important;
+            border: 1px solid #d1d5db !important;
+            color: #111827 !important;
+            border-radius: 14px !important;
+            box-shadow: 0 2px 10px rgba(0,0,0,.05);
+        }
+
+            #main-reset-button:hover {
+                filter: brightness(.98);
+                box-shadow: 0 10px 18px rgba(0,0,0,.08);
+            }
+
+        /* Fiş başlığı tipografi */
+        #receipt-title {
+            font-size: 22px;
+            font-weight: 800;
+            color: #111827;
+        }
+
+        /* Totals alanı */
+        #receipt-totals {
+            border-top: 1px solid rgba(0,0,0,.06);
+        }
+
+            #receipt-totals .text-green-600 {
+                color: #16a34a !important;
+            }
+
+            #receipt-totals .text-red-600 {
+                color: #dc2626 !important;
+            }
+
+            #receipt-totals .text-blue-700 {
+                color: #1d4ed8 !important;
+            }
+
+        /* Modal kartlar (varsa) */
+        .ekstre-info-card, .modal-content {
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow);
+        }
+        /* ===== SATIŞ / CARİ TOGGLE ===== */
+
+        .toggle-checkbox {
+            display: none;
+        }
+
+        .toggle-label {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px;
+            width: 120px;
+            height: 38px;
+            border-radius: 14px;
+            cursor: pointer;
+            position: relative;
+            transition: background-color .25s ease;
+            background-color: #15803d; /* SATIŞ varsayılan */
+        }
+
+            /* Beyaz kayan pill */
+            .toggle-label::before {
+                content: "";
+                position: absolute;
+                top: 4px;
+                left: 4px;
+                width: 56px;
+                height: 30px;
+                background: white;
+                border-radius: 10px;
+                box-shadow: 0 1px 3px rgba(0,0,0,.2);
+                transition: transform .25s ease;
+            }
+
+        /* Metinler */
+        .toggle-text {
+            flex: 1;
+            text-align: center;
+            font-size: 13px;
+            font-weight: 700;
+            z-index: 2;
+            transition: color .25s ease, opacity .25s ease;
+        }
+
+        /* === SATIŞ AKTİF === */
+        .toggle-satis {
+            color: #15803d;
+        }
+
+        .toggle-cari {
+            color: rgba(255,255,255,.7);
+        }
+
+        /* === CARİ AKTİF === */
+        .toggle-checkbox:checked + .toggle-label {
+            background-color: #2563eb;
+        }
+
+            .toggle-checkbox:checked + .toggle-label::before {
+                transform: translateX(56px);
+            }
+
+            .toggle-checkbox:checked + .toggle-label .toggle-satis {
+                color: rgba(255,255,255,.7);
+            }
+
+            .toggle-checkbox:checked + .toggle-label .toggle-cari {
+                color: #2563eb;
+            }
+        /* =========================
+                                           SATIŞ / CARİ SEGMENTED TOGGLE (ss1/ss2 gibi)
+                                           HTML:
+                                           <input id="operation-type-toggle" class="toggle-checkbox" type="checkbox">
+                                           <label for="operation-type-toggle" class="toggle-label">
+                                             <span class="toggle-text">SATIŞ</span>
+                                             <span class="toggle-text">CARİ</span>
+                                           </label>
+                                           JS: body'ye satis-active / cari-active veriyorsun.
+                                           ========================= */
+
+        /* Toggle container ölçüsü */
+        .toggle-container {
+            position: relative;
+            display: inline-block;
+            width: 120px;
+            height: 38px;
+        }
+
+        /* Checkbox gizli */
+        .toggle-checkbox {
+            position: absolute;
+            opacity: 0;
+            width: 0;
+            height: 0;
+            pointer-events: none;
+        }
+
+        /* Label kapsül (arka plan) */
+        .toggle-label {
+            position: relative;
+            width: 120px;
+            height: 38px;
+            display: inline-flex;
+            align-items: center;
+            padding: 3px;
+            border-radius: 12px;
+            cursor: pointer;
+            user-select: none;
+            border: 1px solid rgba(17,24,39,.18);
+            box-shadow: 0 1px 2px rgba(0,0,0,.06);
+            transition: background-color .2s ease, border-color .2s ease;
+        }
+
+            /* İçteki beyaz pill (slider) */
+            .toggle-label::before {
+                content: "";
+                position: absolute;
+                top: 3px;
+                left: 3px;
+                width: calc(50% - 3px);
+                height: 32px;
+                background: #fff;
+                border-radius: 10px;
+                box-shadow: 0 1px 2px rgba(0,0,0,.12);
+                transition: transform .22s ease;
+            }
+
+        /* Yazılar */
+        .toggle-text {
+            flex: 1;
+            text-align: center;
+            font-size: 13px;
+            font-weight: 800;
+            line-height: 1;
+            z-index: 1;
+            transition: color .2s ease, opacity .2s ease;
+            letter-spacing: .2px;
+        }
+
+        /* ===== SATIŞ tema (YEŞİL) ===== */
+        body.satis-active .toggle-label {
+            background: #15803d; /* yeşil */
+            border-color: rgba(21,128,61,.45);
+        }
+
+        /* SATIŞ aktifken: checkbox unchecked => pill solda (SATIŞ tarafı) */
+        body.satis-active .toggle-checkbox:not(:checked) + .toggle-label::before {
+            transform: translateX(0);
+        }
+
+        /* SATIŞ aktifken: SATIŞ yazısı (aktif) yeşil, CARİ pasif beyaz */
+        body.satis-active .toggle-checkbox:not(:checked) + .toggle-label .toggle-text:first-child {
+            color: #15803d;
+            opacity: 1;
+        }
+
+        body.satis-active .toggle-checkbox:not(:checked) + .toggle-label .toggle-text:last-child {
+            color: rgba(255,255,255,.85);
+            opacity: .85;
+        }
+
+        /* ===== CARİ tema (MAVİ) ===== */
+        body.cari-active .toggle-label {
+            background: #3b82f6; /* mavi */
+            border-color: rgba(59,130,246,.55);
+        }
+
+        /* CARİ aktifken: checkbox checked => pill sağa (CARİ tarafı) */
+        body.cari-active .toggle-checkbox:checked + .toggle-label::before {
+            transform: translateX(calc(100% - 0px));
+        }
+
+        /* CARİ aktifken: CARİ yazısı (aktif) mavi, SATIŞ pasif beyaz */
+        body.cari-active .toggle-checkbox:checked + .toggle-label .toggle-text:last-child {
+            color: #3b82f6;
+            opacity: 1;
+        }
+
+        body.cari-active .toggle-checkbox:checked + .toggle-label .toggle-text:first-child {
+            color: rgba(255,255,255,.85);
+            opacity: .85;
+        }
+
+        /* Checkbox checked ama body satis-active kalırsa (yanlış state) => yine de sağa kaydır */
+        body.satis-active .toggle-checkbox:checked + .toggle-label::before {
+            transform: translateX(calc(100% - 0px));
+        }
+        /* Checkbox unchecked ama body cari-active kalırsa => sola al */
+        body.cari-active .toggle-checkbox:not(:checked) + .toggle-label::before {
+            transform: translateX(0);
+        }
+
+        /* =========================
+                                           Tema border’ları (ekrandaki yeşil/mavi çerçeve hissi)
+                                           Sen zaten theme-border kullanıyorsun; bunu güçlendiriyoruz.
+                                           ========================= */
+        .theme-border,
+        .theme-border-50 {
+            border-radius: 14px;
+        }
+
+        body.satis-active .theme-border {
+            border-color: rgba(21,128,61,.35);
+        }
+
+        body.satis-active .theme-border-50 {
+            border-color: rgba(21,128,61,.28);
+        }
+
+        body.cari-active .theme-border {
+            border-color: rgba(59,130,246,.38);
+        }
+
+        body.cari-active .theme-border-50 {
+            border-color: rgba(59,130,246,.30);
+        }
+
+        /* Aksiyon butonlarının çerçevesi de temaya uysun */
+        body.satis-active .action-btn {
+            border-color: rgba(21,128,61,.35) !important;
+        }
+
+        body.cari-active .action-btn {
+            border-color: rgba(59,130,246,.35) !important;
+        }
+
+        /* (İsteğe bağlı) Genel kart gölgesi biraz yumuşasın */
+        .theme-border {
+            box-shadow: 0 1px 3px rgba(0,0,0,.06);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        #page-root {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+
+        #main-content {
+            flex: 1;
+            min-height: 0; /* önemli: flex çocuklarının taşmasını engeller */
+            overflow: hidden;
+        }
+
+        #left-card {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+
+
+        #sales-panel, #cari-panel {
+            flex: 1;
+            min-height: 0;
+            overflow: auto;
+        }
+
+
+        #sales-footer, #cari-footer {
+            flex: 0 0 auto;
+        }
+
+    </style>
+</head>
+<body class="text-gray-800 p-2 overflow-hidden">
+
+    <header class="bg-white p-3 rounded-xl shadow-sm theme-border">
+        <div class="flex justify-between items-center gap-3 flex-nowrap">
+            <div class="flex items-center gap-3 flex-1 min-w-0">
+                <div class="toggle-container flex-shrink-0">
+                    <input type="checkbox" id="operation-type-toggle" class="toggle-checkbox" name="operation-type-toggle">
+                    <label for="operation-type-toggle" class="toggle-label">
+                        <span class="toggle-text">SATIŞ</span>
+                        <span class="toggle-text">CARİ</span>
+                    </label>
+                </div>
+                <select id="currency-select" name="currency-select" class="flex-shrink-0 form-select w-auto bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-1.5 h-[38px]">
+                    <option value="1">TRY</option>
+                </select>
+                <div class="flex-1 min-w-0 app-shell-customer">
+                    <select id="customer-select" name="customer-select">
+                        @foreach (var item in Model.Where(x => !x.Tezgahtar))
+                        {
+                            <option value="@item.AccountId">@item.AccountName</option>
+                        }
+                    </select>
+                </div>
+            </div>
+            <div class="flex items-center gap-2 flex-shrink-0">
+                <button class="bg-white hover:bg-gray-100 text-gray-800 font-semibold py-1.5 px-3 border border-gray-300 rounded-lg shadow-sm text-xs"><i class="fas fa-users mr-1.5"></i>CRM</button>
+                <button id="ekstre-button" class="bg-white hover:bg-gray-100 text-gray-800 font-semibold py-1.5 px-3 border border-gray-300 rounded-lg shadow-sm text-xs"><i class="fas fa-file-invoice mr-1.5"></i>Ekstre</button>
+                <button id="sales-list-button" class="bg-white hover:bg-gray-100 text-gray-800 font-semibold py-1.5 px-3 border border-gray-300 rounded-lg shadow-sm text-xs"><i class="fas fa-list mr-1.5"></i>Satış Listesi</button>
+            </div>
+            <div class="flex items-center min-w-[200px] flex-shrink-0">
+                <select id="salesperson-select" name="salesperson-select">
+                    @foreach (var item in Model.Where(x => x.Tezgahtar))
+                    {
+                        <option value="@item.AccountId">@item.AccountName</option>
+                    }
+                </select>
+            </div>
+        </div>
+    </header>
+    <main class="pt-3 h-[calc(100vh-92px)]">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 h-full">
+            <div class="lg:col-span-4 flex flex-col gap-3 h-full">
+                <div class="left-card theme-border">
+
+                    <!-- Başlık alanı -->
+                    <div class="flex items-center justify-between px-4 py-3 border-b">
+                        <h3 class="text-xl font-bold" id="fis-title">Satış Fişi</h3>
+
+                        <div class="flex items-center gap-3 text-gray-600">
+                            <span id="fis-datetime">06.01.2026 13:20</span>
+                            <i class="fa-regular fa-calendar"></i>
+                        </div>
+                    </div>
+
+                    <!-- İçerik -->
+                    <div class="p-4" style="min-height: 520px;">
+                        <!-- SATIŞ içeriği -->
+                        <div id="sales-panel">
+                            <!-- burada senin satış fişi içeriğin (liste vs.) -->
+                            <div class="text-gray-400 text-sm">Satış fişi içeriği...</div>
+                        </div>
+
+                        <!-- CARİ içeriği -->
+                        <div id="cari-panel" class="hidden">
+                            <!-- burada cari fişi içeriğin -->
+                            <div class="text-gray-400 text-sm">Cari fişi içeriği...</div>
+                        </div>
+                    </div>
+
+                    <!-- Footer / Totals -->
+                    <div class="border-t px-4 py-3">
+                        <!-- SATIŞ footer -->
+                        <div id="sales-footer">
+                            <div class="flex justify-between text-sm">
+                                <span>Giren Toplam:</span><span class="font-bold text-green-600">0,00 TRY</span>
+                            </div>
+                            <div class="flex justify-between text-sm">
+                                <span>Çıkan Toplam:</span><span class="font-bold text-red-600">0,00 TRY</span>
+                            </div>
+                            <div class="flex justify-between text-sm mt-1">
+                                <span class="font-bold">Fark:</span><span class="font-bold text-blue-700">0,00 TRY</span>
+                            </div>
+                        </div>
+
+                        <!-- CARİ footer (Birim/Devir/Giren/Çıkan/Kalan görünmeli) -->
+                        <div id="cari-footer" class="hidden">
+                            <div class="grid grid-cols-5 text-sm font-bold text-gray-700 border-b pb-2">
+                                <div>Birim</div>
+                                <div class="text-center">Devir</div>
+                                <div class="text-center">Giren</div>
+                                <div class="text-center">Çıkan</div>
+                                <div class="text-center">Kalan</div>
+                            </div>
+
+                            <div class="text-center text-sm text-gray-500 py-4">
+                                Hesabın hareketi veya devir bakiyesi yok.
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <div id="middle-panel" class="lg:col-span-5 bg-white rounded-xl shadow-sm flex flex-col theme-border h-full overflow-hidden">
+                <div id="dynamic-content-area" class="flex-grow p-4 overflow-y-auto custom-scrollbar min-h-0"></div>
+                <div class="p-3 border-t border-gray-200 flex justify-end gap-2 flex-shrink-0">
+                    <button id="delete-button" class="hidden bg-red-100 hover:bg-red-200 text-red-800 font-semibold py-1.5 px-4 rounded-md text-sm transition-colors border border-red-200"><i class="fas fa-trash mr-1.5"></i>Sil</button>
+                    <button id="add-button" class="hidden bg-blue-100 hover:bg-blue-200 text-blue-800 font-semibold py-1.5 px-4 rounded-md text-sm transition-colors border border-blue-200"><i class="fas fa-check mr-1.5"></i>Ekle</button>
+                    <button id="cancel-button" class="hidden bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold py-1.5 px-4 rounded-md text-sm transition-colors border border-gray-200"><i class="fas fa-times mr-1.5"></i>Vazgeç</button>
+                </div>
+            </div>
+
+            <div class="lg:col-span-3 h-full flex flex-col gap-4">
+                <div class="bg-white rounded-xl shadow-md p-3 theme-border">
+                    <div class="border-b pb-2 mb-2">
+                        <div class="grid grid-cols-2 gap-2">
+                            <button id="btn-nakit-tahsilat" class="flex flex-col items-center justify-center p-2 bg-white hover:bg-gray-50 rounded-lg theme-border-50 action-btn"><i id="icon-nakit-tahsilat" class="fas fa-hand-holding-dollar text-xl mb-1 theme-icon-color income" style="transform: scaleX(-1);"></i><span id="label-nakit-tahsilat" class="block text-xs font-semibold"></span></button>
+                            <button id="btn-nakit-odeme" class="flex flex-col items-center justify-center p-2 bg-white hover:bg-gray-50 rounded-lg theme-border-50 action-btn"><i id="icon-nakit-odeme" class="fas fa-hand-holding-dollar text-xl mb-1 theme-icon-color expense"></i><span id="label-nakit-odeme" class="block text-xs font-semibold"></span></button>
+                        </div>
+                    </div>
+                    <div class="border-b pb-2 mb-2">
+                        <div class="grid grid-cols-2 gap-2">
+                            <button id="btn-urun-alis" class="flex flex-col items-center justify-center p-2 bg-white hover:bg-gray-50 rounded-lg theme-border-50 action-btn"><i id="icon-urun-alis" class="fas fa-gem text-xl mb-1 theme-icon-color income"></i><span id="label-urun-alis" class="block text-xs font-semibold"></span></button>
+                            <button id="btn-urun-satis" class="flex flex-col items-center justify-center p-2 bg-white hover:bg-gray-50 rounded-lg theme-border-50 action-btn"><i id="icon-urun-satis" class="fas fa-tag text-xl mb-1 theme-icon-color expense"></i><span id="label-urun-satis" class="block text-xs font-semibold"></span></button>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button id="btn-iskonto" class="flex flex-col items-center justify-center p-2 bg-white hover:bg-gray-50 rounded-lg theme-border-50 action-btn"><i class="fas fa-percent text-xl mb-1 theme-icon-color expense"></i><span class="block text-xs font-semibold">İskonto</span></button>
+                            <button id="btn-virman" class="flex flex-col items-center justify-center p-2 bg-white hover:bg-gray-50 rounded-lg theme-border-50 action-btn"><i class="fas fa-exchange-alt text-xl mb-1 theme-icon-color income"></i><span class="block text-xs font-semibold">Virman</span></button>
+                            <button id="btn-acik-hesap" class="flex flex-col items-center justify-center p-2 bg-white hover:bg-gray-50 rounded-lg theme-border-50 action-btn"><i class="fas fa-book-open text-xl mb-1 theme-icon-color income"></i><span class="block text-xs font-semibold">Açık Hesap</span></button>
+                            <button id="btn-ceviri" class="flex flex-col items-center justify-center p-2 bg-white hover:bg-gray-50 rounded-lg theme-border-50 action-btn"><i class="fas fa-random text-xl mb-1 theme-icon-color income"></i><span class="block text-xs font-semibold">Çeviri</span></button>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-xl shadow-md p-3 flex-grow flex flex-col theme-border">
+                    <div class="mt-auto flex gap-2">
+                        <button id="main-save-button" class="flex-1 bg-green-200 hover:bg-green-300 text-green-800 font-semibold py-2 px-4 rounded-lg transition-colors border border-green-300 text-sm"><i class="fas fa-save mr-2"></i>Kaydet</button>
+                        <button id="main-reset-button" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg transition-colors border border-gray-300 text-sm"><i class="fas fa-sync-alt mr-2"></i>Yeni İşlem</button>
+                        <button id="main-delete-button" class="flex-1 bg-red-200 hover:bg-red-300 text-red-800 font-semibold py-2 px-4 rounded-lg transition-colors border border-red-300 text-sm hidden"><i class="fas fa-trash mr-2"></i>Sil</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+    <div id="confirmation-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center z-50 pt-10">
+        <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-sm rolex-green-border">
+            <h3 class="text-lg font-bold text-gray-800 mb-4">Uyarı</h3>
+            <p id="modal-message" class="text-sm text-gray-600 mb-6"></p>
+            <div class="flex justify-end gap-3">
+                <button id="modal-cancel" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg text-sm">Vazgeç</button>
+                <button id="modal-confirm" class="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded-lg text-sm">Devam Et</button>
+            </div>
+        </div>
+    </div>
+    <div id="toast-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center z-[60] pt-20">
+        <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-sm rolex-green-border transform transition-all duration-300 scale-95 opacity-0">
+            <h3 class="text-lg font-bold mb-4">Uyarı</h3>
+            <p class="text-sm text-gray-600 mb-6"></p>
+            <div class="flex justify-end">
+                <button class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg text-sm">Tamam</button>
+            </div>
+        </div>
+    </div>
+    <div id="loading-overlay" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
+        <div class="text-white text-center">
+            <i class="fas fa-spinner fa-spin text-4xl mb-3"></i>
+            <p class="text-lg font-semibold">Lütfen Bekleyiniz...</p>
+        </div>
+    </div>
+    <div id="ekstre-modal" class="hidden fixed inset-0 modal-bg flex items-start justify-center z-50 pt-10">
+        <div class="bg-gray-50 rounded-lg shadow-xl w-full max-w-7xl max-h-[90vh] flex flex-col">
+
+            <div class="flex justify-between items-center p-4 ekstre-modal-header rounded-t-lg">
+                <h3 class="text-lg font-bold text-gray-700 flex items-center">
+                    <i class="fas fa-file-invoice-dollar text-gray-500 mr-3"></i>
+                    Hesap Ekstresi
+                </h3>
+                <button id="ekstre-modal-close-button" class="text-gray-500 hover:text-red-600 text-2xl transition-colors">&times;</button>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 p-4 border-b">
+                <!-- Müşteri Bilgi Kartı -->
+                <div class="ekstre-info-card lg:col-span-1">
+                    <h4 class="card-title-absolute"><i class="fas fa-user-circle"></i>Müşteri Bilgileri</h4>
+                    <span id="ekstre-hesap-adi" class="font-bold text-gray-800 text-base truncate block" title="Hesap Adı"></span>
+                    <span id="ekstre-hesap-tipi" class="block text-sm text-gray-500 mt-1"></span>
+                    <span id="ekstre-hesap-telefon" class="block text-sm text-gray-600 mt-1"></span>
+                    <span id="ekstre-hesap-id" class="text-xs font-mono text-gray-400 block mt-2"></span>
+                </div>
+
+                <!-- Bakiye Özeti Kartı -->
+                <div class="ekstre-info-card lg:col-span-1">
+                    <h4 class="card-title-absolute"><i class="fas fa-balance-scale"></i>Bakiye Özeti</h4>
+                    <div id="ekstre-bakiye-ozeti" class="custom-scrollbar pr-2 ekstre-bakiye-ozeti-v2">
+                        <!-- Bakiye içeriği JS ile dolacak -->
+                    </div>
+                </div>
+
+                <!-- Tarih Filtreleme & Pozisyon Kartı -->
+                <div class="ekstre-info-card lg:col-span-1">
+                    <h4 class="card-title-absolute"><i class="fas fa-calendar-alt"></i>Tarih Aralığı</h4>
+                    <div class="flex items-stretch">
+                        <input type="date" id="ekstre-baslangic-tarihi" class="block w-full px-3 py-2 bg-white border border-gray-300 rounded-l-md shadow-sm text-sm h-[38px] border-r-0">
+                        <input type="date" id="ekstre-bitis-tarihi" class="block w-full px-3 py-2 bg-white border border-gray-300 shadow-sm text-sm h-[38px] rounded-none">
+                        <button id="ekstre-getir-button" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-r-md text-sm h-[38px] border border-blue-600 flex items-center justify-center">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                    <div class="mt-3 text-center w-full border-t pt-3">
+                        <span id="ekstre-has-pozisyon" class="text-base font-semibold"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div id="ekstre-content" class="p-4 overflow-y-auto bg-white rounded-b-lg">
+                <!-- Ekstre içeriği JS ile dolacak -->
+            </div>
+        </div>
+    </div>
+    <div id="fis-list-modal" class="hidden fixed inset-0 z-50 flex justify-end">
+        <div class="modal-bg absolute inset-0"></div>
+        <div class="modal-content bg-white w-full max-w-4xl h-full flex flex-col shadow-2xl relative">
+            <div class="flex justify-between items-center p-4 border-b sticky top-0 bg-white z-10">
+                <h3 id="fis-list-modal-title" class="text-lg font-bold text-gray-800"></h3>
+                <button id="fis-list-modal-close-button" class="text-gray-500 hover:text-gray-800 text-2xl">&times;</button>
+            </div>
+
+            <div id="fis-list-filters" class="p-3 border-b bg-gray-50 flex flex-wrap gap-3 items-end">
+                <div class="flex-grow min-w-[250px]">
+                    <label for="fis-list-customer-filter" class="text-xs font-semibold text-gray-600">Hesap Filtresi</label>
+                    <select id="fis-list-customer-filter"></select>
+                </div>
+                <div>
+                    <label for="fis-list-start-date" class="text-xs font-semibold text-gray-600">Başlangıç Tarihi</label>
+                    <input type="date" id="fis-list-start-date" class="block w-full px-3 py-1.5 bg-white border border-gray-300 rounded-md shadow-sm text-sm h-[38px]">
+                </div>
+                <div>
+                    <label for="fis-list-end-date" class="text-xs font-semibold text-gray-600">Bitiş Tarihi</label>
+                    <input type="date" id="fis-list-end-date" class="block w-full px-3 py-1.5 bg-white border border-gray-300 rounded-md shadow-sm text-sm h-[38px]">
+                </div>
+                <div>
+                    <button id="fis-list-filter-button" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-md text-sm h-[38px]">
+                        <i class="fas fa-filter mr-1.5"></i>Filtrele
+                    </button>
+                </div>
+            </div>
+
+            <div id="fis-list-content" class="flex-grow overflow-y-auto">
+            </div>
+        </div>
+    </div>
+    <template id="product-form-template">
+        <h1 id="product-form-title" class="text-xl font-bold text-gray-800 mb-4">Ürün Giriş</h1>
+
+        <div class="space-y-4">
+            <div class="space-y-2">
+                <input type="text" id="stokHiyerarsi" class="w-full p-2 bg-gray-100 border border-gray-200 rounded-md text-gray-600 text-sm mb-2" placeholder="Stok Kartı Seçiniz" disabled>
+                <div class="relative" id="aramaKonteyneri">
+                    <input type="text" id="stokArama" class="w-full px-3 py-2 text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Stok ara veya seç...">
+                    <div id="stokKartiListesi" class="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto hidden">
+                    </div>
+                </div>
+            </div>
+
+            <div id="dinamik-alanlar-wrapper" class="relative" style="min-height: 280px;">
+                <div id="initial-prompt" class="absolute inset-0 flex flex-col items-center justify-center text-gray-400 transition-opacity duration-300">
+                    <i class="fas fa-hand-point-up fa-3x mb-3"></i>
+                    <p class="font-semibold">Lütfen bir stok kartı seçiniz.</p>
+                </div>
+
+                <div id="defaultLayout" class="hidden space-y-6 opacity-0 transition-opacity duration-300">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="space-y-2">
+                            <label for="diger-miktar" id="diger-miktar-label" class="text-sm font-medium text-gray-700">Miktar</label>
+                            <input type="text" id="diger-miktar" class="w-full px-3 py-2 text-right font-mono border border-gray-300 rounded-md shadow-sm">
+                        </div>
+                        <div class="space-y-2">
+                            <label for="diger-birim-fiyat" id="diger-birim-fiyat-label" class="text-sm font-medium text-gray-700">Birim Fiyatı</label>
+                            <input type="text" id="diger-birim-fiyat" class="w-full px-3 py-2 text-right font-mono border border-gray-300 rounded-md shadow-sm">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4 border-t pt-4">
+                        <div class="space-y-2">
+                            <label for="diger-toplam-tutar" class="text-sm font-medium text-gray-700">Tutar</label>
+                            <input type="text" id="diger-toplam-tutar" class="w-full px-3 py-2 text-right font-mono bg-gray-100" readonly>
+                        </div>
+                        <div class="space-y-2">
+                            <label class="text-sm font-medium text-gray-700">Tutar Birimi</label>
+                            <input type="text" id="diger-tutar-birimi" class="w-full px-3 py-2 text-center font-mono bg-gray-100" readonly>
+                        </div>
+                    </div>
+                    <div class="space-y-2 border-t pt-4">
+                        <label for="product-description-default" class="text-sm font-medium text-gray-700">Açıklama</label>
+                        <textarea id="product-description-default" class="product-description-input w-full px-3 py-2 text-sm border border-gray-300 rounded-md shadow-sm" rows="2" placeholder="İşlem için özel bir açıklama..."></textarea>
+                    </div>
+                </div>
+
+                <div id="altinLayout" class="hidden space-y-2 opacity-0 transition-opacity duration-300">
+                    <div class="grid gap-3" style="grid-template-columns: 2fr 1fr 2fr;">
+                        <div class="space-y-2">
+                            <label for="altin-miktar" class="text-sm font-medium text-gray-700">Miktar</label>
+                            <input type="text" id="altin-miktar" class="w-full px-3 py-2 text-right font-mono border rounded-md">
+                        </div>
+                        <div class="space-y-2">
+                            <label for="altin-milyem" class="text-sm font-medium text-gray-700">Milyem</label>
+                            <input type="text" id="altin-milyem" class="w-full px-3 py-2 text-right font-mono bg-gray-100" readonly>
+                        </div>
+                        <div class="space-y-2">
+                            <label for="altin-has" class="text-sm font-medium text-gray-700">HAS</label>
+                            <input type="text" id="altin-has" class="w-full px-3 py-2 text-right font-mono bg-gray-100" readonly>
+                        </div>
+                    </div>
+                    <div class="grid gap-3 items-center py-2" style="grid-template-columns: 2fr 1fr 2fr;">
+                        <div class="flex items-center space-x-2">
+                            <div class="karsilik-toggle-container">
+                                <input type="checkbox" id="iscilik-dahil-toggle" class="karsilik-toggle" />
+                                <label for="iscilik-dahil-toggle" class="karsilik-toggle-label"></label>
+                            </div>
+                            <label for="iscilik-dahil-toggle" class="text-sm font-medium text-gray-700 cursor-pointer">İşçilik Dahil</label>
+                        </div>
+                        <div class="space-y-2">
+                            <input type="text" id="iscilik-dahil-deger" class="w-full px-3 py-2 text-right font-mono border rounded-md hidden">
+                        </div>
+                        <div></div>
+                    </div>
+                    <div class="border-t pt-4">
+                        <div class="grid gap-x-3 gap-y-2" style="grid-template-columns: 2fr 1fr 2fr;">
+                            <div class="space-y-2">
+                                <label for="altin-birim-iscilik" class="text-sm font-medium text-gray-700">Birim İşçilik</label>
+                                <input type="text" id="altin-birim-iscilik" class="w-full px-3 py-2 text-right font-mono border rounded-md">
+                            </div>
+                            <div class="space-y-2">
+                                <label class="text-sm font-medium text-gray-700">Birim</label>
+                                <input type="text" id="altin-birim" class="w-full px-3 py-2 text-center font-mono bg-gray-100" readonly>
+                            </div>
+                            <div class="space-y-2">
+                                <label for="altin-iscilik-tutari" class="text-sm font-medium text-gray-700">İşçilik Tutarı</label>
+                                <input type="text" id="altin-iscilik-tutari" class="w-full px-3 py-2 text-right font-mono bg-gray-100" readonly>
+                            </div>
+
+                            <div id="gram-adet-container" class="flex items-center justify-start col-start-1">
+                                <div class="flex items-center border border-blue-500 rounded-md p-0.5 text-sm">
+                                    <button id="gram-btn" class="px-3 py-1 rounded-md toggle-btn-active">Gram</button>
+                                    <button id="adet-btn" class="px-3 py-1 rounded-md toggle-btn-inactive">Adet</button>
+                                </div>
+                            </div>
+                            <div class="space-y-2 col-start-2">
+                                <input type="text" id="altin-adet" class="w-full px-3 py-2 text-right font-mono border rounded-md hidden" value="1">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="space-y-2 border-t pt-4">
+                        <label for="altin-toplam-has" class="text-sm font-medium text-gray-700">Toplam HAS Değeri</label>
+                        <input type="text" id="altin-toplam-has" class="w-full px-3 py-2 text-right font-mono bg-gray-100" readonly>
+                    </div>
+                    <div class="space-y-2 border-t pt-4">
+                        <label for="product-description-altin" class="text-sm font-medium text-gray-700">Açıklama</label>
+                        <textarea id="product-description-altin" class="product-description-input w-full px-3 py-2 text-sm border border-gray-300 rounded-md shadow-sm" rows="2" placeholder="İşlem için özel bir açıklama..."></textarea>
+                    </div>
+                </div>
+
+                <div id="hurdaLayout" class="hidden space-y-6 opacity-0 transition-opacity duration-300">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="space-y-2">
+                            <label for="hurda-miktar" class="text-sm font-medium text-gray-700">Miktar</label>
+                            <input type="text" id="hurda-miktar" class="w-full px-3 py-2 text-right font-mono border rounded-md">
+                        </div>
+                        <div class="space-y-2">
+                            <label for="hurda-milyem" class="text-sm font-medium text-gray-700">Milyem</label>
+                            <input type="text" id="hurda-milyem" class="w-full px-3 py-2 text-right font-mono border rounded-md">
+                        </div>
+                    </div>
+                    <div class="space-y-2 border-t pt-4">
+                        <label for="hurda-toplam-has" class="text-sm font-medium text-gray-700">Toplam HAS Değeri</label>
+                        <input type="text" id="hurda-toplam-has" class="w-full px-3 py-2 text-right font-mono bg-gray-100" readonly>
+                    </div>
+                    <div class="space-y-2 border-t pt-4">
+                        <label for="product-description-hurda" class="text-sm font-medium text-gray-700">Açıklama</label>
+                        <textarea id="product-description-hurda" class="product-description-input w-full px-3 py-2 text-sm border border-gray-300 rounded-md shadow-sm" rows="2" placeholder="İşlem için özel bir açıklama..."></textarea>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </template>
+</body>
+</html>
+
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const toggle = document.getElementById("operation-type-toggle");
+
+      const salesPanel  = document.getElementById("sales-panel");
+      const cariPanel   = document.getElementById("cari-panel");
+      const salesFooter = document.getElementById("sales-footer");
+      const cariFooter  = document.getElementById("cari-footer");
+      const titleEl     = document.getElementById("fis-title");
+
+      // Sağ buton label'ları
+      const lblNakitTahsilat = document.getElementById("label-nakit-tahsilat");
+      const lblNakitOdeme    = document.getElementById("label-nakit-odeme");
+      const lblUrunAlis      = document.getElementById("label-urun-alis");
+      const lblUrunSatis     = document.getElementById("label-urun-satis");
+      const btnSatisListesi = document.getElementById("sales-list-button");
+
+      function setButtonLabels(isCari) {
+        if (lblNakitTahsilat) lblNakitTahsilat.textContent = isCari ? "Nakit Giriş"  : "Nakit Tahsilat";
+        if (lblNakitOdeme)    lblNakitOdeme.textContent    = isCari ? "Nakit Çıkış"  : "Nakit Ödeme";
+        if (lblUrunAlis)      lblUrunAlis.textContent      = isCari ? "Ürün Giriş"   : "Ürün Alış";
+        if (lblUrunSatis)     lblUrunSatis.textContent     = isCari ? "Ürün Çıkış"   : "Ürün Satış";
+        if (btnSatisListesi) btnSatisListesi.textContent = isCari ? "Cari Listesi"  : "Satış Listesi";
+      }
+
+      function applyMode(isCari) {
+        // Tema
+        document.body.classList.toggle("cari-active", isCari);
+        document.body.classList.toggle("satis-active", !isCari);
+
+        // Sol kart içerik switch
+        if (salesPanel)  salesPanel.classList.toggle("hidden", isCari);
+        if (salesFooter) salesFooter.classList.toggle("hidden", isCari);
+
+        if (cariPanel)   cariPanel.classList.toggle("hidden", !isCari);
+        if (cariFooter)  cariFooter.classList.toggle("hidden", !isCari);
+
+        // Başlık
+        if (titleEl) titleEl.textContent = isCari ? "Cari Fişi" : "Satış Fişi";
+
+        // Sağ buton yazıları
+        setButtonLabels(isCari);
+      }
+
+      // İlk yükleme
+      applyMode(toggle?.checked ?? false);
+
+      // Değişince
+      toggle?.addEventListener("change", () => applyMode(toggle.checked));
+    });
+</script>
+

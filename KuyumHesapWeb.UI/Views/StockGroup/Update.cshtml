@@ -1,0 +1,96 @@
+﻿@using KuyumHesapWeb.Core.Feature.StockGroupFeature.Commands.Update
+@model UpdateStockGroupCommandRequest
+@{
+    ViewData["Title"] = "Update";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stok Grubu Yönetimi</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'rolex-green': '#4C9779',
+                        'list-item-bg': '#F0FAFA',
+                        'success': '#22c55e',
+                        'danger': '#ef4444',
+                        'secondary': '#6b7280',
+                    },
+                    keyframes: {
+                        'fade-in-out': {
+                            '0%': { opacity: '0', transform: 'translateY(10px)' },
+                            '10%': { opacity: '1', transform: 'translateY(0)' },
+                            '90%': { opacity: '1', transform: 'translateY(0)' },
+                            '100%': { opacity: '0', transform: 'translateY(10px)' },
+                        },
+                    },
+                    animation: {
+                        'fade-in-out': 'fade-in-out 3s ease-in-out forwards',
+                    },
+                }
+            }
+        }
+    </script>
+    <style>
+        .form-group .form-label {
+            position: absolute;
+            top: 0.5rem;
+            left: 0.6rem;
+            color: #6b7280;
+            pointer-events: none;
+            transition: all 0.2s ease-in-out;
+            background-color: white;
+            padding: 0 0.25rem;
+            font-size: 0.875rem;
+        }
+
+        .form-group .form-input:focus + .form-label,
+        .form-group .form-input:not(:placeholder-shown) + .form-label {
+            top: -0.6rem;
+            left: 0.5rem;
+            font-size: 0.75rem;
+            color: #1f2937;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 p-3 overflow-hidden">
+
+    <div class="flex flex-col md:flex-row gap-4 w-full h-[calc(100vh-1.5rem)]">
+
+        <div class="flex flex-col flex-[3]">
+            <div class="panel bg-white rounded-lg shadow-sm border border-rolex-green p-4 flex flex-col flex-grow min-h-0">
+                <h2 class="text-lg font-semibold text-gray-800 mb-4 pb-2 border-b border-rolex-green flex-shrink-0">Stok Grubu Tanımlama</h2>
+                <div class="flex-grow overflow-y-auto pr-3 -mr-3">
+                    <form asp-controller="StockGroup" asp-action="Update" method="post" class="space-y-4 mt-2">
+                        <input type="hidden" asp-for="Id">
+                        <div class="relative form-group">
+                            <input type="text" id="stokGrupAdi" asp-for="StockGroupName" required class="form-input text-sm mt-1 block w-full p-2 border border-rolex-green rounded-md shadow-sm focus:border-black focus:ring-0 peer" placeholder=" ">
+                            <label for="stokGrupAdi" class="form-label">Stok Grubu Adı</label>
+                        </div>
+                        <div class="flex justify-end gap-3 pt-4 mt-auto border-t border-gray-200 flex-shrink-0">
+                            <div id="add-mode-buttons" class="flex gap-x-3">
+                                <button type="submit" class="px-6 py-1.5 bg-success text-white text-sm font-semibold rounded-md hover:bg-opacity-90 shadow-sm">KAYDET</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast-container" class="fixed bottom-4 right-4 z-50"></div>
+
+    <script>
+
+    </script>
+</body>
+</html>
+
+
+

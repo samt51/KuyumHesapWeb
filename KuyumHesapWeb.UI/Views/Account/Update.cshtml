@@ -1,0 +1,240 @@
+﻿@using KuyumHesapWeb.Core.Feature.AccountFeature.Dtos
+@model GetByIdAccountAndAccountTypeResponseDto
+@{
+    ViewData["Title"] = "Update";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hesap Tanımlama</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'rolex-green': '#4C9779',
+                        'list-item-bg': '#F0FAFA',
+                        'success': '#22c55e',
+                        'danger': '#ef4444',
+                        'secondary': '#6b7280',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .form-group .form-label {
+            position: absolute;
+            top: 0.5rem;
+            left: 0.6rem;
+            color: #6b7280;
+            pointer-events: none;
+            transition: all 0.2s ease-in-out;
+            background-color: white;
+            padding: 0 0.25rem;
+            font-size: 0.875rem;
+        }
+
+        .form-group .form-input:focus + .form-label,
+        .form-group .form-input:not(:placeholder-shown) + .form-label,
+        .form-group .form-input.has-value + .form-label {
+            top: -0.6rem;
+            left: 0.5rem;
+            font-size: 0.75rem;
+            color: #1f2937;
+        }
+
+        .form-input:required:invalid {
+            color: #6b7280;
+        }
+
+        .tab-button {
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s ease-in-out;
+        }
+
+            .tab-button.active {
+                border-bottom-color: #4C9779;
+                color: #4C9779;
+                font-weight: 600;
+            }
+
+        .tab-content {
+            display: none;
+        }
+
+            .tab-content.active {
+                display: block;
+            }
+    </style>
+</head>
+<body class="bg-gray-100 p-3 overflow-hidden">
+
+    <div class="flex flex-col md:flex-row gap-4 w-full h-[calc(100vh-1.5rem)]">
+
+        <!-- SOL TARAF: FORM PANELİ -->
+        <div class="flex flex-col flex-[3]">
+            <div class="panel bg-white rounded-lg shadow-sm border border-rolex-green p-4 flex flex-col flex-grow min-h-0">
+                <h2 class="text-lg font-semibold text-gray-800 mb-3 pb-2 border-b border-rolex-green flex-shrink-0">Hesap Tanımlama</h2>
+
+                <div class="border-b border-gray-200 mb-3 flex-shrink-0">
+                    <nav class="-mb-px flex gap-x-6" aria-label="Tabs">
+                        <button class="tab-button whitespace-nowrap py-2 px-1 border-b-2 font-medium text-xs text-gray-500 hover:text-rolex-green active" data-tab="temel-bilgiler">Temel Bilgiler</button>
+                        <button class="tab-button whitespace-nowrap py-2 px-1 border-b-2 font-medium text-xs text-gray-500 hover:text-rolex-green" data-tab="adres-bilgileri">Adres Bilgileri</button>
+                    </nav>
+                </div>
+
+                <div class="flex-grow overflow-y-auto pr-3 -mr-3">
+                    <form asp-controller="Account" asp-action="Update" method="post">
+                        <input type="hidden" asp-for="GetByIdAccountQueryResponse.Id">
+
+                        <div id="tab-temel-bilgiler" class="tab-content active space-y-4">
+                            <div class="space-y-4">
+                                <div class="relative form-group">
+                                    <input type="text" id="hesapAdi" asp-for="GetByIdAccountQueryResponse.AccountName" required class="form-input text-sm mt-1 block w-full p-2 border border-rolex-green rounded-md shadow-sm peer" placeholder=" ">
+                                    <label for="hesapAdi" class="form-label">Hesap Adı</label>
+                                </div>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div class="relative form-group">
+                                        <select asp-for="GetByIdAccountQueryResponse.AccountTypeId" id="hesapTipiID" required class="form-input text-sm mt-1 block w-full p-2 border border-rolex-green rounded-md shadow-sm">
+                                            @foreach (var item in Model.GetAllAccountTypeQueryResponses)
+                                            {
+                                                <option value="@item.Id">@item.AccountTypeName</option>
+                                            }
+                                        </select>
+                                        <label for="hesapTipiID" class="form-label">Hesap Tipi</label>
+                                    </div>
+                                    <div id="tezgahtar-container" class="border border-rolex-green rounded-md p-2 flex items-center justify-between hidden">
+                                        <span class="text-xs font-medium text-gray-700">Satış Yapabilir (Tezgahtar)</span>
+                                        <label class="relative inline-flex items-center cursor-pointer">
+                                            <input type="checkbox" id="tezgahtar" class="sr-only peer">
+                                            <div class="w-9 h-5 bg-gray-200 rounded-full peer peer-focus:ring-2 peer-focus:ring-rolex-green peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-rolex-green"></div>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div id="iletisim-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div class="relative form-group">
+                                        <input type="tel" asp-for="GetByIdAccountQueryResponse.MobilePhone" id="cepTelefonu" class="form-input text-sm mt-1 block w-full p-2 border border-rolex-green rounded-md shadow-sm peer" placeholder=" ">
+                                        <label for="cepTelefonu" class="form-label">Cep Telefonu</label>
+                                        <p id="telefon-validation-message" class="text-xs mt-1 text-danger"></p>
+                                    </div>
+                                    <div class="relative form-group">
+                                        <input type="email" id="mail" asp-for="GetByIdAccountQueryResponse.Email" autocomplete="off" class="form-input text-sm mt-1 block w-full p-2 border border-rolex-green rounded-md shadow-sm peer" placeholder=" ">
+                                        <label for="mail" class="form-label">Mail</label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="relative form-group">
+                                    <select asp-for="GetByIdAccountQueryResponse.CustomerType" class="form-input text-sm mt-1 block w-full p-2 border border-rolex-green rounded-md shadow-sm">
+                                        <option value="Bireysel" selected>Bireysel</option>
+                                        <option value="Kurumsal">Kurumsal</option>
+                                        <option value="Sistem">Sistem</option>
+                                    </select>
+                                    <label for="musteriTipi" class="form-label">Müşteri Tipi</label>
+                                </div>
+                                <div id="bireysel-fields" class="relative form-group">
+                                    <input type="text" id="tcKimlikNo" asp-for="GetByIdAccountQueryResponse.NationalIdNumber" maxlength="11" class="form-input text-sm mt-1 block w-full p-2 border border-rolex-green rounded-md shadow-sm peer" placeholder=" ">
+                                    <label for="tcKimlikNo" id="kimlik-pasaport-label" class="form-label">TC Kimlik No</label>
+                                    <p id="tc-validation-message" class="text-xs mt-1"></p>
+                                </div>
+                                <div id="kurumsal-fields" class="hidden md:col-span-2 grid grid-cols-2 gap-4">
+                                    <div class="relative form-group">
+                                        <input type="text" id="vergiDairesi" asp-for="GetByIdAccountQueryResponse.TaxOffice" class="form-input text-sm mt-1 block w-full p-2 border border-rolex-green rounded-md shadow-sm peer" placeholder=" ">
+                                        <label for="vergiDairesi" class="form-label">Vergi Dairesi</label>
+                                    </div>
+                                    <div class="relative form-group">
+                                        <input type="text" id="vergiNo" asp-for="GetByIdAccountQueryResponse.TaxNumber" class="form-input text-sm mt-1 block w-full p-2 border border-rolex-green rounded-md shadow-sm peer" placeholder=" ">
+                                        <label for="vergiNo" class="form-label">Vergi Numarası</label>
+                                        <p id="vergi-validation-message" class="text-xs mt-1 text-danger"></p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="border border-rolex-green rounded-md p-2 flex items-center justify-between">
+                                <span class="text-xs font-medium text-gray-700">Aktif</span>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" id="aktif" asp-for="GetByIdAccountQueryResponse.IsActive" class="sr-only peer" >
+                                    <div class="w-9 h-5 bg-gray-200 rounded-full peer peer-focus:ring-2 peer-focus:ring-rolex-green peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-rolex-green"></div>
+                                </label>
+                            </div>
+                            <div class="relative form-group">
+                                <textarea id="genelBilgi" rows="2" asp-for="GetByIdAccountQueryResponse.GeneralInformation" class="form-input text-sm mt-1 block w-full p-2 border border-rolex-green rounded-md shadow-sm peer" placeholder=" "></textarea>
+                                <label for="genelBilgi" class="form-label">Genel Bilgi</label>
+                            </div>
+                        </div>
+
+                        <div id="tab-adres-bilgileri" class="tab-content space-y-4">
+                            <div class="relative form-group">
+                                <select id="ulke" class="form-input text-sm mt-1 block w-full p-2 border border-rolex-green rounded-md shadow-sm">
+                                    <option value="Türkiye" selected>Türkiye</option>
+                                    <option value="Diğer">Diğer</option>
+                                </select>
+                                <label for="ulke" class="form-label">Ülke</label>
+                            </div>
+                            <div id="tr-adres-container" class="space-y-4">
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div class="relative form-group"><input type="text" id="sehir" class="form-input text-sm mt-1 w-full p-2 border rounded-md peer" placeholder=" "><label for="sehir" class="form-label">Şehir</label></div>
+                                    <div class="relative form-group"><input type="text" id="ilce" class="form-input text-sm mt-1 w-full p-2 border rounded-md peer" placeholder=" "><label for="ilce" class="form-label">İlçe</label></div>
+                                </div>
+                                <div class="relative form-group">
+                                    <input type="text" id="mahalle" asp-for="GetByIdAccountQueryResponse.Neighborhood" class="form-input text-sm mt-1 w-full p-2 border rounded-md peer" placeholder=" ">
+                                    <label for="mahalle" class="form-label">Mahalle</label>
+                                </div>
+                                <div class="relative form-group">
+                                    <textarea id="fullAdres" rows="3" asp-for="GetByIdAccountQueryResponse.FullAddress" class="form-input text-sm mt-1 w-full p-2 border rounded-md peer" placeholder=" "></textarea>
+                                    <label for="fullAdres" class="form-label">Açık Adres</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex justify-end gap-3 pt-4 mt-auto border-t border-gray-200 flex-shrink-0">
+                            <div id="add-mode-buttons" class="flex gap-x-3">
+
+                                <button type="submit" class="px-6 py-1.5 bg-success text-white text-sm font-semibold rounded-md hover:bg-opacity-90 shadow-sm">KAYDET</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+
+
+
+    <div id="toast-container" class="fixed bottom-4 right-4 z-50"></div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+
+              const itemListEl = document.getElementById('item-list');
+              const tabs = document.querySelectorAll('.tab-button');
+              const tabContents = document.querySelectorAll('.tab-content');
+              const tezgahtarContainer = document.getElementById('tezgahtar-container');
+                 tabs.forEach(tab => {
+                 if(tab) tab.addEventListener('click', () => {
+                    tabs.forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    tabContents.forEach(content => {
+                        content.classList.toggle('active', content.id === `tab-${tab.dataset.tab}`);
+                    });
+                });
+            });
+
+
+
+        });
+
+
+    </script>
+
+</body>
+</html>
+
+

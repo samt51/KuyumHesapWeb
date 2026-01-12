@@ -1,0 +1,346 @@
+﻿@using KuyumHesapWeb.Core.Feature.DashboardFeature.Queries.GetAllDashboard
+@model GetAllDashboardQueryResponse
+@{
+    ViewData["Title"] = "Dashboard";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ana Menü | KuyumHesap</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- CSS Kodları Yeniden Düzenlendi -->
+    <style>
+        root {
+            --scrolling-ticker-bg: #343a40;
+            --scrolling-ticker-text: #ffffff;
+            --ticker-item-border: #107c41;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7f8fc;
+        }
+
+        /* Sidebar ve Ana İçerik için Geçiş Efektleri */
+        #sidebar-menu, #main-content {
+            transition: all 0.3s ease-in-out;
+        }
+
+        /* Başlangıçta ana içeriğin soldan boşluğu */
+        #main-content {
+            margin-left: 4rem; /* w-16 */
+        }
+
+        /* --- SABİTLEME (Pin) Durumu --- */
+        /* Hamburger ile sabitlendiğinde, içerik SAĞA KAYAR */
+        body.sidebar-pinned #sidebar-menu {
+            width: 16rem; /* w-64 */
+        }
+
+        body.sidebar-pinned #main-content {
+            margin-left: 16rem;
+        }
+
+        body.sidebar-pinned #sidebar-menu .sidebar-text {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* --- GEÇİCİ GENİŞLEME (Overlay) Durumları --- */
+        /* Sabitlenmemişken, hover veya alt menü aktif olduğunda, içerik ÜZERİNE AÇILIR */
+        #sidebar-menu:not(.sidebar-pinned):hover,
+        #sidebar-menu.submenu-active:not(.sidebar-pinned) {
+            width: 16rem; /* w-64 */
+            z-index: 50; /* İçeriğin üzerine çıkması için */
+        }
+
+            #sidebar-menu:not(.sidebar-pinned):hover .sidebar-text,
+            #sidebar-menu.submenu-active:not(.sidebar-pinned) .sidebar-text {
+                opacity: 1;
+                visibility: visible;
+            }
+
+        .rolex-green-border {
+            border: 1px solid rgba(30, 132, 73, 0.35);
+        }
+
+        .sidebar-link-container:hover .sidebar-link {
+            background-color: rgba(30, 132, 73, 0.05);
+            color: #166534;
+        }
+
+            .sidebar-link-container:hover .sidebar-link i {
+                color: #16a34a;
+            }
+
+        .sidebar-link.pinned {
+            background-color: rgba(30, 132, 73, 0.1) !important;
+            color: #166534 !important;
+        }
+
+            .sidebar-link.pinned i {
+                color: #16a34a !important;
+            }
+
+        #submenu-flyout a {
+            padding-left: 1.25rem !important;
+            padding-right: 1rem !important;
+            padding-top: 0.6rem !important;
+            padding-bottom: 0.6rem !important;
+        }
+
+            #submenu-flyout a:hover {
+                background-color: rgba(30, 132, 73, 0.1) !important;
+            }
+
+        .sidebar-link-container.active-link .sidebar-link {
+            background-color: rgba(30, 132, 73, 0.05);
+            color: #166534;
+        }
+
+            .sidebar-link-container.active-link .sidebar-link i {
+                color: #16a34a;
+            }
+
+        .sidebar-text {
+            opacity: 0;
+            transition: opacity 0.2s ease-in-out, visibility 0.2s;
+            visibility: hidden;
+        }
+
+        #tabs-container {
+            display: flex;
+            border-bottom: 1px solid #e5e7eb;
+            background-color: #f9fafb;
+            overflow-x: auto;
+        }
+
+        .tab-button {
+            background-color: transparent;
+            border: none;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s ease-in-out;
+            color: #6b7280;
+            white-space: nowrap;
+        }
+
+            .tab-button:hover {
+                background-color: #f3f4f6;
+                color: #1f2937;
+            }
+
+            .tab-button.active {
+                border-bottom-color: #1e40af;
+                background-color: #ffffff;
+                color: #1e40af;
+                font-weight: 600;
+            }
+
+        .close-tab-btn {
+            font-family: 'Arial', sans-serif;
+            font-weight: bold;
+            font-size: 1rem;
+            line-height: 1;
+            padding: 0 2px;
+            border-radius: 50%;
+        }
+
+            .close-tab-btn:hover {
+                background-color: #e5e7eb;
+            }
+
+        #content-frames {
+            position: relative;
+            flex-grow: 1;
+        }
+
+            #content-frames iframe {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                border: none;
+                display: none;
+            }
+
+                #content-frames iframe.active {
+                    display: block;
+                }
+
+        .chevron-icon {
+            transition: transform 0.3s ease-in-out;
+        }
+
+            .chevron-icon.rotate-180 {
+                transform: rotate(180deg);
+            }
+
+        #page-header {
+            margin-left: 4rem; /* sidebar kapalı: w-16 */
+            width: calc(100% - 4rem);
+            transition: all 0.3s ease-in-out;
+        }
+
+        body.sidebar-pinned #page-header {
+            margin-left: 16rem; /* sidebar sabit açık: w-64 */
+            width: calc(100% - 16rem);
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+
+    <div id="page-header" class="px-8 pt-4">
+        <div class="bg-white rounded-lg shadow-md border border-gray-200 p-6 mb-6">
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center gap-4">
+                    <div class="text-xl font-semibold text-gray-800">Merhaba, <span id="kullanici-adi-gorev">MAHMUT</span></div>
+                    <div class="text-sm text-gray-600"><span id="db-adi-gorev">KuyumHesap</span> şirketine hoşgeldin. Görevlerini buradan takip edebilirsin.</div>
+                </div>
+                <div class="flex gap-3">
+                    <button id="gorev-ekle-btn" class="px-6 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold rounded-md shadow-sm transition"><i class="fas fa-plus mr-2"></i>Görev Ekle</button>
+                    <button id="gorev-listesi-btn" class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-md shadow-sm transition"><i class="fas fa-list mr-2"></i>Görev Listesi</button>
+                </div>
+            </div>
+
+            <!-- Görev Kategorileri -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="border border-gray-300 rounded-lg p-4 bg-gray-50">
+                    <h3 class="text-md font-semibold text-gray-700 mb-3 flex items-center"><i class="fas fa-history text-red-500 mr-2"></i>Geçmiş Görevler (Gecikmiş)</h3>
+                    <ul class="space-y-2 task-list overflow-y-auto pr-2" style="max-height: 6rem;">
+                        @foreach (var item in Model.PastMissions)
+                        {
+                            <li class="flex items-center">
+                                <input type="checkbox" id="task3" class="h-4 w-4 rounded border-gray-300 text-green-600 focus:ring-green-500">
+                                <label for="task3" class="ml-3 text-gray-800 cursor-pointer" onclick="openTaskDetails(this)" data-title="@item.Title">
+                                    @item.Title
+                                </label>
+                            </li>
+                        }
+                    </ul>
+                </div>
+                <div class="border border-gray-300 rounded-lg p-4 bg-gray-50">
+                    <h3 class="text-md font-semibold text-gray-700 mb-3 flex items-center"><i class="fas fa-calendar-day text-blue-500 mr-2"></i>Bugünkü Görevler</h3>
+                    <ul class="space-y-2 task-list overflow-y-auto pr-2" style="max-height: 6rem;">
+                        @foreach (var item in Model.CurrentMissions)
+                        {
+                            <li class="flex items-center">
+                                <input type="checkbox" id="task3" class="h-4 w-4 rounded border-gray-300 text-green-600 focus:ring-green-500">
+                                <label for="task3" class="ml-3 text-gray-800 cursor-pointer" onclick="openTaskDetails(this)" data-title="@item.Title">
+                                    @item.Title
+                                </label>
+                            </li>
+                        }
+                    </ul>
+                </div>
+                <div class="border border-gray-300 rounded-lg p-4 bg-gray-50">
+                    <h3 class="text-md font-semibold text-gray-700 mb-3 flex items-center"><i class="fas fa-calendar-week text-green-500 mr-2"></i>Gelecek Görevler (Haftalık)</h3>
+                    <ul class="space-y-2 task-list overflow-y-auto pr-2" style="max-height: 6rem;">
+                        @foreach (var item in Model.FutureMissions)
+                        {
+                            <li class="flex items-center">
+                                <input type="checkbox" id="task3" class="h-4 w-4 rounded border-gray-300 text-green-600 focus:ring-green-500">
+                                <label for="task3" class="ml-3 text-gray-800 cursor-pointer" onclick="openTaskDetails(this)" data-title="@item.Title">
+                                    @item.Title
+                                </label>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="page-header" class="px-8 pb-8">
+        <div class="bg-white rounded-2xl border border-[#4C9779] shadow-md p-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <!-- Kasa -->
+                <div id="kasa-karti" class="dashboard-card bg-white p-5 rounded-xl shadow-md border border-[#4C9779]">
+                    <div class="flex items-start justify-between">
+                        <span class="text-sm font-semibold text-gray-500">Kasa Son Durum</span>
+                        <a href="#" id="kasa-detay-link" class="text-xs font-medium text-blue-600 hover:underline">Detay</a>
+                    </div>
+                    <div class="flex items-center gap-4 mt-2">
+                        <div class="flex-shrink-0">
+                            <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center"><i class="fas fa-layer-group text-2xl text-yellow-500"></i></div>
+                        </div>
+                        <div>
+                            <p id="kasa-bakiye-has" class="text-3xl font-bold text-gray-800">@Model.ToplamBakiyeHas</p>
+                            <p class="text-sm text-gray-400 font-medium">HAS</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bankalar -->
+                <div id="bankalar-karti" class="dashboard-card bg-white p-5 rounded-xl shadow-md border border-[#4C9779]">
+                    <div class="flex items-start justify-between">
+                        <span class="text-sm font-semibold text-gray-500">Bankalar Son Durum</span>
+                        <a href="#" id="bankalar-detay-link" class="text-xs font-medium text-blue-600 hover:underline">Detay</a>
+                    </div>
+                    <div class="flex items-center gap-4 mt-2">
+                        <div class="flex-shrink-0"><div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center"><i class="fas fa-university text-2xl text-blue-500"></i></div></div>
+                        <div>
+                            <p id="bankalar-bakiye" class="text-3xl font-bold text-gray-800">@Model.BankBalanceTotal</p>
+                            <p class="text-sm text-gray-400 font-medium">HAS</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Poslar -->
+                <div id="poslar-karti" class="dashboard-card bg-white p-5 rounded-xl shadow-md border border-[#4C9779]">
+                    <div class="flex items-start justify-between">
+                        <span class="text-sm font-semibold text-gray-500">Poslar Son Durum</span>
+                        <a href="#" id="poslar-detay-link" class="text-xs font-medium text-blue-600 hover:underline">Detay</a>
+                    </div>
+                    <div class="flex items-center gap-4 mt-2">
+                        <div class="flex-shrink-0"><div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center"><i class="fas fa-credit-card text-2xl text-green-500"></i></div></div>
+                        <div>
+                            <p id="poslar-bakiye" class="text-3xl font-bold text-gray-800">@Model.PosBalanceTotal</p>
+                            <p class="text-sm text-gray-400 font-medium">HAS</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+    <main id="main-content"
+          class="h-screen flex flex-col"
+          data-login-url="@Url.Action("Login", "Auth")"
+          data-dashboard-url="@Url.Action("Dashboard", "Home")">
+        <div id="tabs-container" class="flex-shrink-0"></div>
+        <div id="content-frames" class="flex-grow relative"></div>
+        <div class="fixed bottom-0 left-0 w-full bg-[var(--scrolling-ticker-bg)] text-[var(--scrolling-ticker-text)] shadow-[0_-2px_5px_rgba(0,0,0,0.2)] z-50 flex items-center">
+            <div class="flex-grow overflow-hidden whitespace-nowrap scrolling-ticker-container py-2.5">
+                <div class="scrolling-ticker-content" id="tickerContent"></div>
+            </div>
+            <div class="flex-shrink-0 text-center px-4">
+                <p class="text-xs text-gray-400">Son Güncelleme</p>
+                <p id="last-updated-time" class="text-sm font-semibold text-white">-</p>
+            </div>
+            <button id="refresh-dashboard-btn"
+                    class="flex-shrink-0 px-4 py-2.5 h-full text-white hover:bg-gray-600 transition-colors duration-200"
+                    title="Dashboard'u Güncelle">
+                <i class="fas fa-sync-alt"></i>
+            </button>
+        </div>
+
+    </main>
+
+
+</body>
+</html>
+
+
+

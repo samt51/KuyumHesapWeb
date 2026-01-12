@@ -1,0 +1,115 @@
+﻿@using KuyumHesapWeb.Core.Feature.ProductTypeFeature.Queries.GetAll
+@model List<GetAllProductTypeQueryResponse>
+@{
+    ViewData["Title"] = "Index";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ürün Tipi Yönetimi</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'rolex-green': '#4C9779',
+                        'list-item-bg': '#F0FAFA',
+                        'success': '#22c55e',
+                        'danger': '#ef4444',
+                        'secondary': '#6b7280',
+                    },
+                    keyframes: {
+                        'fade-in-out': {
+                            '0%': { opacity: '0', transform: 'translateY(10px)' },
+                            '10%': { opacity: '1', transform: 'translateY(0)' },
+                            '90%': { opacity: '1', transform: 'translateY(0)' },
+                            '100%': { opacity: '0', transform: 'translateY(10px)' },
+                        },
+                    },
+                    animation: {
+                        'fade-in-out': 'fade-in-out 3s ease-in-out forwards',
+                    },
+                }
+            }
+        }
+    </script>
+    <style>
+        .fx-pt-grid {
+            display: grid;
+            grid-template-columns: 1fr 120px; /* Ad | İşlem */
+            align-items: center;
+            column-gap: 12px;
+        }
+
+        .fx-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            white-space: nowrap;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100 p-3 overflow-hidden">
+    <div class="flex flex-col md:flex-row gap-4 w-full h-[calc(100vh-1.5rem)]">
+        <div class="flex flex-col flex-[3]">
+            <div class="panel bg-white rounded-lg shadow-sm border border-rolex-green p-3 flex flex-col flex-grow min-h-0">
+
+                <div class="flex justify-between items-center mb-3 pb-2 border-b border-rolex-green">
+                    <h2 class="text-lg font-semibold text-gray-800">Ürün Tipleri Listesi</h2>
+                    <a asp-controller="ProductType" asp-action="Create"
+                       class="px-6 py-1.5 bg-success text-white text-sm font-semibold rounded-md hover:bg-opacity-90 shadow-sm">
+                        EKLE
+                    </a>
+                </div>
+
+                <div class="flex-grow overflow-y-auto">
+                    <!-- HEADER -->
+                    <div class="fx-pt-grid text-xs font-semibold text-gray-500 px-2 py-2 border-b sticky top-0 bg-white z-10">
+                        <span>Ürün Tipi Adı</span>
+                        <span class="text-right">İşlem</span>
+                    </div>
+
+                    <!-- LIST -->
+                    <div id="item-list" class="space-y-1">
+                        @{
+                            var rowIndex = 0;
+                        }
+
+                        @foreach (var item in Model)
+                        {
+                            var rowClass = (rowIndex++ % 2 == 1) ? "bg-list-item-bg" : "bg-white";
+
+                            <div class="fx-pt-grid p-2 rounded cursor-pointer hover:bg-gray-200 @rowClass" data-id="@item.Id">
+                                <span class="font-medium text-gray-700 text-sm">@item.ProductTypeName</span>
+
+                                <div class="fx-actions">
+                                    <a href="/ProductType/Update/@item.Id"
+                                       class="w-8 h-8 inline-flex items-center justify-center rounded-md border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 shadow-sm"
+                                       title="Güncelle">
+                                        <i class="fas fa-pen text-xs"></i>
+                                    </a>
+
+                                    <button type="button"
+                                            class="w-8 h-8 inline-flex items-center justify-center rounded-md border border-red-200 bg-red-50 hover:bg-red-100 text-red-700 shadow-sm"
+                                            title="Sil"
+                                            data-id="@item.Id">
+                                        <i class="fas fa-trash text-xs"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        }
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+    </div>
+</body>
+</html>
