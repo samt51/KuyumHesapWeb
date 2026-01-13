@@ -1,0 +1,43 @@
+﻿.form-group .form-label {
+    position: absolute;
+    top: 0.5rem;
+    left: 0.6rem;
+    color: #6b7280;
+    pointer-events: none;
+    transition: all 0.2s ease-in-out;
+    background-color: white;
+    padding: 0 0.25rem;
+    font-size: 0.875rem;
+}
+
+.form-group .form-input:focus + .form-label,
+.form-group .form-input:not(:placeholder-shown) + .form-label,
+.form-group .form-input.has-value + .form-label {
+    top: -0.6rem;
+    left: 0.5rem;
+    font-size: 0.75rem;
+    color: #1f2937;
+}
+
+.form-input:required:invalid {
+    color: #6b7280;
+}
+
+.tab-button {
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s ease-in-out;
+}
+
+    .tab-button.active {
+        border-bottom-color: #4C9779;
+        color: #4C9779;
+        font-weight: 600;
+    }
+
+.tab-content {
+    display: none;
+}
+
+    .tab-content.active {
+        display: block;
+    }

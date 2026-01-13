@@ -217,7 +217,7 @@
                 </div>
                 <div class="submenu hidden">
                     <a asp-controller="Account" asp-action="Index" class="block py-1.5 text-xs text-gray-600 hover:bg-gray-100">[ Hesap Tanımlama ]</a>
-                    <a  asp-controller="AccountType" asp-action="Index" class="block py-1.5 text-xs text-gray-600 hover:bg-gray-100">[ Hesap Tipleri Tanımlama ]</a>
+                    <a asp-controller="AccountType" asp-action="Index" class="block py-1.5 text-xs text-gray-600 hover:bg-gray-100">[ Hesap Tipleri Tanımlama ]</a>
                     <a asp-controller="Exchange" asp-action="Index" class="block py-1.5 text-xs text-gray-600 hover:bg-gray-100">[ Döviz Tanımlama ]</a>
                     <a asp-controller="StockGroup" asp-action="Index" class="block py-1.5 text-xs text-gray-600 hover:bg-gray-100">[ Stok Grubu Tanımlama ]</a>
                     <a asp-controller="StockType" asp-action="Index" class="block py-1.5 text-xs text-gray-600 hover:bg-gray-100">[ Stok Tipleri Tanımlama ]</a>
@@ -237,7 +237,7 @@
                     <i class="fas fa-chevron-right ml-auto sidebar-text chevron-icon text-xs"></i>
                 </div>
                 <div class="submenu hidden">
-                    <a href="javascript:void(0);" onclick="openTab('@Url.Action("Index", "BarkodAyarlari")', '[ Barkod Ayarları ]')" class="block py-1.5 text-xs text-gray-600 hover:bg-gray-100">[ Barkod Ayarları ]</a>
+                    <a asp-controller="BarcodeSetting" asp-action="Index" class="block py-1.5 text-xs text-gray-600 hover:bg-gray-100">[ Barkod Ayarları ]</a>
                 </div>
             </div>
             <!-- MEVCUT KULLANICI BİLGİSİ -->
@@ -248,10 +248,13 @@
                 </a>
             </div>
             <div class="sidebar-link-container">
-                <a id="logout-button" href="#" class="sidebar-link flex items-center px-5 py-2.5 text-gray-700 transition-colors hover:text-red-600">
-                    <i class="fas fa-sign-out-alt w-6 text-center text-xl text-gray-500"></i>
-                    <span class="ml-3 font-semibold text-sm sidebar-text whitespace-nowrap">Çıkış Yap</span>
-                </a>
+                <form asp-controller="Auth" asp-action="Logout" method="post">
+                    <button class="sidebar-link flex items-center px-5 py-2.5 text-gray-700 transition-colors hover:text-red-600">
+                        <i class="fas fa-sign-out-alt w-6 text-center text-xl text-gray-500"></i>
+                        <span class="ml-3 font-semibold text-sm sidebar-text whitespace-nowrap">Çıkış Yap</span>
+                    </button>
+                </form>
+
             </div>
         </div>
     </nav>

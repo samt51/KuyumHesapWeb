@@ -1,0 +1,902 @@
+﻿
+@{
+    ViewData["Title"] = "Index";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Barkod Ayarı</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'rolex-green': '#4C9779',
+                        'list-item-bg': '#F0FAFA',
+                        'success': '#22c55e',
+                        'danger': '#ef4444',
+                        'warning': '#f97316',
+                        'info': '#3b82f6',
+                        'secondary': '#6b7280',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .draggable-item {
+            user-select: none;
+            transition: all 0.2s ease-in-out;
+            position: relative;
+        }
+
+        .placed-item {
+            user-select: none;
+            font-size: 0.875rem;
+            color: #1f2937;
+            cursor: move;
+            position: absolute;
+            transition: all 0.2s ease-in-out;
+            padding: 0.5rem;
+            border-radius: 0.375rem;
+        }
+
+            .draggable-item[data-id^="field-"], .placed-item[data-id^="field-"] {
+                min-height: 50px;
+                min-width: 120px;
+            }
+
+        .item-number {
+            position: absolute;
+            top: -12px;
+            left: -12px;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background-color: white;
+            border: 1px solid #cbd5e1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: bold;
+            color: #4a5568;
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        .item-formula-text {
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .dragging {
+            cursor: grabbing;
+            transform: scale(1.05);
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            z-index: 10;
+        }
+
+        #design-area {
+            position: relative;
+            background-image: linear-gradient(to right, rgba(203, 213, 225, 0.5) 1px, transparent 1px), linear-gradient(to bottom, rgba(203, 213, 225, 0.5) 1px, transparent 1px);
+            background-size: 15px 15px;
+        }
+
+        .modal-overlay {
+            transition: opacity 0.2s ease-in-out;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+            .modal-overlay.show {
+                opacity: 1;
+                pointer-events: auto;
+            }
+
+        .modal-content {
+            transform: scale(0.95);
+            transition: transform 0.2s ease-in-out;
+        }
+
+        .modal-overlay.show .modal-content {
+            transform: scale(1);
+        }
+
+        .toast {
+            transition: opacity 0.3s, transform 0.3s;
+            transform: translateX(100%);
+            opacity: 0;
+        }
+
+            .toast.show {
+                transform: translateX(0);
+                opacity: 1;
+            }
+
+        .disabled-ui {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 p-3 overflow-hidden">
+
+    <div class="w-full h-[calc(100vh-1.5rem)]">
+        <div class="panel bg-white rounded-lg shadow-sm border border-rolex-green p-4 flex flex-col h-full">
+
+            <!-- Üst Başlık ve Kontrol Çubuğu -->
+            <div class="flex-shrink-0 border-b border-gray-200 pb-3 mb-3 flex items-center justify-between">
+                <!-- Sol: Şablon Başlığı -->
+                <h3 id="sablon-basligi" class="text-lg font-bold text-rolex-green transition-all duration-300">
+                    Lütfen bir şablon seçin veya yeni bir tane oluşturun.
+                </h3>
+
+                <!-- Sağ: Şablon Seçimi ve İkon Butonları (Metinli Butonlara Geri Döndü) -->
+                <div class="flex items-center space-x-2">
+                    <!-- Şablon Seçimi (Combo) -->
+                    <select id="sablon-listesi" class="form-input text-sm p-1.5 border border-rolex-green rounded-md shadow-sm focus:border-rolex-green focus:ring-0 max-w-xs">
+                        <option value="0">--- Lütfen Bir Şablon Seçin ---</option>
+                    </select>
+
+                    <!-- Yeni Şablon Butonu -->
+                    <button id="yeni-btn" class="px-3 py-2 bg-blue-600 text-white text-xs font-semibold rounded-md hover:bg-blue-700 shadow-sm flex items-center gap-1 transition-colors">
+                        <i class="fas fa-plus"></i>
+                        Yeni Şablon
+                    </button>
+                    <!-- Kaydet Butonu -->
+                    <button id="kaydet-btn" class="px-3 py-2 bg-rolex-green text-white text-xs font-semibold rounded-md hover:bg-opacity-90 shadow-sm flex items-center gap-1 transition-colors">
+                        <i class="fas fa-save"></i>
+                        Kaydet
+                    </button>
+                    <!-- Sil Butonu -->
+                    <button id="sil-btn" class="px-3 py-2 bg-danger text-white text-xs font-semibold rounded-md hover:bg-red-600 shadow-sm flex items-center gap-1 transition-colors">
+                        <i class="fas fa-trash"></i>
+                        Sil
+                    </button>
+                </div>
+            </div>
+
+            <!-- Ana içerik alanı -->
+            <div id="main-content-area" class="flex h-full gap-4 flex-grow">
+
+                <!-- Sol: Tasarım Alanı -->
+                <div class="flex-[3] flex flex-col">
+                    <div id="design-area" class="flex-grow bg-slate-100 border border-dashed border-gray-400 rounded-lg p-2"></div>
+                </div>
+
+                <!-- Sağ: Tüm inputlar ve alan ekleme butonu -->
+                <div class="flex-[1] space-y-4 pr-2 border-l border-gray-200 pl-4 overflow-y-auto">
+                    <div class="space-y-4">
+
+                        <!-- Başlangıç Sol/Üst Ayarları -->
+                        <div class="flex items-center gap-2">
+                            <label for="etiket-en" class="text-sm font-medium w-28">Başlangıç Sol:</label>
+                            <input type="number" id="etiket-en" class="form-input text-sm p-1.5 border border-gray-300 rounded-md shadow-sm w-20">
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <label for="etiket-boy" class="text-sm font-medium w-28">Başlangıç Üst:</label>
+                            <input type="number" id="etiket-boy" class="form-input text-sm p-1.5 border border-gray-300 rounded-md shadow-sm w-20">
+                        </div>
+
+                        <!-- RFID Anahtarı -->
+                        <div class="flex items-center justify-between border-t pt-4">
+                            <label for="rfid-mi" class="block text-sm font-medium text-gray-900">RFID Etiket</label>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="rfid-mi" class="sr-only peer">
+                                <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-rolex-green/50 peer-checked:bg-rolex-green peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+                            </label>
+                        </div>
+
+                        <!-- Yeni Alan Ekle Butonu -->
+                        <button id="yeni-alan-btn" class="w-full mt-6 px-4 py-3 bg-rolex-green text-white text-sm font-semibold rounded-md hover:bg-opacity-90 shadow-sm flex items-center justify-center gap-2">
+                            <i class="fas fa-plus-circle"></i>
+                            Yeni Alan Ekle
+                        </button>
+
+                        <!-- İpucu -->
+                        <div class="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                            <p class="text-xs text-blue-800">
+                                <i class="fas fa-info-circle"></i>
+                                <strong>İpucu:</strong> Alanları sürükleyerek konumlandırabilirsiniz.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Properties Modal (Özellikler) - Placeholder -->
+    <div id="properties-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 modal-overlay">
+        <!-- Özellikler modalı içeriği buraya eklenecek -->
+    </div>
+
+    <!-- Add New Field Modal (Yeni Alan Ekle) - HTML Eklendi -->
+    <div id="yeni-alan-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 modal-overlay">
+        <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-lg modal-content">
+            <h3 class="text-lg font-semibold text-gray-800 border-b pb-2 mb-4">Yeni Alan Ekle</h3>
+            <div class="space-y-4">
+                <div>
+                    <label for="alan-adi" class="block text-sm font-medium text-gray-700">Alan Adı (Benzersiz)</label>
+                    <input type="text" id="alan-adi" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-rolex-green focus:border-rolex-green">
+                </div>
+                <div>
+                    <label for="alan-tipi" class="block text-sm font-medium text-gray-700">Alan Tipi</label>
+                    <select id="alan-tipi" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm bg-white focus:ring-rolex-green focus:border-rolex-green">
+                        <option value="text">Metin (Text)</option>
+                        <option value="barcode">Barkod (Code128)</option>
+                        <option value="qrcode">QR Kod</option>
+                        <option value="image">Resim</option>
+                    </select>
+                </div>
+                <div id="ean13-container" style="display:none;">
+                    <label for="ean13-tipi" class="block text-sm font-medium text-gray-700">QR Kod Tipi</label>
+                    <select id="ean13-tipi" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm bg-white focus:ring-rolex-green focus:border-rolex-green">
+                        <option value="">--- Seçiniz ---</option>
+                        <option value="EAN13">EAN13</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="stok-alani" class="block text-sm font-medium text-gray-700">Stok Alanı</label>
+                    <select id="stok-alani" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm bg-white focus:ring-rolex-green focus:border-rolex-green">
+                        <option value="">--- Seçiniz ---</option>
+                        <option value="StokKodu">StokKodu</option>
+                        <option value="Barkod">Barkod</option>
+                        <option value="Maliyet">Maliyet</option>
+                        <option value="MaliyetParabirimi">MaliyetParabirimi</option>
+                        <option value="FiyatTPT">FiyatTPT</option>
+                        <option value="FiyatMgz">FiyatMgz</option>
+                        <option value="FiyatMst">FiyatMst</option>
+                        <option value="FiyatParabirimi">FiyatParabirimi</option>
+                        <option value="OlusturmaTarihi">OlusturmaTarihi</option>
+                        <option value="StokDetay1">StokDetay1</option>
+                        <option value="StokDetay2">StokDetay2</option>
+                        <option value="StokDetay3">StokDetay3</option>
+                        <option value="StokDetay4">StokDetay4</option>
+                        <option value="StokDetay5">StokDetay5</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="alan-formulu" class="block text-sm font-medium text-gray-700">Değer / Formül</label>
+                    <textarea id="alan-formulu" rows="3" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-rolex-green focus:border-rolex-green" placeholder="Örn: 'ÜRÜN:' + URUN_ADI"></textarea>
+                    <p class="mt-1 text-xs text-gray-500">Sabit metinler için ' (tek tırnak) kullanın. Alan adlarını + ile birleştirin.</p>
+                </div>
+            </div>
+            <div class="mt-6 flex justify-end gap-3">
+                <button id="yeni-alan-iptal-btn" class="px-4 py-1.5 bg-secondary text-white text-sm font-semibold rounded-md hover:bg-opacity-90 shadow-sm">İptal</button>
+                <button id="yeni-alan-ekle-btn" class="px-4 py-1.5 bg-rolex-green text-white text-sm font-semibold rounded-md hover:bg-opacity-90 shadow-sm">Alanı Ekle</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add New Template Modal (Yeni Şablon Ekle) -->
+    <div id="yeni-sablon-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 modal-overlay">
+        <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-md modal-content">
+            <h3 class="text-lg font-semibold text-gray-800 border-b pb-2 mb-4">Yeni Şablon Oluştur</h3>
+            <div class="space-y-4">
+                <div>
+                    <label for="yeni-sablon-adi" class="block text-sm font-medium text-gray-700">Şablon Adı</label>
+                    <input type="text" id="yeni-sablon-adi" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-rolex-green focus:border-rolex-green">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label for="yeni-etiket-en" class="block text-sm font-medium text-gray-700">Etiket Eni (mm)</label>
+                        <input type="number" id="yeni-etiket-en" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm">
+                    </div>
+                    <div>
+                        <label for="yeni-etiket-boy" class="block text-sm font-medium text-gray-700">Etiket Boyu (mm)</label>
+                        <input type="number" id="yeni-etiket-boy" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm">
+                    </div>
+                </div>
+                <div class="flex items-center pt-2">
+                    <input type="checkbox" id="yeni-rfid-mi" class="h-4 w-4 rounded border-gray-300 text-rolex-green focus:ring-rolex-green">
+                    <label for="yeni-rfid-mi" class="ml-2 block text-sm text-gray-900">RFID Etiket</label>
+                </div>
+            </div>
+            <div class="mt-6 flex justify-end gap-3">
+                <button id="yeni-sablon-iptal-btn" class="px-4 py-1.5 bg-secondary text-white text-sm font-semibold rounded-md hover:bg-opacity-90 shadow-sm">İptal</button>
+                <button id="yeni-sablon-olustur-btn" class="px-4 py-1.5 bg-rolex-green text-white text-sm font-semibold rounded-md hover:bg-opacity-90 shadow-sm">Oluştur ve Düzenle</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal (Onay Penceresi) - HTML Eklendi -->
+    <div id="confirm-modal" class="fixed inset-0 bg-black bg-opacity-50 z-[60] flex items-center justify-center p-4 modal-overlay">
+        <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-sm modal-content">
+            <div class="flex items-center">
+                <div class="flex-shrink-0 bg-danger/10 text-danger rounded-full h-10 w-10 flex items-center justify-center">
+                    <i class="fas fa-exclamation-triangle text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <h3 id="confirm-title" class="text-lg font-semibold text-gray-800">İşlemi Onayla</h3>
+                    <p id="confirm-message" class="text-sm text-gray-600 mt-1">Bu işlemi geri alamazsınız.</p>
+                </div>
+            </div>
+            <div class="mt-6 flex justify-end gap-3">
+                <button id="confirm-iptal-btn" class="px-4 py-1.5 bg-secondary text-white text-sm font-semibold rounded-md hover:bg-opacity-90 shadow-sm">İptal</button>
+                <button id="confirm-onayla-btn" class="px-4 py-1.5 bg-danger text-white text-sm font-semibold rounded-md hover:bg-opacity-90 shadow-sm">Onayla</button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Toast Bildirimleri -->
+    <div id="toast-container" class="fixed top-5 right-5 z-[100] space-y-2"></div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('? Sayfa yüklendi!');
+
+            // API Bağlantısı
+            const API_URL = 'https://localhost:7055/api/BarkodAyar';
+            const token = localStorage.getItem('jwt_token');
+
+            const getAuthHeaders = () => ({
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            });
+
+            // --- Element Referansları ---
+            const sablonListesi = document.getElementById('sablon-listesi');
+            const yeniBtn = document.getElementById('yeni-btn');
+            const kaydetBtn = document.getElementById('kaydet-btn');
+            const silBtn = document.getElementById('sil-btn');
+            const sablonBasligi = document.getElementById('sablon-basligi');
+            const etiketEnInput = document.getElementById('etiket-en');
+            const etiketBoyInput = document.getElementById('etiket-boy');
+            const rfidMiCheckbox = document.getElementById('rfid-mi');
+            const designArea = document.getElementById('design-area');
+            const mainContentArea = document.getElementById('main-content-area'); // ID'li alana referans
+            const yeniAlanBtn = document.getElementById('yeni-alan-btn');
+            const toastContainer = document.getElementById('toast-container');
+
+            // Yeni Şablon Modalı Elemanları
+            const yeniSablonModal = document.getElementById('yeni-sablon-modal');
+            const yeniSablonOlusturBtn = document.getElementById('yeni-sablon-olustur-btn');
+            const yeniSablonIptalBtn = document.getElementById('yeni-sablon-iptal-btn');
+            const yeniSablonAdiInput = document.getElementById('yeni-sablon-adi');
+            const yeniEtiketEnInput = document.getElementById('yeni-etiket-en');
+            const yeniEtiketBoyInput = document.getElementById('yeni-etiket-boy');
+            const yeniRfidMiCheckbox = document.getElementById('yeni-rfid-mi');
+
+            // Yeni Alan Modalı Elemanları
+            const yeniAlanModal = document.getElementById('yeni-alan-modal');
+            const yeniAlanIptalBtn = document.getElementById('yeni-alan-iptal-btn');
+            const yeniAlanEkleBtn = document.getElementById('yeni-alan-ekle-btn');
+
+            // Onay Modalı Elemanları
+            const confirmModal = document.getElementById('confirm-modal');
+            const confirmTitle = document.getElementById('confirm-title');
+            const confirmMessage = document.getElementById('confirm-message');
+            const confirmIptalBtn = document.getElementById('confirm-iptal-btn');
+            const confirmOnaylaBtn = document.getElementById('confirm-onayla-btn');
+            let confirmCallback = null;
+
+            console.log('? Tüm elementler bulundu!');
+
+            // --- Toast Bildirim Fonksiyonu ---
+            const showToast = (message, type = 'success') => {
+                const icons = {
+                    success: 'fa-check-circle',
+                    danger: 'fa-times-circle',
+                    warning: 'fa-exclamation-triangle',
+                    info: 'fa-info-circle'
+                };
+                const colors = {
+                    success: 'bg-success',
+                    danger: 'bg-danger',
+                    warning: 'bg-warning',
+                    info: 'bg-info'
+                };
+
+                const toast = document.createElement('div');
+                toast.className = `toast ${colors[type]} text-white p-3 rounded-lg shadow-md flex items-center gap-3`;
+                toast.innerHTML = `
+                    <i class="fas ${icons[type]} text-xl"></i>
+                    <span class="font-medium">${message}</span>
+                    <button class="ml-auto text-white/80 hover:text-white">&times;</button>
+                `;
+
+                toast.querySelector('button').addEventListener('click', () => {
+                    toast.classList.remove('show');
+                    setTimeout(() => toast.remove(), 300);
+                });
+
+                toastContainer.appendChild(toast);
+
+                // Toast'u göster
+                setTimeout(() => toast.classList.add('show'), 10);
+
+                // Toast'u 5 saniye sonra gizle (daha uzun süre görünsün)
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                    setTimeout(() => toast.remove(), 300);
+                }, 5000);
+            };
+
+            // --- UI Durum Yönetimi ---
+            const toggleUI = (isEnabled) => {
+                if (isEnabled) {
+                    mainContentArea.classList.remove('disabled-ui');
+                } else {
+                    mainContentArea.classList.add('disabled-ui');
+                }
+            };
+
+            // --- Form ve Tasarım Alanını Temizleme/Sıfırlama ---
+            const resetForm = () => {
+                sablonListesi.value = '0';
+                // Yeni konumdaki başlık alanını güncelle
+                sablonBasligi.textContent = 'Lütfen bir şablon seçin veya yeni bir tane oluşturun.';
+                sablonBasligi.className = 'text-lg font-bold text-gray-500 transition-all duration-300';
+                etiketEnInput.value = '';
+                etiketBoyInput.value = '';
+                rfidMiCheckbox.checked = false;
+                designArea.innerHTML = '';
+                toggleUI(false);
+            };
+
+            // --- Modal Göster/Gizle Fonksiyonları ---
+            const openModal = (modalElement) => {
+                modalElement.classList.add('show');
+            };
+            const closeModal = (modalElement) => {
+                modalElement.classList.remove('show');
+            };
+
+            // --- Onay Modalı Fonksiyonları ---
+            const openConfirmModal = (title, message, onConfirm) => {
+                confirmTitle.textContent = title;
+                confirmMessage.textContent = message;
+                confirmCallback = onConfirm; // Onay fonksiyonunu sakla
+                openModal(confirmModal);
+            };
+            const closeConfirmModal = () => {
+                closeModal(confirmModal);
+                confirmCallback = null;
+            };
+            confirmIptalBtn.addEventListener('click', closeConfirmModal);
+            confirmOnaylaBtn.addEventListener('click', () => {
+                if (confirmCallback) {
+                    confirmCallback();
+                }
+                closeConfirmModal();
+            });
+
+
+            // --- API FONKSİYONLARI ---
+            const getTumSablonlar = async () => {
+                console.log('?? API çağrısı yapılıyor:', API_URL);
+                try {
+                    const response = await fetch(API_URL, { headers: getAuthHeaders() });
+                    console.log('?? API yanıtı:', response.status, response.statusText);
+
+                    if (!response.ok) {
+                        throw new Error(`API Hatası: ${response.status} - ${response.statusText}`);
+                    }
+
+                    const sablonlar = await response.json();
+                    console.log('? Şablonlar yüklendi:', sablonlar);
+
+                    const currentVal = sablonListesi.value;
+                    sablonListesi.innerHTML = '<option value="0">--- Lütfen Bir Şablon Seçin ---</option>';
+
+                    sablonlar.forEach(s => {
+                        const option = document.createElement('option');
+                        option.value = s.id;
+                        option.textContent = s.adi;
+                        sablonListesi.appendChild(option);
+                    });
+
+                    sablonListesi.value = currentVal;
+                    console.log('? Dropdown güncellendi');
+                } catch (error) {
+                    console.error('? API Hatası:', error);
+                    // --- HATA MESAJI GÜNCELLENDİ ---
+                    let hataMesaji = 'Şablonlar yüklenemedi. ';
+                    if (error.message.includes('Failed to fetch')) {
+                        hataMesaji += 'API sunucusunun (localhost:7055) çalıştığından ve CORS ayarlarının doğru olduğundan emin misiniz?';
+                    } else {
+                        hataMesaji += error.message;
+                    }
+                    showToast(hataMesaji, 'danger');
+                    // --- GÜNCELLEME SONU ---
+                }
+            };
+
+            const getSablonDetay = async (id) => {
+                if (!id || id === '0') {
+                    resetForm();
+                    return;
+                }
+
+                console.log('?? Şablon detayı getiriliyor, ID:', id);
+                try {
+                    const response = await fetch(`${API_URL}/${id}`, { headers: getAuthHeaders() });
+
+                    if (!response.ok) {
+                        throw new Error(`Detay alınamadı: ${response.status}`);
+                    }
+
+                    const sablon = await response.json();
+                    console.log('? Şablon detayı:', sablon);
+
+                    // Başlık güncelleniyor
+                    sablonBasligi.textContent = sablon.adi;
+                    sablonBasligi.className = 'text-lg font-bold text-rolex-green transition-all duration-300';
+
+                    etiketEnInput.value = sablon.baslangicEn;
+                    etiketBoyInput.value = sablon.baslangicBoy;
+                    rfidMiCheckbox.checked = sablon.rfidmi;
+
+                    designArea.innerHTML = '';
+                    window._sablonDetaylar = Array.isArray(sablon.detaylar) ? [...sablon.detaylar] : [];
+                    if (Array.isArray(sablon.detaylar)) {
+                        sablon.detaylar.forEach((detay, idx) => {
+                            let el = document.createElement('div');
+                            el.className = 'placed-item';
+                            el.setAttribute('data-id', `field-${idx}`);
+                            el.style.left = (detay.posx !== undefined ? detay.posx :20) + 'px';
+                            el.style.top = (detay.posy !== undefined ? detay.posy : (20 + idx *80)) + 'px';
+                            el.style.width = '220px';
+                            el.style.height = '60px';
+                            el.style.minWidth = '120px';
+                            el.style.minHeight = '50px';
+                            el.style.background = 'none';
+                            el.style.border = 'none';
+                            el.style.boxShadow = (detay.tip === 'barcode' || detay.tip === 'EAN13') ? '02px8px rgba(0,0,0,0.08)' : 'none';
+                            let content = '';
+                            let bgColor = '';
+                            let numColor = '';
+                            switch (detay.tip) {
+                                case 'qrcode':
+                                    content = `<div style="width:60px;height:60px;display:flex;align-items:center;justify-content:center;"><img src='https://api.qrserver.com/v1/create-qr-code/?size=60x60&data=Demo' alt='QR Kod' style='width:60px;height:60px;'/></div>`;
+                                    bgColor = 'bg-white';
+                                    numColor = 'text-blue-500 border-blue-300';
+                                    break;
+                                case 'barcode':
+                                case 'EAN13':
+                                    content = `<div style='width:100px;height:40px;display:flex;align-items:center;justify-content:center;'><img src='https://barcode.tec-it.com/barcode.ashx?data=123456789012&code=EAN13&dpi=96' alt='Barkod' style='height:40px;'/></div>`;
+                                    bgColor = 'bg-white';
+                                    numColor = 'text-gray-500 border-gray-300';
+                                    break;
+                                case 'image':
+                                    content = `<div style='width:60px;height:60px;border:2px dashed #cbd5e1;display:flex;align-items:center;justify-content:center;'><i class='fa fa-image text-gray-400 text-2xl'></i></div>`;
+                                    bgColor = 'bg-white';
+                                    numColor = 'text-gray-500 border-gray-300';
+                                    break;
+                                case 'text':
+                                default:
+                                    content = `<span class='item-formula-text block text-center font-semibold'>${detay.formul || detay.alanAdi || 'Alan'}</span>`;
+                                    bgColor = idx %2 ===0 ? 'bg-blue-200' : 'bg-orange-200';
+                                    numColor = idx %2 ===0 ? 'text-blue-500 border-blue-300' : 'text-orange-500 border-orange-300';
+                                    break;
+                            }
+                            el.innerHTML = `
+                                <span class='item-number ${numColor}'>${(idx +1).toString().padStart(2, '0')}</span>
+                                <div class='w-full h-full flex items-center justify-center ${bgColor}' style='padding:8px;border-radius:8px;'>${content}</div>
+                            `;
+                            // Tıklama ile düzenleme modalı açılır
+                            //el.addEventListener('click', function(e) {
+                            //    e.stopPropagation();
+                            //    window._editingIndex = idx;
+                            //    // Modalı aç ve inputları doldur
+                            //    document.getElementById('alan-adi').value = detay.alanAdi || '';
+                            //    document.getElementById('alan-tipi').value = detay.tip || 'text';
+                            //    document.getElementById('alan-formulu').value = detay.formul || '';
+                            //    // Diğer alanlar da doldurulabilir
+                            //    // Sil butonunu göster
+                            //    let silBtn = document.getElementById('modal-sil-btn');
+                            //    if (!silBtn) {
+                            //        silBtn = document.createElement('button');
+                            //        silBtn.id = 'modal-sil-btn';
+                            //        silBtn.className = 'px-4 py-1.5 bg-danger text-white text-sm font-semibold rounded-md hover:bg-opacity-90 shadow-sm ml-2';
+                            //        silBtn.innerText = 'Sil';
+                            //        silBtn.onclick = function() {
+                            //            window._sablonDetaylar.splice(idx,1);
+                            //            getSablonDetay(sablon.id); // Yeniden render
+                            //            closeModal(yeniAlanModal);
+                            //        };
+                            //        document.querySelector('#yeni-alan-modal .mt-6.flex').appendChild(silBtn);
+                            //    } else {
+                            //        silBtn.style.display = '';
+                            //        silBtn.onclick = function() {
+                            //            window._sablonDetaylar.splice(idx,1);
+                            //            getSablonDetay(sablon.id); // Yeniden render
+                            //            closeModal(yeniAlanModal);
+                            //        };
+                            //    }
+                            //    openModal(yeniAlanModal);
+                            //});
+                            // Çift tıklama ile düzenleme modalı açılır
+                            el.addEventListener('dblclick', function(e) {
+                                e.stopPropagation();
+                                window._editingIndex = idx;
+                                // Modalı aç ve inputları doldur
+                                document.getElementById('alan-adi').value = detay.alanAdi || '';
+                                document.getElementById('alan-tipi').value = detay.tip || 'text';
+                                document.getElementById('alan-formulu').value = detay.formul || '';
+                                // Diğer alanlar da doldurulabilir
+                                // Sil butonunu göster
+                                let silBtn = document.getElementById('modal-sil-btn');
+                                if (!silBtn) {
+                                    silBtn = document.createElement('button');
+                                    silBtn.id = 'modal-sil-btn';
+                                    silBtn.className = 'px-4 py-1.5 bg-danger text-white text-sm font-semibold rounded-md hover:bg-opacity-90 shadow-sm ml-2';
+                                    silBtn.innerText = 'Sil';
+                                    silBtn.onclick = function() {
+                                        window._sablonDetaylar.splice(idx,1);
+                                        getSablonDetay(sablon.id); // Yeniden render
+                                        closeModal(yeniAlanModal);
+                                    };
+                                    document.querySelector('#yeni-alan-modal .mt-6.flex').appendChild(silBtn);
+                                } else {
+                                    silBtn.style.display = '';
+                                    silBtn.onclick = function() {
+                                        window._sablonDetaylar.splice(idx,1);
+                                        getSablonDetay(sablon.id); // Yeniden render
+                                        closeModal(yeniAlanModal);
+                                    };
+                                }
+                                openModal(yeniAlanModal);
+                            });
+                            // Elemanı doğru konumda başlat
+                            el.style.left = (detay.posx !== undefined ? detay.posx :20) + 'px';
+                            el.style.top = (detay.posy !== undefined ? detay.posy : (20 + idx *80)) + 'px';
+
+                            // Sürükle-bırak fonksiyonu
+                            el.onmousedown = function (e) {
+                                e.preventDefault();
+                                let shiftX = e.clientX - el.getBoundingClientRect().left;
+                                let shiftY = e.clientY - el.getBoundingClientRect().top;
+                                el.classList.add('dragging');
+
+                                function moveAt(pageX, pageY) {
+                                    let x = pageX - designArea.getBoundingClientRect().left - shiftX;
+                                    let y = pageY - designArea.getBoundingClientRect().top - shiftY;
+                                    x = Math.max(0, Math.min(x, designArea.offsetWidth - el.offsetWidth));
+                                    y = Math.max(0, Math.min(y, designArea.offsetHeight - el.offsetHeight));
+                                    el.style.left = x + 'px';
+                                    el.style.top = y + 'px';
+                                }
+
+                                function onMouseMove(e) {
+                                    moveAt(e.pageX, e.pageY);
+                                }
+
+                                function onMouseUp() {
+                                    document.removeEventListener('mousemove', onMouseMove);
+                                    document.removeEventListener('mouseup', onMouseUp);
+                                    el.classList.remove('dragging');
+
+                                    // Yeni pozisyonu güncelle
+                                    let x = parseInt(el.style.left);
+                                    let y = parseInt(el.style.top);
+                                    detay.posx = x;
+                                    detay.posy = y;
+
+                                    // API'ye kaydet
+                                            fetch(`https://localhost:7055/api/BarkodDetay/${detay.ID}/konum`, {
+                                            method: 'PUT',
+                                            headers: getAuthHeaders(),
+                                            body: JSON.stringify({
+                                            PosX: x,
+                                            PosY: y
+                                        })
+                                       })
+                                    .then(() => showToast('Pozisyon kaydedildi', 'success'))
+                                    .catch(() => showToast('Pozisyon kaydedilemedi', 'danger'));
+                                }
+
+                                document.addEventListener('mousemove', onMouseMove);
+                                document.addEventListener('mouseup', onMouseUp);
+                            };
+                            el.ondragstart = () => false;
+                            designArea.appendChild(el);
+                        });
+                    }
+
+                    toggleUI(true);
+                } catch (error) {
+                    console.error('? Detay Hatası:', error);
+                    // --- HATA MESAJI GÜNCELLENDİ ---
+                    let hataMesaji = 'Şablon detayı yüklenemedi. ';
+                    if (error.message.includes('Failed to fetch')) {
+                        hataMesaji += 'API sunucusu (localhost:7055) çalışıyor mu?';
+                    } else {
+                        hataMesaji += error.message;
+                    }
+                    showToast(hataMesaji, 'danger');
+                    // --- GÜNCELLEME SONU ---
+                }
+            };
+
+            const olusturYeniSablon = async () => {
+                const adi = yeniSablonAdiInput.value.trim();
+                if (!adi) {
+                    showToast('Şablon adı boş olamaz!', 'warning');
+                    return;
+                }
+
+                const yeniSablon = {
+                    id: 0,
+                    adi: adi,
+                    rfidmi: yeniRfidMiCheckbox.checked,
+                    baslangicEn: parseInt(yeniEtiketEnInput.value) || 0,
+                    baslangicBoy: parseInt(yeniEtiketBoyInput.value) || 0,
+                    detaylar: []
+                };
+
+                console.log('?? Yeni şablon oluşturuluyor:', yeniSablon);
+                try {
+                    const response = await fetch(API_URL, {
+                        method: 'POST',
+                        headers: getAuthHeaders(),
+                        body: JSON.stringify(yeniSablon)
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`Şablon oluşturulamadı: ${response.status}`);
+                    }
+
+                    const savedSablon = await response.json();
+                    console.log('? Şablon kaydedildi:', savedSablon);
+
+                    closeModal(yeniSablonModal);
+                    await getTumSablonlar();
+                    sablonListesi.value = savedSablon.id;
+                    await getSablonDetay(savedSablon.id);
+
+                    showToast('Şablon başarıyla oluşturuldu!', 'success');
+                } catch (error) {
+                    console.error('? Kaydetme Hatası:', error);
+                    // --- HATA MESAJI GÜNCELLENDİ ---
+                    let hataMesaji = 'Şablon oluşturulamadı. ';
+                    if (error.message.includes('Failed to fetch')) {
+                        hataMesaji += 'API sunucusu (localhost:7055) çalışıyor mu?';
+                    } else {
+                        hataMesaji += error.message;
+                    }
+                    showToast(hataMesaji, 'danger');
+                    // --- GÜNCELLEME SONU ---
+                }
+            };
+
+            const silSablon = async () => {
+                const id = sablonListesi.value;
+                if (!id || id === '0') {
+                    showToast('Lütfen silinecek bir şablon seçin.', 'warning');
+                    return;
+                }
+
+                console.log(`?? Şablon siliniyor, ID: ${id}`);
+                // --- GERÇEK SİLME İŞLEMİ (Şu an test modunda) ---
+                // try {
+                //     const response = await fetch(`${API_URL}/${id}`, {
+                //         method: 'DELETE',
+                //         headers: getAuthHeaders()
+                //     });
+                //     if (!response.ok) {
+                //         throw new Error('Silme işlemi başarısız oldu.');
+                //     }
+                //     showToast('Şablon başarıyla silindi.', 'success');
+                //     resetForm();
+                //     await getTumSablonlar();
+                // } catch (error) {
+                //     console.error('? Silme Hatası:', error);
+                //     showToast(error.message, 'danger');
+                // }
+
+                // --- Test Modu ---
+                showToast('Silme işlemi henüz aktif değil (test modu)', 'info');
+                console.log('Silme işlemi test modunda, API çağrısı yapılmadı.');
+            };
+
+            // --- Olay Dinleyicileri ---
+
+            // Yeni Şablon Modalı
+            yeniBtn.addEventListener('click', () => {
+                console.log('? Yeni Şablon butonu tıklandı!');
+                // Formu temizle
+                yeniSablonAdiInput.value = '';
+                yeniEtiketEnInput.value = '';
+                yeniEtiketBoyInput.value = '';
+                yeniRfidMiCheckbox.checked = false;
+                openModal(yeniSablonModal);
+                yeniSablonAdiInput.focus();
+            });
+            yeniSablonOlusturBtn.addEventListener('click', olusturYeniSablon);
+            yeniSablonIptalBtn.addEventListener('click', () => closeModal(yeniSablonModal));
+            yeniSablonModal.addEventListener('click', e => {
+                if (e.target === yeniSablonModal) closeModal(yeniSablonModal);
+            });
+
+            // Yeni Alan Modalı
+            yeniAlanBtn.addEventListener('click', () => {
+                 console.log('? Yeni Alan Ekle butonu tıklandı!');
+                 openModal(yeniAlanModal);
+            });
+            yeniAlanIptalBtn.addEventListener('click', () => closeModal(yeniAlanModal));
+            yeniAlanModal.addEventListener('click', e => {
+                if (e.target === yeniAlanModal) closeModal(yeniAlanModal);
+            });
+            yeniAlanEkleBtn.addEventListener('click', () => {
+                // TODO: Yeni alan ekleme mantığı buraya gelecek
+                showToast('Alan eklendi! (Test)', 'success');
+                closeModal(yeniAlanModal);
+            });
+
+
+            // Ana Kontroller
+            sablonListesi.addEventListener('change', (e) => {
+                getSablonDetay(e.target.value);
+            });
+
+            kaydetBtn.addEventListener('click', () => {
+                console.log('? Kaydet butonu tıklandı!');
+                showToast('Kaydetme işlemi henüz aktif değil (test modu)', 'info');
+            });
+
+            silBtn.addEventListener('click', () => {
+                console.log('? Sil butonu tıklandı!');
+                const selectedOption = sablonListesi.options[sablonListesi.selectedIndex];
+                if (!selectedOption || selectedOption.value === '0') {
+                    showToast('Lütfen silinecek bir şablon seçin.', 'warning');
+                    return;
+                }
+                const sablonAdi = selectedOption.textContent;
+
+                openConfirmModal(
+                    'Şablonu Sil',
+                    `'${sablonAdi}' şablonunu kalıcı olarak silmek istediğinizden emin misiniz?`,
+                    silSablon // Onaylandığında çalışacak fonksiyon
+                );
+            });
+
+            // Yeni Alan Modalı için ek JS
+            const stokAlaniCombo = document.getElementById('stok-alani');
+            const alanFormuluInput = document.getElementById('alan-formulu');
+            const alanTipiCombo = document.getElementById('alan-tipi');
+            const ean13Container = document.getElementById('ean13-container');
+            stokAlaniCombo.addEventListener('change', function() {
+                const val = stokAlaniCombo.value;
+                if (val) {
+                    // Formüle ekle
+                    if (alanFormuluInput.value.trim() === '') {
+                        alanFormuluInput.value = val;
+                    } else {
+                        alanFormuluInput.value += ' + ' + val;
+                    }
+                    // Seçilen alanı bir daha göstermemek için kaldır
+                    stokAlaniCombo.querySelector(`option[value='${val}']`).remove();
+                    stokAlaniCombo.value = '';
+                }
+            });
+            alanTipiCombo.addEventListener('change', function() {
+                if (alanTipiCombo.value === 'qrcode') {
+                    ean13Container.style.display = '';
+                } else {
+                    ean13Container.style.display = 'none';
+                }
+            });
+
+            // --- Başlangıç ---
+            console.log('? Başlangıç fonksiyonları çalıştırılıyor...');
+            getTumSablonlar();
+            resetForm();
+            console.log('? Sayfa hazır!');
+        });
+    </script>
+</body>
+</html>
+
+

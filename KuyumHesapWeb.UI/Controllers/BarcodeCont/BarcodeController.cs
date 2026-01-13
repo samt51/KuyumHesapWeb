@@ -2,7 +2,7 @@
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
-namespace KuyumHesapWeb.UI.Controllers
+namespace KuyumHesapWeb.UI.Controllers.BarcodeCont
 {
     public class BarcodeController : Controller
     {

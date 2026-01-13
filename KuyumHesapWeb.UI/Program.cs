@@ -1,5 +1,4 @@
 using KuyumHesapWeb.Core;
-using KuyumHesapWeb.Core.Commond.Concrete;
 using Microsoft.AspNetCore.Authentication.Cookies;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -22,6 +21,12 @@ builder.Services
         options.ExpireTimeSpan = TimeSpan.FromHours(1);
     });
 
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.LoginPath = "/Auth/Login";
+    options.LogoutPath = "/Auth/LogoutAsync";
+    options.AccessDeniedPath = "/Auth/Login";
+});
 
 var app = builder.Build();
 
@@ -38,8 +43,8 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
-app.UseAuthentication(); 
-app.UseAuthorization();  
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapControllerRoute(
     name: "default",

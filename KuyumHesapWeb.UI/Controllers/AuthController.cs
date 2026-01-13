@@ -53,5 +53,25 @@ namespace KuyumHesapWeb.UI.Controllers
 
             return RedirectToAction("Dashboard", "Dashboard");
         }
+        [HttpPost]
+        public async Task<IActionResult> LogoutAsync()
+        {
+            // 1️⃣ Authentication cookie temizle
+            await HttpContext.SignOutAsync(
+                CookieAuthenticationDefaults.AuthenticationScheme
+            );
+
+            // 2️⃣ AuthToken cookie sil
+            if (Request.Cookies.ContainsKey("AuthToken"))
+            {
+                Response.Cookies.Delete("AuthToken", new CookieOptions
+                {
+                    Path = "/" // ⚠️ Login'de verdiğin Path ile aynı olmalı
+                });
+            }
+
+            // 3️⃣ Login sayfasına yönlendir
+            return RedirectToAction("Login", "Auth");
+        }
     }
 }
