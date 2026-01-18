@@ -1,0 +1,79 @@
+﻿@using KuyumHesapWeb.Core.Commond.Models
+@model IskontoPopupVm
+
+<div class="p-4">
+    <h3 class="font-bold text-lg mb-4">@Model.Title</h3>
+
+    <div class="space-y-4">
+        <div>
+            <div id="iskonto-tipi-toggle" class="tri-toggle-container" data-selected="@Model.DefaultActiveType">
+                <div class="tri-toggle-slider" style="width: calc((100% - 6px) / 2);"></div>
+                <div class="tri-toggle-options">
+                    <div class="tri-toggle-option" data-value="@Model.Option1Value">@Model.Option1Label</div>
+                    <div class="tri-toggle-option" data-value="@Model.Option2Value">@Model.Option2Label</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="iskonto-form-content">
+            <div class="grid grid-cols-12 gap-x-1 gap-y-1 items-end">
+                <div class="float-label-container col-span-2">
+                    <select id="form-iskonto-currency" class="float-label-input float-label-select" disabled>
+                        <option value="@Model.ActiveCurrencyId">@Model.ActiveCurrency</option>
+                    </select>
+                    <label for="form-iskonto-currency" class="float-label">Birim</label>
+                </div>
+
+                <div class="float-label-container col-span-7">
+                    <input type="text" id="form-iskonto-amount"
+                           class="float-label-input text-right font-mono px-3"
+                           placeholder=" " value="@Model.AmountText">
+                    <label for="form-iskonto-amount" class="float-label">Miktar</label>
+                </div>
+
+                <div class="float-label-container col-span-3">
+                    <input type="text" id="form-iskonto-rate"
+                           class="float-label-input text-right font-mono px-3"
+                           placeholder=" " value="@Model.RateText">
+                    <label for="form-iskonto-rate" class="float-label">Kur</label>
+                </div>
+            </div>
+        </div>
+
+        <div class="float-label-container">
+            <input type="text" id="form-iskonto-karsi-hesap" class="float-label-input"
+                   value="@Model.KarsiHesapAdi" readonly>
+            <label for="form-iskonto-karsi-hesap" class="float-label">Karşı Hesap</label>
+        </div>
+
+        <div id="iskonto-has-container">
+            <div class="grid grid-cols-12 gap-x-1 gap-y-1 items-end">
+                <div class="float-label-container col-span-2">
+                    <select id="form-iskonto-equiv-currency" class="float-label-input float-label-select" disabled>
+                        <option value="0">HAS</option>
+                    </select>
+                    <label for="form-iskonto-equiv-currency" class="float-label">Bilanço</label>
+                </div>
+
+                <div class="float-label-container col-span-7">
+                    <input type="text" id="form-iskonto-equiv-amount"
+                           class="float-label-input text-right font-mono px-3"
+                           placeholder=" " value="0,00" readonly>
+                    <label for="form-iskonto-equiv-amount" class="float-label">HAS Karşılığı</label>
+                </div>
+
+                <div class="float-label-container col-span-3">
+                    <input type="text" id="form-iskonto-equiv-rate"
+                           class="float-label-input text-right font-mono px-3"
+                           placeholder=" " value="0,0000" readonly>
+                    <label for="form-iskonto-equiv-rate" class="float-label">HAS Kuru</label>
+                </div>
+            </div>
+        </div>
+
+        <div class="float-label-container mt-4">
+            <textarea id="form-iskonto-aciklama" class="float-label-input" placeholder=" " rows="3"></textarea>
+            <label for="form-iskonto-aciklama" class="float-label">Açıklama</label>
+        </div>
+    </div>
+</div>

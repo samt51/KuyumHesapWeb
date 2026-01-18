@@ -1,5 +1,5 @@
-﻿@using KuyumHesapWeb.Core.Feature.AccountFeature.Queries.GetAll
-@model List<GetAllAccountQueryResponse>
+﻿@using KuyumHesapWeb.Core.Commond.Models.Dtos
+@model GetAllAccountResponseDto
 @{
     ViewData["Title"] = "Index";
     Layout = "~/Views/Shared/_Layout.cshtml";
@@ -9,604 +9,967 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Roboto+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/slim-select/2.8.2/slimselect.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/slim-select/2.8.2/slimselect.min.js"></script>
     <style>
-
-        :root {
-            --bg: #f7f8fc;
-            --card: #ffffff;
-            --text: #111827;
-            --muted: #6b7280;
-            --green: #1E8449;
-            --green-2: rgba(30,132,73,.18);
-            --green-border: rgba(30,132,73,.35);
-            --blue: #3B82F6;
-            --blue-2: rgba(59,130,246,.18);
-            --blue-border: rgba(59,130,246,.40);
-            --shadow: 0 6px 18px rgba(0,0,0,.06);
-            --shadow-sm: 0 2px 10px rgba(0,0,0,.05);
-            --radius-xl: 18px;
-            --radius-lg: 14px;
-            --radius-md: 12px;
+        .ekstre-list-container {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
         }
 
-        html, body {
-            height: 100%;
-            overflow: hidden;
+        .ekstre-item.selected-ekstre-row {
+            background-color: #e0f2fe; /* light blue */
+            border-color: #0ea5e9;
+            box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.4);
+        }
+        /* YENİ: Floating Label Stilleri */
+        .float-label-container {
+            position: relative;
+            margin-top: 1.5rem; /* Etiketin yukarı kayması için yer aç */
         }
 
-        body {
-            font-family: 'Inter', sans-serif;
-            background: var(--bg);
-            color: var(--text);
-        }
-
-        /* Kart & panel görünümü */
-        .theme-border {
-            border: 1px solid var(--green-border);
-            border-radius: var(--radius-xl);
-            box-shadow: var(--shadow-sm);
-            background: var(--card);
-        }
-
-        .theme-border-50 {
-            border: 1px solid rgba(30,132,73,.22);
-            border-radius: var(--radius-lg);
-        }
-
-        body.cari-active .theme-border {
-            border-color: var(--blue-border);
-        }
-
-        body.cari-active .theme-border-50 {
-            border-color: rgba(59,130,246,.22);
-        }
-
-        /* Header */
-        header.theme-border,
-        header.bg-white {
-            border-radius: var(--radius-xl) !important;
-            box-shadow: var(--shadow-sm) !important;
-        }
-
-        /* Üst butonlar (CRM / Ekstre / Satış Listesi) */
-        header button {
-            height: 34px;
-            border-radius: 12px !important;
-            border: 1px solid #d1d5db !important;
-            background: #fff !important;
-            box-shadow: 0 1px 2px rgba(0,0,0,.04);
-            transition: transform .08s ease, box-shadow .2s ease, border-color .2s ease;
-        }
-
-            header button:hover {
-                box-shadow: 0 6px 14px rgba(0,0,0,.08);
-                transform: translateY(-1px);
-            }
-
-            header button:active {
-                transform: translateY(0);
-            }
-
-        /* Select’ler (SlimSelect yokken düzgün görünsün) */
-        #customer-select, #salesperson-select {
+        .float-label-input {
             width: 100%;
-            height: 38px;
-            padding: 0 38px 0 12px;
-            border: 1px solid #d1d5db;
-            border-radius: 12px;
-            background: #fff;
-            font-size: 14px;
-            font-weight: 600;
-            color: #111827;
-            outline: none;
+            padding: 0.75rem 0.75rem 0.25rem 0.75rem; /* Üst padding etikete yer açar */
+            border: 1px solid #d1d5db; /* Tailwind border-gray-300 */
+            border-radius: 0.375rem; /* Tailwind rounded-md */
+            font-size: 0.875rem; /* Tailwind text-sm */
+            height: 38px; /* Diğer inputlarla aynı yükseklik */
+            transition: border-color 0.2s ease-in-out;
+            background-color: white;
+            padding-top: 0.15rem; /* Üst padding'i biraz artırarak metni aşağı itin */
+            padding-bottom: 0rem; /* Alt padding'i azaltın */
+            line-height: 1.25; /* Satır yüksekliğini ayarlayın (gerekirse) */
+        }
+        /* Select için özel padding ayarı */
+        .float-label-select {
+            padding-top: 0.15rem; /* Üst padding'i artır */
+            padding-bottom: 0rem; /* Alt padding'i azalt */
+        }
+
+        .float-label-input.pt-4 { /* textarea için kullandığımız sınıf */
+            padding-top: 1.25rem !important; /* Etikete daha fazla yer aç */
+        }
+
+        .float-label {
+            position: absolute;
+            top: 0.65rem; /* Inputun ortasına yakın */
+            left: 0.75rem;
+            font-size: 0.875rem; /* Tailwind text-sm */
+            color: #6b7280; /* Tailwind text-gray-500 */
+            pointer-events: none; /* Üzerine tıklanınca input'a odaklanılsın */
+            transition: all 0.2s ease-in-out;
+            background-color: white; /* Arkasındaki çizgiyi silmek için */
+            padding: 0 0.25rem; /* Kenarlara hafif boşluk */
+        }
+        /* Textarea Stilleri (Otomatik Genişleyen ve Şık Görünümlü) */
+        textarea.float-label-input {
+            /* Temel Görünüm ve Floating Label Uyumu */
+            padding-top: 1.25rem; /* Floating label için yer */
+            padding-bottom: 0.25rem;
+            line-height: 1.5; /* Satır yüksekliği - içeriğe göre ayarlanabilir */
+            min-height: calc(1.5em * 2 + 1.5rem); /* Yaklaşık 3 satır + padding için min yükseklik */
+            height: auto; /* Başlangıçta yüksekliği içeriğe göre ayarla */
+            /* Otomatik Genişleme ve Kaydırma */
+            overflow-y: hidden; /* Dikey kaydırma çubuğunu HER ZAMAN gizle */
+            resize: none; /* Yeniden boyutlandırma tutamacını kaldır */
+            /* Tarayıcı varsayılan görünümünü sıfırlama (isteğe bağlı) */
             appearance: none;
             -webkit-appearance: none;
             -moz-appearance: none;
-            box-shadow: 0 1px 2px rgba(0,0,0,.04);
+            background-clip: padding-box; /* Border'ın içeriğin üzerine binmesini engelle */
         }
 
-            #customer-select:focus, #salesperson-select:focus {
-                border-color: var(--green);
-                box-shadow: 0 0 0 3px var(--green-2);
+            /* İnce Kaydırma Çubuğu (Gerekirse diye, ama overflow:hidden ile gizlenmeli) */
+            textarea.float-label-input::-webkit-scrollbar {
+                display: none; /* Webkit'te tamamen gizle */
             }
 
-        body.cari-active #customer-select:focus,
-        body.cari-active #salesperson-select:focus {
-            border-color: var(--blue);
-            box-shadow: 0 0 0 3px var(--blue-2);
+        textarea.float-label-input {
+            scrollbar-width: none; /* Firefox'ta tamamen gizle */
+        }
+        /* Input focus olduğunda veya içinde değer olduğunda label'ı yukarı taşı */
+        .float-label-input:focus + .float-label,
+        .float-label-input:not(:placeholder-shown) + .float-label,
+        .float-label-container.select-has-value .float-label { /* Select için özel durum */
+            top: -0.6rem; /* Inputun üstüne taşı */
+            left: 0.5rem;
+            font-size: 0.75rem; /* Tailwind text-xs */
+            color: #3b82f6; /* Tailwind text-blue-600 */
+        }
+        /* Focus olduğunda border rengini değiştir */
+        .float-label-input:focus {
+            outline: none;
+            border-color: #3b82f6; /* Tailwind focus:border-blue-500 */
+            box-shadow: 0 0 0 1px #3b82f6; /* Tailwind focus:ring-1 focus:ring-blue-500 */
+        }
+        /* Readonly inputlar için farklı stil */
+        .float-label-input[readonly] {
+            background-color: #f3f4f6; /* Tailwind bg-gray-100 */
+            cursor: not-allowed;
         }
 
-        /* Select ok’u – customer-select kapsayan div’e bu class’i ver: app-shell-customer */
-        .app-shell-customer {
-            position: relative;
-        }
-
-            .app-shell-customer::after {
-                content: "▾";
-                position: absolute;
-                right: 12px;
-                top: 50%;
-                transform: translateY(-50%);
-                color: #6b7280;
-                pointer-events: none;
-                font-size: 14px;
-            }
-
-        /* Tarih input (fiş tarihi) */
-        #fis-tarihi {
-            height: 34px;
-            padding: 0 10px;
-            border-radius: 12px;
+        .ekstre-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            background-color: #fff;
+            border-radius: 8px;
             border: 1px solid #e5e7eb;
-            background: #fff;
-            box-shadow: 0 1px 2px rgba(0,0,0,.04);
+            border-left-width: 5px;
+            transition: box-shadow 0.2s ease-in-out;
         }
 
-        /* Sol / orta / sağ panellerin iç çizgileri daha yumuşak */
-        .bg-white.rounded-xl {
-            border-radius: var(--radius-xl) !important;
-            box-shadow: var(--shadow-sm) !important;
+            .ekstre-item:hover {
+                box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            }
+
+        .ekstre-item-giris {
+            border-left-color: #22c55e; /* green-500 */
         }
 
-        /* Scrollbar (mevcut sınıfın aynısı) */
+        .ekstre-item-cikis {
+            border-left-color: #ef4444; /* red-500 */
+        }
+
+        .ekstre-sol {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+            .ekstre-sol .baslik {
+                font-weight: 600;
+                font-size: 0.9rem;
+            }
+
+            .ekstre-sol .tarih {
+                font-size: 0.75rem;
+                color: #6b7280;
+                margin-top: 2px;
+            }
+
+        .ekstre-orta {
+            display: flex;
+            align-items: center;
+            gap: 20px; /* Gruplar arası boşluk */
+            font-family: 'Roboto Mono', monospace;
+            margin: 0 24px;
+        }
+
+        .ekstre-detay-grup {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .ekstre-sag {
+            display: flex;
+            align-items: center;
+            font-family: 'Roboto Mono', monospace;
+            margin-left: auto;
+        }
+
+        .bakiye-grup {
+            display: flex;
+            flex-direction: column;
+            text-align: right;
+            margin-right: 16px;
+        }
+
+            .bakiye-grup .eski-bakiye {
+                font-size: 0.7rem;
+                color: #6b7280;
+            }
+
+            .bakiye-grup .son-bakiye {
+                font-size: 0.8rem;
+                font-weight: 700;
+                color: #1f2937;
+            }
+
+        .hareket-id {
+            font-size: 0.7rem;
+            color: #9ca3af;
+            margin-bottom: 2px;
+        }
+
+        .mutabakat-switch {
+            position: relative;
+            display: inline-block;
+            width: 34px;
+            height: 20px;
+        }
+
+            .mutabakat-switch input {
+                opacity: 0;
+                width: 0;
+                height: 0;
+            }
+
+        .mutabakat-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 20px;
+        }
+
+            .mutabakat-slider:before {
+                position: absolute;
+                content: "";
+                height: 14px;
+                width: 14px;
+                left: 3px;
+                bottom: 3px;
+                background-color: white;
+                transition: .4s;
+                border-radius: 50%;
+            }
+
+        input:checked + .mutabakat-slider {
+            background-color: #3B82F6;
+        }
+
+            input:checked + .mutabakat-slider:before {
+                transform: translateX(14px);
+            }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7f8fc;
+            transition: background-color 0.4s ease;
+        }
+
+        #receipt-log, #receipt-totals {
+            font-family: 'Roboto Mono', monospace;
+        }
+
         .custom-scrollbar::-webkit-scrollbar {
-            width: 6px;
+            width: 5px;
         }
 
         .custom-scrollbar::-webkit-scrollbar-track {
-            background: transparent;
+            background: #f1f1f1;
         }
 
         .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: rgba(17,24,39,.18);
+            background: #d1d5db;
             border-radius: 10px;
         }
 
             .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-                background: rgba(17,24,39,.28);
+                background: #9ca3af;
             }
 
-        /* =========================================================
-                                    SATIŞ / CARİ Toggle (2. görseldeki gibi yeşil kapsül + beyaz seçili)
-                                    HTML:
-                                    <input class="toggle-checkbox" ...> +
-                                    <label class="toggle-label">
-                                        ...
-                                        Span’ler: .toggle-text.toggle-satis ve .toggle-text.toggle-cari
-                                        ========================================================= */
+        .theme-border {
+            border: 1px solid;
+            transition: border-color 0.4s ease, border-top-width 0.3s ease, border-top-color 0.3s ease;
+        }
+
+        .theme-border-50 {
+            border: 1px solid;
+            transition: border-color 0.4s ease;
+        }
+
+        .theme-icon-color {
+            transition: color 0.4s ease;
+        }
+
+        .modal-bg {
+            background-color: rgba(0,0,0,0.5);
+            transition: opacity 0.3s ease;
+        }
+
+        #fis-list-modal.hidden .modal-bg {
+            opacity: 0;
+        }
+
+        #fis-list-modal .modal-content {
+            transition: transform 0.3s ease;
+            transform: translateX(100%);
+        }
+
+        #fis-list-modal:not(.hidden) .modal-content {
+            transform: translateX(0);
+        }
+
+        #fis-list-table tbody tr:hover {
+            background-color: #f9fafb;
+        }
+
+        #fis-list-table tbody tr.selected-row {
+            background-color: #eff6ff;
+            --tw-ring-color: #3b82f6;
+            --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);
+            --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color);
+            box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000);
+        }
+
+        body.satis-active .theme-border {
+            border-color: rgba(30, 132, 73, 0.35);
+        }
+
+        body.satis-active .theme-border-50 {
+            border-color: rgba(30, 132, 73, 0.5);
+        }
+
+        body.satis-active .theme-icon-color.income {
+            color: #16a34a;
+        }
+
+        body.satis-active .theme-icon-color.expense {
+            color: #dc2626;
+        }
+
+        .account-type-btn {
+            transition: background-color 0.2s ease, color 0.2s ease;
+            border: 1px solid #d1d5db;
+        }
+
+        .active-account-type-btn {
+            background-color: #3b82f6;
+            color: white;
+            border-color: #3b82f6;
+            font-weight: 600;
+        }
+
+        body.cari-active .theme-border {
+            border-color: rgba(59, 130, 246, 0.4);
+        }
+
+        body.cari-active .theme-border-50 {
+            border-color: rgba(59, 130, 246, 0.55);
+        }
+
+        body.cari-active .theme-icon-color.income {
+            color: #16a34a;
+        }
+
+        body.cari-active .theme-icon-color.expense {
+            color: #dc2626;
+        }
+        /* YENİ: 3'lü Nakit Hesap Tipi Toggle Stilleri */
+        .tri-toggle-container {
+            position: relative;
+            display: inline-block; /* Veya inline-flex */
+            width: 100%; /* Form içinde tam genişlik */
+            /* max-width: 240px; İsterseniz maksimum genişlik verebilirsiniz */
+            height: 38px;
+            background-color: #e5e7eb; /* Tailwind bg-gray-200 */
+            border-radius: 8px; /* Tailwind rounded-lg */
+            padding: 3px;
+            box-shadow: inset 0 1px 2px rgba(0,0,0,0.1);
+        }
+
+        .tri-toggle-slider { /* Kayacak olan beyaz kısım */
+            position: absolute;
+            height: 32px; /* Konteyner yüksekliği - (padding * 2) */
+            width: calc((100% - 6px) / 3); /* 3 seçenek var, padding'i hesaba kat */
+            top: 3px;
+            left: 3px;
+            background-color: white;
+            border-radius: 6px; /* Konteyner border-radius'undan biraz küçük */
+            transition: transform 0.4s ease; /* Yumuşak geçiş animasyonu */
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06); /* Tailwind shadow */
+            z-index: 1;
+        }
+
+        .tri-toggle-options {
+            display: flex;
+            height: 100%;
+            position: relative;
+            z-index: 2; /* Yazılar slider'ın üzerinde olmalı */
+        }
+
+        .tri-toggle-option {
+            flex: 1; /* Seçenekler eşit genişlikte */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600; /* Tailwind font-semibold */
+            color: #6b7280; /* Pasif yazı rengi - Tailwind text-gray-500 */
+            user-select: none;
+            transition: color 0.4s ease; /* Yazı rengi geçişi */
+        }
+
+        #acikhesap-tipi-toggle[data-selected="borcuna"] .tri-toggle-slider {
+            transform: translateX(0%);
+        }
+
+        #acikhesap-tipi-toggle[data-selected="alacagina"] .tri-toggle-slider {
+            transform: translateX(100%);
+        }
+
+        #ceviri-tipi-toggle[data-selected="borcundaki"] .tri-toggle-slider {
+            transform: translateX(0%);
+        }
+
+        #ceviri-tipi-toggle[data-selected="alacagindaki"] .tri-toggle-slider {
+            transform: translateX(100%);
+        }
+        /* Aktif seçeneğin yazı rengi */
+        .tri-toggle-option.active {
+            color: #3b82f6; /* Aktif yazı rengi - Tailwind text-blue-600 */
+        }
+
+        /* Slider'ın pozisyonunu data attribute'una göre ayarla */
+        /* ÖNEMLİ: Buradaki değerler ('KASALAR', 'BANKALAR', 'POSLAR') JavaScript'teki accountTypes.value ile eşleşmeli */
+        .tri-toggle-container[data-selected="KASALAR"] .tri-toggle-slider {
+            transform: translateX(0%);
+        }
+
+        .tri-toggle-container[data-selected="BANKALAR"] .tri-toggle-slider {
+            transform: translateX(100%);
+        }
+
+        .tri-toggle-container[data-selected="POSLAR"] .tri-toggle-slider {
+            transform: translateX(200%);
+        }
+
         .toggle-container {
+            position: relative;
+            display: inline-block;
             width: 110px;
             height: 38px;
         }
 
         .toggle-checkbox {
-            position: absolute;
-            opacity: 0;
-            pointer-events: none;
-        }
-
-        .toggle-label {
-            height: 38px;
-            padding: 3px;
-            border-radius: 14px;
-            display: inline-flex;
-            align-items: center;
-            gap: 3px;
-            border: 1px solid rgba(30,132,73,.55);
-            background: var(--green);
-            box-shadow: 0 2px 10px rgba(0,0,0,.06);
-        }
-
-        body.cari-active .toggle-label {
-            background: var(--blue);
-            border-color: rgba(59,130,246,.55);
-        }
-
-        /* metinler */
-        .toggle-text {
-            flex: 1;
-            text-align: center;
-            padding: 7px 10px;
-            border-radius: 11px;
-            font-size: 13px;
-            font-weight: 800;
-            line-height: 1;
-            user-select: none;
-            color: rgba(255,255,255,.78);
-            transition: background .18s ease, color .18s ease, opacity .18s ease, box-shadow .18s ease;
-        }
-
-        /* default: checkbox kapalı => SATIŞ seçili */
-        .toggle-checkbox:not(:checked) + .toggle-label .toggle-satis {
-            background: #fff;
-            color: var(--green);
-            box-shadow: 0 1px 2px rgba(0,0,0,.12);
-        }
-
-        .toggle-checkbox:not(:checked) + .toggle-label .toggle-cari {
-            opacity: .65;
-        }
-
-        /* checkbox açık => CARİ seçili */
-        .toggle-checkbox:checked + .toggle-label .toggle-cari {
-            background: #fff;
-            color: var(--green); /* beyaz pill içi yazı yeşil kalsın */
-            box-shadow: 0 1px 2px rgba(0,0,0,.12);
-        }
-
-        .toggle-checkbox:checked + .toggle-label .toggle-satis {
-            opacity: .65;
-        }
-
-        /* cari-active modunda seçili yazı rengi mavi olsun istersen */
-        body.cari-active .toggle-checkbox:checked + .toggle-label .toggle-cari {
-            color: var(--blue);
-        }
-
-        body.cari-active .toggle-checkbox:not(:checked) + .toggle-label .toggle-satis {
-            color: var(--blue);
-        }
-
-        /* =========================================================
-                                        Sağdaki işlem butonları (Nakit Tahsilat, Ürün Alış, vb.)
-                                        ========================================================= */
-        .action-btn {
-            border-radius: 14px !important;
-            border: 1px solid rgba(30,132,73,.28) !important;
-            background: #fff !important;
-            box-shadow: 0 2px 10px rgba(0,0,0,.05);
-            transition: transform .08s ease, box-shadow .2s ease, border-color .2s ease;
-        }
-
-            .action-btn:hover {
-                transform: translateY(-1px);
-                box-shadow: 0 10px 18px rgba(0,0,0,.08);
-                border-color: rgba(30,132,73,.40) !important;
-            }
-
-        body.cari-active .action-btn {
-            border-color: rgba(59,130,246,.28) !important;
-        }
-
-            body.cari-active .action-btn:hover {
-                border-color: rgba(59,130,246,.40) !important;
-            }
-
-        /* ikon renkleri (senin mevcut .theme-icon-color ile uyumlu) */
-        .theme-icon-color.income {
-            color: #16a34a;
-        }
-
-        .theme-icon-color.expense {
-            color: #dc2626;
-        }
-
-        /* =========================================================
-                                        Alt sağ Kaydet / Yeni İşlem
-                                        ========================================================= */
-        #main-save-button {
-            background: #bbf7d0 !important;
-            border: 1px solid #86efac !important;
-            color: #14532d !important;
-            border-radius: 14px !important;
-            box-shadow: 0 2px 10px rgba(0,0,0,.05);
-        }
-
-            #main-save-button:hover {
-                filter: brightness(.98);
-                box-shadow: 0 10px 18px rgba(0,0,0,.08);
-            }
-
-        #main-reset-button {
-            background: #e5e7eb !important;
-            border: 1px solid #d1d5db !important;
-            color: #111827 !important;
-            border-radius: 14px !important;
-            box-shadow: 0 2px 10px rgba(0,0,0,.05);
-        }
-
-            #main-reset-button:hover {
-                filter: brightness(.98);
-                box-shadow: 0 10px 18px rgba(0,0,0,.08);
-            }
-
-        /* Fiş başlığı tipografi */
-        #receipt-title {
-            font-size: 22px;
-            font-weight: 800;
-            color: #111827;
-        }
-
-        /* Totals alanı */
-        #receipt-totals {
-            border-top: 1px solid rgba(0,0,0,.06);
-        }
-
-            #receipt-totals .text-green-600 {
-                color: #16a34a !important;
-            }
-
-            #receipt-totals .text-red-600 {
-                color: #dc2626 !important;
-            }
-
-            #receipt-totals .text-blue-700 {
-                color: #1d4ed8 !important;
-            }
-
-        /* Modal kartlar (varsa) */
-        .ekstre-info-card, .modal-content {
-            border-radius: var(--radius-xl);
-            box-shadow: var(--shadow);
-        }
-        /* ===== SATIŞ / CARİ TOGGLE ===== */
-
-        .toggle-checkbox {
-            display: none;
-        }
-
-        .toggle-label {
-            display: inline-flex;
-            align-items: center;
-            padding: 4px;
-            width: 120px;
-            height: 38px;
-            border-radius: 14px;
-            cursor: pointer;
-            position: relative;
-            transition: background-color .25s ease;
-            background-color: #15803d; /* SATIŞ varsayılan */
-        }
-
-            /* Beyaz kayan pill */
-            .toggle-label::before {
-                content: "";
-                position: absolute;
-                top: 4px;
-                left: 4px;
-                width: 56px;
-                height: 30px;
-                background: white;
-                border-radius: 10px;
-                box-shadow: 0 1px 3px rgba(0,0,0,.2);
-                transition: transform .25s ease;
-            }
-
-        /* Metinler */
-        .toggle-text {
-            flex: 1;
-            text-align: center;
-            font-size: 13px;
-            font-weight: 700;
-            z-index: 2;
-            transition: color .25s ease, opacity .25s ease;
-        }
-
-        /* === SATIŞ AKTİF === */
-        .toggle-satis {
-            color: #15803d;
-        }
-
-        .toggle-cari {
-            color: rgba(255,255,255,.7);
-        }
-
-        /* === CARİ AKTİF === */
-        .toggle-checkbox:checked + .toggle-label {
-            background-color: #2563eb;
-        }
-
-            .toggle-checkbox:checked + .toggle-label::before {
-                transform: translateX(56px);
-            }
-
-            .toggle-checkbox:checked + .toggle-label .toggle-satis {
-                color: rgba(255,255,255,.7);
-            }
-
-            .toggle-checkbox:checked + .toggle-label .toggle-cari {
-                color: #2563eb;
-            }
-        /* =========================
-                                           SATIŞ / CARİ SEGMENTED TOGGLE (ss1/ss2 gibi)
-                                           HTML:
-                                           <input id="operation-type-toggle" class="toggle-checkbox" type="checkbox">
-                                           <label for="operation-type-toggle" class="toggle-label">
-                                             <span class="toggle-text">SATIŞ</span>
-                                             <span class="toggle-text">CARİ</span>
-                                           </label>
-                                           JS: body'ye satis-active / cari-active veriyorsun.
-                                           ========================= */
-
-        /* Toggle container ölçüsü */
-        .toggle-container {
-            position: relative;
-            display: inline-block;
-            width: 120px;
-            height: 38px;
-        }
-
-        /* Checkbox gizli */
-        .toggle-checkbox {
-            position: absolute;
             opacity: 0;
             width: 0;
             height: 0;
-            pointer-events: none;
         }
 
-        /* Label kapsül (arka plan) */
         .toggle-label {
-            position: relative;
-            width: 120px;
-            height: 38px;
-            display: inline-flex;
-            align-items: center;
-            padding: 3px;
-            border-radius: 12px;
+            position: absolute;
             cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border-radius: 8px;
+            transition: background-color 0.4s, opacity 0.4s;
+            display: flex;
+            align-items: center;
+            color: white;
+            font-weight: bold;
+            font-size: 13px;
             user-select: none;
-            border: 1px solid rgba(17,24,39,.18);
-            box-shadow: 0 1px 2px rgba(0,0,0,.06);
-            transition: background-color .2s ease, border-color .2s ease;
         }
 
-            /* İçteki beyaz pill (slider) */
             .toggle-label::before {
-                content: "";
+                content: '';
                 position: absolute;
-                top: 3px;
-                left: 3px;
-                width: calc(50% - 3px);
                 height: 32px;
-                background: #fff;
-                border-radius: 10px;
-                box-shadow: 0 1px 2px rgba(0,0,0,.12);
-                transition: transform .22s ease;
+                width: 52px;
+                left: 3px;
+                top: 3px;
+                background-color: white;
+                border-radius: 6px;
+                transition: transform 0.4s ease;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+                z-index: 1;
             }
 
-        /* Yazılar */
         .toggle-text {
             flex: 1;
             text-align: center;
-            font-size: 13px;
-            font-weight: 800;
-            line-height: 1;
-            z-index: 1;
-            transition: color .2s ease, opacity .2s ease;
-            letter-spacing: .2px;
+            position: relative;
+            z-index: 2;
+            transition: color 0.4s ease, opacity 0.4s ease;
         }
 
-        /* ===== SATIŞ tema (YEŞİL) ===== */
         body.satis-active .toggle-label {
-            background: #15803d; /* yeşil */
-            border-color: rgba(21,128,61,.45);
+            background-color: #1E8449;
         }
 
-        /* SATIŞ aktifken: checkbox unchecked => pill solda (SATIŞ tarafı) */
-        body.satis-active .toggle-checkbox:not(:checked) + .toggle-label::before {
-            transform: translateX(0);
-        }
-
-        /* SATIŞ aktifken: SATIŞ yazısı (aktif) yeşil, CARİ pasif beyaz */
-        body.satis-active .toggle-checkbox:not(:checked) + .toggle-label .toggle-text:first-child {
-            color: #15803d;
+        body.satis-active .toggle-text:first-child {
+            color: #1E8449;
             opacity: 1;
         }
 
-        body.satis-active .toggle-checkbox:not(:checked) + .toggle-label .toggle-text:last-child {
-            color: rgba(255,255,255,.85);
-            opacity: .85;
+        body.satis-active .toggle-text:last-child {
+            color: #FFFFFF;
+            opacity: 0.5;
         }
 
-        /* ===== CARİ tema (MAVİ) ===== */
         body.cari-active .toggle-label {
-            background: #3b82f6; /* mavi */
-            border-color: rgba(59,130,246,.55);
+            background-color: #3B82F6;
         }
 
-        /* CARİ aktifken: checkbox checked => pill sağa (CARİ tarafı) */
-        body.cari-active .toggle-checkbox:checked + .toggle-label::before {
-            transform: translateX(calc(100% - 0px));
+        body.cari-active .toggle-text:first-child {
+            color: #FFFFFF;
+            opacity: 0.5;
         }
 
-        /* CARİ aktifken: CARİ yazısı (aktif) mavi, SATIŞ pasif beyaz */
-        body.cari-active .toggle-checkbox:checked + .toggle-label .toggle-text:last-child {
-            color: #3b82f6;
+        body.cari-active .toggle-text:last-child {
+            color: #3B82F6;
             opacity: 1;
         }
 
-        body.cari-active .toggle-checkbox:checked + .toggle-label .toggle-text:first-child {
-            color: rgba(255,255,255,.85);
-            opacity: .85;
+        .toggle-checkbox:checked + .toggle-label::before {
+            transform: translateX(52px);
         }
 
-        /* Checkbox checked ama body satis-active kalırsa (yanlış state) => yine de sağa kaydır */
-        body.satis-active .toggle-checkbox:checked + .toggle-label::before {
-            transform: translateX(calc(100% - 0px));
-        }
-        /* Checkbox unchecked ama body cari-active kalırsa => sola al */
-        body.cari-active .toggle-checkbox:not(:checked) + .toggle-label::before {
-            transform: translateX(0);
+        .toggle-checkbox:disabled + .toggle-label {
+            opacity: 0.6;
+            cursor: not-allowed;
         }
 
-        /* =========================
-                                           Tema border’ları (ekrandaki yeşil/mavi çerçeve hissi)
-                                           Sen zaten theme-border kullanıyorsun; bunu güçlendiriyoruz.
-                                           ========================= */
-        .theme-border,
-        .theme-border-50 {
-            border-radius: 14px;
+        .karsilik-toggle-container {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 24px;
         }
 
-        body.satis-active .theme-border {
-            border-color: rgba(21,128,61,.35);
+        .karsilik-toggle {
+            opacity: 0;
+            width: 0;
+            height: 0;
         }
 
-        body.satis-active .theme-border-50 {
-            border-color: rgba(21,128,61,.28);
+        .karsilik-toggle-label {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 24px;
         }
 
-        body.cari-active .theme-border {
-            border-color: rgba(59,130,246,.38);
+            .karsilik-toggle-label:before {
+                position: absolute;
+                content: "";
+                height: 18px;
+                width: 18px;
+                left: 3px;
+                bottom: 3px;
+                background-color: white;
+                transition: .4s;
+                border-radius: 50%;
+            }
+
+        .karsilik-toggle:checked + .karsilik-toggle-label {
+            background-color: #3B82F6;
         }
 
-        body.cari-active .theme-border-50 {
-            border-color: rgba(59,130,246,.30);
+            .karsilik-toggle:checked + .karsilik-toggle-label:before {
+                transform: translateX(20px);
+            }
+
+        .ss-main .ss-single-selected, .ss-main .ss-multi-selected {
+            height: 38px;
+            padding: 6px 10px;
+            font-size: 0.875rem;
+            border-color: #d1d5db;
         }
 
-        /* Aksiyon butonlarının çerçevesi de temaya uysun */
-        body.satis-active .action-btn {
-            border-color: rgba(21,128,61,.35) !important;
+        .receipt-item.selected-item-income {
+            background-color: #f0fdf4;
+            border-color: #22c55e;
         }
 
-        body.cari-active .action-btn {
-            border-color: rgba(59,130,246,.35) !important;
+        .receipt-item.selected-item-expense {
+            background-color: #fef2f2;
+            border-color: #ef4444;
         }
 
-        /* (İsteğe bağlı) Genel kart gölgesi biraz yumuşasın */
-        .theme-border {
-            box-shadow: 0 1px 3px rgba(0,0,0,.06);
+        .receipt-item.income-border {
+            border: 1px solid #dcfce7;
         }
 
-        .hidden {
-            display: none !important;
+        .receipt-item.expense-border {
+            border: 1px solid #fee2e2;
         }
 
-        #page-root {
-            height: 100vh;
+        button:disabled {
+            cursor: not-allowed;
+            background-color: #e5e7eb !important;
+            opacity: 0.7;
+        }
+        /* Üçlü anahtarın genel kapsayıcısı */
+        .toggle-group {
+            position: relative;
+            display: flex;
+            background-color: #e5e7eb; /* Tailwind gray-200 */
+            border-radius: 0.5rem; /* Tailwind rounded-lg */
+            padding: 0.25rem; /* Tailwind p-1 */
+            width: 100%;
+            box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
+        }
+
+        /* Seçimi gösteren hareketli arkaplan */
+        .toggle-slider {
+            position: absolute;
+            top: 0.25rem;
+            left: 0.25rem;
+            width: calc((100% - 0.5rem) / 3);
+            height: calc(100% - 0.5rem);
+            background-color: white;
+            border-radius: 0.375rem; /* Tailwind rounded-md */
+            box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 1;
+        }
+
+        /* Görünmez radio butonlar */
+        .toggle-radio {
+            display: none;
+        }
+
+        /* Tıklanabilir metin etiketleri */
+        .toggle-label {
+            flex: 1;
+            text-align: center;
+            padding-top: 0.5rem;
+            padding-bottom: 0.5rem;
+            font-weight: 600;
+            font-size: 0.875rem; /* Tailwind text-sm */
+            color: #4b5563; /* Tailwind gray-600 */
+            cursor: pointer;
+            z-index: 2;
+            transition: color 0.3s ease;
+            user-select: none;
+        }
+
+        #virman-tipi-toggle[data-selected="giris"] .tri-toggle-slider,
+        #virman-tipi-toggle[data-selected="borcuna"] .tri-toggle-slider {
+            transform: translateX(0%);
+        }
+
+        #virman-tipi-toggle[data-selected="cikis"] .tri-toggle-slider,
+        #virman-tipi-toggle[data-selected="alacagina"] .tri-toggle-slider {
+            transform: translateX(100%);
+        }
+
+        #iskonto-tipi-toggle[data-selected="borcuna"] .tri-toggle-slider {
+            transform: translateX(0%);
+        }
+
+        #iskonto-tipi-toggle[data-selected="alacagina"] .tri-toggle-slider {
+            transform: translateX(100%);
+        }
+        /* Seçili radio butona göre kaydırıcıyı hareket ettir ve metin rengini değiştir */
+        #toggle-radio-kasa:checked ~ .toggle-slider {
+            transform: translateX(0%);
+        }
+
+        #toggle-radio-kasa:checked ~ .toggle-label[for="toggle-radio-kasa"] {
+            color: #1f2937; /* Tailwind gray-800 */
+        }
+
+        #toggle-radio-banka:checked ~ .toggle-slider {
+            transform: translateX(100%);
+        }
+
+        #toggle-radio-banka:checked ~ .toggle-label[for="toggle-radio-banka"] {
+            color: #1f2937;
+        }
+
+        #toggle-radio-pos:checked ~ .toggle-slider {
+            transform: translateX(200%);
+        }
+
+        #toggle-radio-pos:checked ~ .toggle-label[for="toggle-radio-pos"] {
+            color: #1f2937;
+        }
+
+        .hat-green {
+            border-top-width: 4px;
+            border-top-color: #22c55e !important;
+        }
+
+        .hat-red {
+            border-top-width: 4px;
+            border-top-color: #ef4444 !important;
+        }
+
+        .rolex-green-border {
+            border: 1px solid #006039;
+        }
+
+        .toggle-btn-active {
+            background-color: #3B82F6;
+            color: white;
+            font-weight: 600;
+        }
+
+        .toggle-btn-inactive {
+            background-color: transparent;
+            color: #3B82F6;
+        }
+
+        .ekstre-list-container {
             display: flex;
             flex-direction: column;
-            overflow: hidden;
+            gap: 0.25rem;
         }
 
-
-        #main-content {
-            flex: 1;
-            min-height: 0; /* önemli: flex çocuklarının taşmasını engeller */
-            overflow: hidden;
+        .ekstre-item {
+            background-color: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.5rem;
+            padding: 0.5rem 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            min-height: 64px;
+            cursor: pointer;
+            transition: background-color 0.2s, border-color 0.2s, box-shadow 0.2s;
         }
 
-        #left-card {
-            height: 100%;
+            .ekstre-item.selected-ekstre-row {
+                background-color: #e0f2fe; /* light blue */
+                border-color: #0ea5e9;
+                box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.4);
+            }
+
+        .ekstre-item-giris {
+            border-left-width: 4px;
+            border-left-color: #4ade80; /* yeşil */
+        }
+
+        .ekstre-item-cikis {
+            border-left-width: 4px;
+            border-left-color: #f87171; /* kırmızı */
+        }
+
+        .ekstre-blok-sag {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-shrink: 0;
+            margin-left: auto; /* Sağa yaslamak için */
+        }
+
+            .ekstre-blok-sag .bakiye-grup {
+                display: flex;
+                flex-direction: column;
+                text-align: right;
+                font-family: 'Roboto Mono', monospace;
+                font-size: 0.75rem;
+                min-width: 140px
+            }
+
+                .ekstre-blok-sag .bakiye-grup .eski-bakiye {
+                    white-space: nowrap;
+                    color: #6b7280;
+                }
+
+                .ekstre-blok-sag .bakiye-grup .son-bakiye {
+                    white-space: nowrap;
+                    color: #1f2937;
+                    font-weight: 700;
+                }
+
+            .ekstre-blok-sag .hareket-id {
+                font-size: 0.65rem;
+                font-family: 'Roboto Mono', monospace;
+                color: #9ca3af;
+                text-align: center;
+                margin-bottom: 2px;
+            }
+
+        .mutabakat-switch {
+            position: relative;
+            display: inline-block;
+            width: 40px;
+            height: 22px;
+        }
+
+            .mutabakat-switch input {
+                opacity: 0;
+                width: 0;
+                height: 0;
+            }
+
+        .mutabakat-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 22px;
+        }
+
+            .mutabakat-slider:before {
+                position: absolute;
+                content: "";
+                height: 16px;
+                width: 16px;
+                left: 3px;
+                bottom: 3px;
+                background-color: white;
+                transition: .4s;
+                border-radius: 50%;
+            }
+
+        input:checked + .mutabakat-slider {
+            background-color: #22c55e;
+        }
+
+            input:checked + .mutabakat-slider:before {
+                transform: translateX(18px);
+            }
+
+        .ekstre-modal-header {
+            background: linear-gradient(to right, #f8f9fa, #e9ecef);
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .ekstre-info-card {
+            background-color: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.75rem;
+            padding: 1.75rem 1rem 1rem 1rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.07), 0 2px 4px -2px rgb(0 0 0 / 0.07);
+            position: relative;
+        }
+
+        .card-title-absolute {
+            position: absolute;
+            top: -0.7rem;
+            left: 0.75rem;
+            background-color: #ffffff;
+            padding: 0 0.5rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #4b5563;
+            display: flex;
+            align-items: center;
+        }
+
+            .card-title-absolute i {
+                margin-right: 0.5rem;
+                color: #9ca3af;
+            }
+        /* Bakiye satırlarının altına %10 opaklıkta bir çizgi ekler */
+        .bakiye-item {
+            border-bottom: 1px solid rgba(0, 0, 0, 0.07);
+            padding-top: 0.5rem;
+            padding-bottom: 0.5rem;
+        }
+
+            /* Son satırın altındaki çizgiyi kaldırır */
+            .bakiye-item:last-child {
+                border-bottom: none;
+            }
+
+        /* Rakam ve durumu içeren sağ taraf kabı */
+        .bakiye-item-sag {
+            display: flex;
+            align-items: baseline;
+            justify-content: flex-end;
+        }
+
+        /* Rakamları sağa yaslar ve okunaklı olması için sabit bir minimum genişlik verir */
+        .bakiye-tutar-rakam {
+            min-width: 90px;
+            text-align: right;
+            font-weight: 700; /* Rakamları kalın yapar */
+        }
+
+        /* Durum yazısını (ALACAKLI/BORÇLU) sola yaslar ve rakamdan biraz ayırır */
+        .bakiye-tutar-durum {
+            min-width: 75px;
+            text-align: left;
+            margin-left: 0.75rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+            /* ===== YENİ EKLENDİ: Renklendirme ===== */
+            /* Yeşil Renk (Alacaklı) */
+            .bakiye-tutar-rakam.alacak,
+            .bakiye-tutar-durum.alacak {
+                color: #16a34a; /* Tailwind Green-600 */
+            }
+
+            /* Kırmızı Renk (Borçlu) */
+            .bakiye-tutar-rakam.borc,
+            .bakiye-tutar-durum.borc {
+                color: #dc2626; /* Tailwind Red-600 */
+            }
+
+        #ekstre-bakiye-ozeti {
+            max-height: 116px;
+            overflow-y: auto;
+        }
+
+        .ekstre-bakiye-ozeti-v2 .bakiye-item {
+            display: flex;
+            justify-content: space-between;
+            font-family: 'Roboto Mono', monospace;
+            font-size: 0.8rem;
+            padding: 0.25rem 0;
+            height: 29px;
+        }
+
+            .ekstre-bakiye-ozeti-v2 .bakiye-item .birim {
+                font-weight: 600;
+                color: #4b5563;
+            }
+
+            .ekstre-bakiye-ozeti-v2 .bakiye-item .tutar.alacak {
+                color: #16a34a;
+                font-weight: 700;
+            }
+
+            .ekstre-bakiye-ozeti-v2 .bakiye-item .tutar.borc {
+                color: #dc2626;
+                font-weight: 700;
+            }
+
+        /* ===== YENİ EKSTRE SATIR TASARIMI (v3) ===== */
+        .ekstre-v3-sol {
             display: flex;
             flex-direction: column;
-            min-height: 0;
+            flex-shrink: 0;
+            width: 110px;
+            justify-content: center;
         }
 
+            .ekstre-v3-sol .baslik {
+                font-size: 0.8rem;
+                font-weight: 700;
+                line-height: 1.2;
+            }
 
-        #sales-panel, #cari-panel {
-            flex: 1;
-            min-height: 0;
-            overflow: auto;
+            .ekstre-v3-sol .tarih {
+                font-size: 0.7rem;
+                color: #6b7280;
+            }
+
+        .ekstre-v3-orta {
+            display: flex;
+            flex-grow: 1;
+            gap: 1.5rem;
+            align-items: center;
+            font-family: 'Roboto Mono', monospace;
         }
 
-
-        #sales-footer, #cari-footer {
-            flex: 0 0 auto;
+        .ekstre-v3-detay-grup {
+            display: flex;
+            flex-direction: column;
         }
-
     </style>
 </head>
 <body class="text-gray-800 p-2 overflow-hidden">
@@ -622,11 +985,14 @@
                     </label>
                 </div>
                 <select id="currency-select" name="currency-select" class="flex-shrink-0 form-select w-auto bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-1.5 h-[38px]">
-                    <option value="1">TRY</option>
+                    @foreach (var item in Model.getAllCurrencyQueryResponses)
+                    {
+                        <option value="@item.Id">@item.CurrencyCode</option>
+                    }
                 </select>
                 <div class="flex-1 min-w-0 app-shell-customer">
                     <select id="customer-select" name="customer-select">
-                        @foreach (var item in Model.Where(x => !x.Tezgahtar))
+                        @foreach (var item in Model.getAllAccountQueryResponses.Where(x => !x.Tezgahtar))
                         {
                             <option value="@item.AccountId">@item.AccountName</option>
                         }
@@ -640,7 +1006,7 @@
             </div>
             <div class="flex items-center min-w-[200px] flex-shrink-0">
                 <select id="salesperson-select" name="salesperson-select">
-                    @foreach (var item in Model.Where(x => x.Tezgahtar))
+                    @foreach (var item in Model.getAllAccountQueryResponses.Where(x => x.Tezgahtar))
                     {
                         <option value="@item.AccountId">@item.AccountName</option>
                     }
@@ -651,64 +1017,24 @@
     <main class="pt-3 h-[calc(100vh-92px)]">
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 h-full">
             <div class="lg:col-span-4 flex flex-col gap-3 h-full">
-                <div class="left-card theme-border">
-
-                    <!-- Başlık alanı -->
-                    <div class="flex items-center justify-between px-4 py-3 border-b">
-                        <h3 class="text-xl font-bold" id="fis-title">Satış Fişi</h3>
-
-                        <div class="flex items-center gap-3 text-gray-600">
-                            <span id="fis-datetime">06.01.2026 13:20</span>
-                            <i class="fa-regular fa-calendar"></i>
+                <div class="bg-white rounded-xl shadow-sm flex flex-col theme-border h-full overflow-hidden">
+                    <div class="p-3 border-b border-gray-200 flex-shrink-0">
+                        <div class="flex justify-between items-center">
+                            <h5 id="receipt-title" class="text-lg font-bold text-gray-700">Satış Fişi</h5>
+                            <input type="datetime-local" id="fis-tarihi" asp-for="@DateTime.Now" value="@DateTime.Now" class="text-sm bg-transparent text-gray-600 border-none focus:ring-0 p-0 w-auto">
                         </div>
                     </div>
-
-                    <!-- İçerik -->
-                    <div class="p-4" style="min-height: 520px;">
-                        <!-- SATIŞ içeriği -->
-                        <div id="sales-panel">
-                            <!-- burada senin satış fişi içeriğin (liste vs.) -->
-                            <div class="text-gray-400 text-sm">Satış fişi içeriği...</div>
+                    <div id="receipt-log" class="flex-grow p-3 overflow-y-auto custom-scrollbar min-h-0"></div>
+                    <div id="receipt-totals" class="p-3 border-t border-gray-200 flex-shrink-0 max-h-48 overflow-y-auto custom-scrollbar">
+                        <div id="satis-totals" class="space-y-1">
+                            <div class="flex justify-between items-center text-xs"><strong class="font-medium text-gray-600">Giren Toplam:</strong><span id="giren-toplam" class="font-bold text-green-600">0,00 TRY</span></div>
+                            <div class="flex justify-between items-center text-xs"><strong class="font-medium text-gray-600">Çıkan Toplam:</strong><span id="cikan-toplam" class="font-bold text-red-600">0,00 TRY</span></div>
+                            <hr class="my-1">
+                            <div class="flex justify-between items-center text-sm"><strong class="font-semibold text-gray-800">Fark:</strong><span id="fark-toplam" class="font-extrabold text-blue-700">0,00 TRY</span></div>
                         </div>
-
-                        <!-- CARİ içeriği -->
-                        <div id="cari-panel" class="hidden">
-                            <!-- burada cari fişi içeriğin -->
-                            <div class="text-gray-400 text-sm">Cari fişi içeriği...</div>
+                        <div id="cari-totals" class="hidden">
                         </div>
                     </div>
-
-                    <!-- Footer / Totals -->
-                    <div class="border-t px-4 py-3">
-                        <!-- SATIŞ footer -->
-                        <div id="sales-footer">
-                            <div class="flex justify-between text-sm">
-                                <span>Giren Toplam:</span><span class="font-bold text-green-600">0,00 TRY</span>
-                            </div>
-                            <div class="flex justify-between text-sm">
-                                <span>Çıkan Toplam:</span><span class="font-bold text-red-600">0,00 TRY</span>
-                            </div>
-                            <div class="flex justify-between text-sm mt-1">
-                                <span class="font-bold">Fark:</span><span class="font-bold text-blue-700">0,00 TRY</span>
-                            </div>
-                        </div>
-
-                        <!-- CARİ footer (Birim/Devir/Giren/Çıkan/Kalan görünmeli) -->
-                        <div id="cari-footer" class="hidden">
-                            <div class="grid grid-cols-5 text-sm font-bold text-gray-700 border-b pb-2">
-                                <div>Birim</div>
-                                <div class="text-center">Devir</div>
-                                <div class="text-center">Giren</div>
-                                <div class="text-center">Çıkan</div>
-                                <div class="text-center">Kalan</div>
-                            </div>
-
-                            <div class="text-center text-sm text-gray-500 py-4">
-                                Hesabın hareketi veya devir bakiyesi yok.
-                            </div>
-                        </div>
-                    </div>
-
                 </div>
             </div>
 
@@ -994,60 +1320,696 @@
             </div>
 
         </div>
+
+
+
     </template>
+    <!-- Nakit Tahsilat Modal -->
+    <div id="nakit-tahsilat-modal" class="hidden fixed inset-0 bg-black/50 flex items-start justify-center z-50 pt-10">
+        <div class="bg-white w-full max-w-3xl rounded-2xl shadow-2xl overflow-hidden theme-border">
+            <!-- Header -->
+            <div class="px-6 pt-5 pb-4 border-b border-gray-200 flex items-center justify-between">
+                <h3 class="text-xl font-extrabold text-gray-900">Nakit Tahsilat</h3>
+                <button id="nakit-tahsilat-close" class="text-gray-500 hover:text-gray-900 text-2xl leading-none">&times;</button>
+            </div>
+
+            <!-- Content -->
+            <div class="px-6 py-5 space-y-4">
+                <!-- Tabs -->
+                <div class="bg-gray-100 rounded-xl p-1 flex gap-1">
+                    <button type="button" class="nt-tab flex-1 py-2 rounded-lg font-bold text-sm"
+                            data-tab="kasalar">
+                        KASALAR
+                    </button>
+                    <button type="button" class="nt-tab flex-1 py-2 rounded-lg font-bold text-sm"
+                            data-tab="bankalar">
+                        BANKALAR
+                    </button>
+                    <button type="button" class="nt-tab flex-1 py-2 rounded-lg font-bold text-sm"
+                            data-tab="poslar">
+                        POSLAR
+                    </button>
+                </div>
+
+                <!-- Tab contents -->
+                <div id="nt-tab-kasalar" class="nt-panel space-y-4">
+                    <div>
+                        <label class="block text-sm font-semibold text-blue-600 mb-1">Kasa Seçiniz</label>
+                        <select id="nt-kasa" class="w-full h-[44px] px-4 rounded-xl border border-gray-300 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="">Seçiniz...</option>
+                            @foreach (var item in Model.getAllAccountQueryResponses.Where(x => x.AccountTypeId == 7))
+                            {
+                                <option value=@item.AccountId>@item.AccountName</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+
+                <div id="nt-tab-bankalar" class="nt-panel hidden space-y-4">
+                    <div>
+                        <label class="block text-sm font-semibold text-blue-600 mb-1">Banka Seçiniz</label>
+                        <select id="nt-banka" class="w-full h-[44px] px-4 rounded-xl border border-gray-300 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="">Seçiniz...</option>
+                            @foreach (var item in Model.getAllAccountQueryResponses.Where(x => x.AccountTypeId == 5))
+                            {
+                                <option value=@item.AccountId>@item.AccountName</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+
+                <div id="nt-tab-poslar" class="nt-panel hidden space-y-4">
+                    <div>
+                        <label class="block text-sm font-semibold text-blue-600 mb-1">POS Seçiniz</label>
+                        <select id="nt-pos" class="w-full h-[44px] px-4 rounded-xl border border-gray-300 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="">Seçiniz...</option>
+                            @foreach (var item in Model.getAllAccountQueryResponses.Where(x => x.AccountTypeId == 6))
+                            {
+                                <option value=@item.AccountId>@item.AccountName</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Amount row -->
+                <div class="grid grid-cols-12 gap-3 items-end">
+                    <div class="col-span-3">
+                        <label class="block text-sm font-semibold text-blue-600 mb-1">Birim</label>
+                        <select id="nt-birim" class="w-full h-[44px] px-4 rounded-xl border border-gray-300 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="TRY">TRY</option>
+                            @foreach (var item in Model.getAllCurrencyQueryResponses)
+                            {
+                                <option value=@item.Id>@item.CurrencyCode</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-span-6">
+                        <label class="block text-sm font-semibold text-blue-600 mb-1">Tutar</label>
+                        <input id="nt-tutar" type="text" value="0,00"
+                               class="w-full h-[44px] px-4 rounded-xl border border-gray-300 bg-white shadow-sm text-right font-mono focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                    </div>
+                    <div class="col-span-3">
+                        <label class="block text-sm font-semibold text-blue-600 mb-1">Kur</label>
+                        <input id="nt-kur" type="text" value="0,0000"
+                               class="w-full h-[44px] px-4 rounded-xl border border-gray-300 bg-white shadow-sm text-right font-mono focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                    </div>
+                </div>
+
+                <!-- Karsiligi -->
+                <div>
+                    <label class="block text-sm font-semibold text-blue-600 mb-1">Karşılığı</label>
+                    <div class="w-full h-[44px] px-4 rounded-xl border border-gray-300 bg-gray-50 shadow-sm flex items-center justify-between">
+                        <span id="nt-karsilik" class="font-mono text-right w-full">0,00</span>
+                        <span class="ml-3 text-gray-500 font-semibold">TRY</span>
+                    </div>
+                </div>
+
+                <!-- Button -->
+                <button type="button" id="nt-kalan-ekle"
+                        class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2 rounded-xl shadow">
+                    <i class="fas fa-calculator"></i>
+                    Kalanı Ekle (0,00)
+                </button>
+
+                <!-- Aciklama -->
+                <div>
+                    <label class="block text-sm font-semibold text-blue-600 mb-1">Açıklama</label>
+                    <textarea id="nt-aciklama" rows="4"
+                              class="w-full px-4 py-3 rounded-xl border border-gray-300 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              placeholder="Açıklama"></textarea>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="px-6 py-4 border-t border-gray-200 flex justify-end gap-3 bg-gray-50">
+                <button type="button" id="nt-submit"
+                        class="bg-blue-200 hover:bg-blue-300 text-blue-900 font-bold px-6 py-2 rounded-xl border border-blue-300">
+                    <i class="fas fa-check mr-2"></i>Ekle
+                </button>
+                <button type="button" id="nt-cancel"
+                        class="bg-gray-200 hover:bg-gray-300 text-gray-900 font-bold px-6 py-2 rounded-xl border border-gray-300">
+                    <i class="fas fa-times mr-2"></i>Vazgeç
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="ekstre-modal" class="hidden fixed inset-0 modal-bg flex items-start justify-center z-50 pt-10">
+        <div class="bg-gray-50 rounded-lg shadow-xl w-full max-w-7xl max-h-[90vh] flex flex-col">
+
+            <div class="flex justify-between items-center p-4 ekstre-modal-header rounded-t-lg">
+                <h3 class="text-lg font-bold text-gray-700 flex items-center">
+                    <i class="fas fa-file-invoice-dollar text-gray-500 mr-3"></i>
+                    Hesap Ekstresi
+                </h3>
+                <button id="ekstre-modal-close-button" class="text-gray-500 hover:text-red-600 text-2xl transition-colors">&times;</button>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 p-4 border-b">
+                <!-- Müşteri Bilgi Kartı -->
+                <div class="ekstre-info-card lg:col-span-1">
+                    <h4 class="card-title-absolute"><i class="fas fa-user-circle"></i>Müşteri Bilgileri</h4>
+                    <span id="ekstre-hesap-adi" class="font-bold text-gray-800 text-base truncate block" title="Hesap Adı"></span>
+                    <span id="ekstre-hesap-tipi" class="block text-sm text-gray-500 mt-1"></span>
+                    <span id="ekstre-hesap-telefon" class="block text-sm text-gray-600 mt-1"></span>
+                    <span id="ekstre-hesap-id" class="text-xs font-mono text-gray-400 block mt-2"></span>
+                </div>
+
+                <!-- Bakiye Özeti Kartı -->
+                <div class="ekstre-info-card lg:col-span-1">
+                    <h4 class="card-title-absolute"><i class="fas fa-balance-scale"></i>Bakiye Özeti</h4>
+                    <div id="ekstre-bakiye-ozeti" class="custom-scrollbar pr-2 ekstre-bakiye-ozeti-v2">
+                        <!-- Bakiye içeriği JS ile dolacak -->
+                    </div>
+                </div>
+
+                <!-- Tarih Filtreleme & Pozisyon Kartı -->
+                <div class="ekstre-info-card lg:col-span-1">
+                    <h4 class="card-title-absolute"><i class="fas fa-calendar-alt"></i>Tarih Aralığı</h4>
+                    <div class="flex items-stretch">
+                        <input type="date" id="ekstre-baslangic-tarihi" class="block w-full px-3 py-2 bg-white border border-gray-300 rounded-l-md shadow-sm text-sm h-[38px] border-r-0">
+                        <input type="date" id="ekstre-bitis-tarihi" class="block w-full px-3 py-2 bg-white border border-gray-300 shadow-sm text-sm h-[38px] rounded-none">
+                        <button id="ekstre-getir-button" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-r-md text-sm h-[38px] border border-blue-600 flex items-center justify-center">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                    <div class="mt-3 text-center w-full border-t pt-3">
+                        <span id="ekstre-has-pozisyon" class="text-base font-semibold"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div id="ekstre-content" class="p-4 overflow-y-auto bg-white rounded-b-lg">
+                <!-- Ekstre içeriği JS ile dolacak -->
+            </div>
+        </div>
+    </div>
 </body>
 </html>
 
-
 <script>
     document.addEventListener("DOMContentLoaded", () => {
+
+            const openBtn  = document.getElementById("ekstre-button");
+    const modal    = document.getElementById("ekstre-modal");
+    const closeBtn = document.getElementById("ekstre-modal-close-button");
+            const ekstreBaslangic = document.getElementById('ekstre-baslangic-tarihi');
+                         const ekstreBitis = document.getElementById('ekstre-bitis-tarihi');
+
+
+                            const getLocalDateString = (date) =>
+                    {
+                        const year = date.getFullYear();
+                        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+                        const day = date.getDate().toString().padStart(2, '0');
+                        return `${year}-${month}-${day}`;
+                    };
+
+
+                             const today = new Date();
+            const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+
+                ekstreBitis.value = getLocalDateString(today);
+            ekstreBaslangic.value = getLocalDateString(firstDayOfMonth);
+
+    if (!openBtn || !modal) return;
+
+    function openModal() {
+      modal.classList.remove("hidden");
+    }
+
+    function closeModal() {
+      modal.classList.add("hidden");
+    }
+
+    // Ekstre butonu
+    openBtn.addEventListener("click", openModal);
+
+    // X butonu
+    closeBtn?.addEventListener("click", closeModal);
+
+    // Modal dışına tıkla kapat
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal) closeModal();
+    });
+
+    // ESC ile kapat
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && !modal.classList.contains("hidden")) {
+        closeModal();
+      }
+    });
+      const currencySelect = document.getElementById("currency-select");
       const toggle = document.getElementById("operation-type-toggle");
 
-      const salesPanel  = document.getElementById("sales-panel");
-      const cariPanel   = document.getElementById("cari-panel");
-      const salesFooter = document.getElementById("sales-footer");
-      const cariFooter  = document.getElementById("cari-footer");
-      const titleEl     = document.getElementById("fis-title");
+      if (!currencySelect || !toggle) return;
 
-      // Sağ buton label'ları
-      const lblNakitTahsilat = document.getElementById("label-nakit-tahsilat");
-      const lblNakitOdeme    = document.getElementById("label-nakit-odeme");
-      const lblUrunAlis      = document.getElementById("label-urun-alis");
-      const lblUrunSatis     = document.getElementById("label-urun-satis");
-      const btnSatisListesi = document.getElementById("sales-list-button");
+      function updateCurrencyVisibility() {
+        const isCari = toggle.checked;
+        currencySelect.classList.toggle("hidden", isCari);
+      }
 
+      // ilk yükleme
+      updateCurrencyVisibility();
+
+      // toggle değişince
+      toggle.addEventListener("change", updateCurrencyVisibility);
+    });
+</script>
+
+
+<script>
+    (() => {
+      // ---------- STATE ----------
+      const state = {
+        receiptItems: [], // { type: 'GIRIS'|'CIKIS', tryAmount:number, html:string }
+        pendingSwitchToCari: false,
+        suppressToggle: false,
+        currentCashOperation: "GIRIS" // default
+      };
+
+      // ---------- HELPERS ----------
+      const fmt2 = new Intl.NumberFormat("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      const fmt4 = new Intl.NumberFormat("tr-TR", { minimumFractionDigits: 4, maximumFractionDigits: 4 });
+
+      function sanitizeNumericText(raw) {
+        let s = (raw ?? "").toString().trim().replace(/[^\d,.\-]/g, "");
+        s = s.replace(/(?!^)-/g, "");   // sadece en başta -
+        s = s.replace(/\./g, "");       // binlik noktalarını sil
+        const firstComma = s.indexOf(",");
+        if (firstComma !== -1) {
+          s = s.slice(0, firstComma + 1) + s.slice(firstComma + 1).replace(/,/g, "");
+        }
+        return s;
+      }
+
+      function parseTrNumber(raw) {
+        const s = sanitizeNumericText(raw);
+        if (!s || s === "-" || s === ",") return 0;
+        const normalized = s.replace(",", ".");
+        const n = Number.parseFloat(normalized);
+        return Number.isFinite(n) ? n : 0;
+      }
+
+      function textToTryNumber(text) {
+        // "43,11 TRY" gibi yerlerden de okuyabilmek için
+        return parseTrNumber(String(text || "").replace("TRY", "").trim());
+      }
+
+      function el(id) { return document.getElementById(id); }
+
+      // ---------- UI ELEMENTS ----------
+      const toggle = el("operation-type-toggle");
+      const receiptTitle = el("receipt-title"); // doğru id bu
+      const receiptLog = el("receipt-log");
+      const girenToplamEl = el("giren-toplam");
+      const cikanToplamEl = el("cikan-toplam");
+      const farkToplamEl  = el("fark-toplam");
+
+      const lblNakitTahsilat = el("label-nakit-tahsilat");
+      const lblNakitOdeme    = el("label-nakit-odeme");
+      const lblUrunAlis      = el("label-urun-alis");
+      const lblUrunSatis     = el("label-urun-satis");
+      const btnSatisListesi  = el("sales-list-button");
+
+      const confirmModal  = el("confirmation-modal");
+      const modalMessage  = el("modal-message");
+      const modalCancel   = el("modal-cancel");
+      const modalConfirm  = el("modal-confirm");
+
+      // Nakit modal
+      const nakitModal = el("nakit-tahsilat-modal");
+      const btnNakitTahsilat = el("btn-nakit-tahsilat");
+      const btnNakitOdeme = el("btn-nakit-odeme");
+      const nakitClose = el("nakit-tahsilat-close");
+      const nakitCancel = el("nt-cancel");
+      const nakitSubmit = el("nt-submit");
+
+      const ntTutar = el("nt-tutar");
+      const ntKur = el("nt-kur");
+      const ntKarsilik = el("nt-karsilik");
+      const ntBirim = el("nt-birim");
+
+      // Tabs
+      const ntTabs = nakitModal ? Array.from(nakitModal.querySelectorAll(".nt-tab")) : [];
+      const ntPanels = nakitModal ? {
+        kasalar:  nakitModal.querySelector("#nt-tab-kasalar"),
+        bankalar: nakitModal.querySelector("#nt-tab-bankalar"),
+        poslar:   nakitModal.querySelector("#nt-tab-poslar"),
+      } : {};
+
+      // ---------- MODE ----------
       function setButtonLabels(isCari) {
-        if (lblNakitTahsilat) lblNakitTahsilat.textContent = isCari ? "Nakit Giriş"  : "Nakit Tahsilat";
-        if (lblNakitOdeme)    lblNakitOdeme.textContent    = isCari ? "Nakit Çıkış"  : "Nakit Ödeme";
-        if (lblUrunAlis)      lblUrunAlis.textContent      = isCari ? "Ürün Giriş"   : "Ürün Alış";
-        if (lblUrunSatis)     lblUrunSatis.textContent     = isCari ? "Ürün Çıkış"   : "Ürün Satış";
-        if (btnSatisListesi) btnSatisListesi.textContent = isCari ? "Cari Listesi"  : "Satış Listesi";
+        if (lblNakitTahsilat) lblNakitTahsilat.textContent = isCari ? "Nakit Giriş" : "Nakit Tahsilat";
+        if (lblNakitOdeme)    lblNakitOdeme.textContent    = isCari ? "Nakit Çıkış" : "Nakit Ödeme";
+        if (lblUrunAlis)      lblUrunAlis.textContent      = isCari ? "Ürün Giriş"  : "Ürün Alış";
+        if (lblUrunSatis)     lblUrunSatis.textContent     = isCari ? "Ürün Çıkış"  : "Ürün Satış";
+        if (btnSatisListesi)  btnSatisListesi.textContent  = isCari ? "Cari Listesi" : "Satış Listesi";
       }
 
       function applyMode(isCari) {
-        // Tema
         document.body.classList.toggle("cari-active", isCari);
         document.body.classList.toggle("satis-active", !isCari);
 
-        // Sol kart içerik switch
-        if (salesPanel)  salesPanel.classList.toggle("hidden", isCari);
-        if (salesFooter) salesFooter.classList.toggle("hidden", isCari);
-
-        if (cariPanel)   cariPanel.classList.toggle("hidden", !isCari);
-        if (cariFooter)  cariFooter.classList.toggle("hidden", !isCari);
-
-        // Başlık
-        if (titleEl) titleEl.textContent = isCari ? "Cari Fişi" : "Satış Fişi";
-
-        // Sağ buton yazıları
+        if (receiptTitle) receiptTitle.textContent = isCari ? "Cari Fişi" : "Satış Fişi";
         setButtonLabels(isCari);
       }
 
-      // İlk yükleme
-      applyMode(toggle?.checked ?? false);
+      function hasReceiptData() {
+        return state.receiptItems.length > 0;
+      }
 
-      // Değişince
-      toggle?.addEventListener("change", () => applyMode(toggle.checked));
-    });
+      function readTotals() {
+        const giren = textToTryNumber(girenToplamEl?.textContent);
+        const cikan = textToTryNumber(cikanToplamEl?.textContent);
+        return { giren, cikan };
+      }
+
+      function writeTotals(giren, cikan) {
+        const fark = giren - cikan;
+        if (girenToplamEl) girenToplamEl.textContent = `${fmt2.format(giren)} TRY`;
+        if (cikanToplamEl) cikanToplamEl.textContent = `${fmt2.format(cikan)} TRY`;
+        if (farkToplamEl)  farkToplamEl.textContent  = `${fmt2.format(fark)} TRY`;
+      }
+
+      function clearReceipt() {
+        state.receiptItems = [];
+        if (receiptLog) receiptLog.innerHTML = "";
+        writeTotals(0, 0);
+      }
+
+      // ---------- CONFIRM MODAL ----------
+      function showConfirmationModal(message, onConfirm, onCancel) {
+        if (!confirmModal) return;
+
+        if (modalMessage) modalMessage.textContent = message;
+
+        // mevcut handlerlar birikmesin diye önce clone ile sıfırla
+        const cancelClone = modalCancel?.cloneNode(true);
+        const confirmClone = modalConfirm?.cloneNode(true);
+
+        if (modalCancel && cancelClone) modalCancel.parentNode.replaceChild(cancelClone, modalCancel);
+        if (modalConfirm && confirmClone) modalConfirm.parentNode.replaceChild(confirmClone, modalConfirm);
+
+        const cBtn = el("modal-cancel");
+        const okBtn = el("modal-confirm");
+
+        cBtn?.addEventListener("click", () => {
+          confirmModal.classList.add("hidden");
+          onCancel?.();
+        });
+
+        okBtn?.addEventListener("click", () => {
+          confirmModal.classList.add("hidden");
+          onConfirm?.();
+        });
+
+        // dışarı tıkla = vazgeç
+        confirmModal.addEventListener("click", (e) => {
+          if (e.target === confirmModal) {
+            confirmModal.classList.add("hidden");
+            onCancel?.();
+          }
+        }, { once: true });
+
+        confirmModal.classList.remove("hidden");
+      }
+
+
+      // ---------- TOGGLE HANDLER ----------
+      function wireToggle() {
+        if (!toggle) return;
+
+        // initial
+        applyMode(toggle.checked);
+
+        toggle.addEventListener("change", (e) => {
+          if (state.suppressToggle) return;
+
+          const wantCari = e.target.checked;
+          const currentlySales = !document.body.classList.contains("cari-active");
+
+          // SADECE Satış -> Cari geçerken kontrol
+          if (currentlySales && wantCari && hasReceiptData()) {
+            showConfirmationModal(
+              "Yapılan işlemler kaybolacak. Devam etmek istiyor musunuz?",
+              () => {
+                clearReceipt();
+                applyMode(true);
+                state.suppressToggle = true;
+                toggle.checked = true;
+                state.suppressToggle = false;
+              },
+              () => {
+                // toggle geri al
+                state.suppressToggle = true;
+                toggle.checked = false;
+                state.suppressToggle = false;
+              }
+            );
+            return;
+          }
+
+          applyMode(wantCari);
+        });
+      }
+
+      // ---------- NAKIT MODAL ----------
+      function setActiveTab(name) {
+        Object.keys(ntPanels).forEach(k => {
+          const p = ntPanels[k];
+          if (!p) return;
+          p.classList.toggle("hidden", k !== name);
+        });
+
+        ntTabs.forEach(t => {
+          const isActive = t.dataset.tab === name;
+          t.classList.toggle("bg-white", isActive);
+          t.classList.toggle("shadow", isActive);
+          t.classList.toggle("text-blue-700", isActive);
+
+          t.classList.toggle("text-gray-600", !isActive);
+          t.classList.toggle("bg-transparent", !isActive);
+        });
+      }
+
+      function openNakitModal(operationType /* GIRIS|CIKIS */) {
+        if (!nakitModal) return;
+        state.currentCashOperation = operationType;
+
+        // modal title'ı değiştirelim
+        const h3 = nakitModal.querySelector("h3");
+        if (h3) h3.textContent = operationType === "GIRIS" ? "Nakit Tahsilat" : "Nakit Ödeme";
+
+        nakitModal.classList.remove("hidden");
+        setActiveTab("kasalar");
+        // inputları sıfırlamak istersen:
+        // ntTutar.value = "0,00"; ntKur.value = "1,0000"; ntKarsilik.textContent = "0,00";
+        updateKarsilikLive();
+      }
+
+      function closeNakitModal() {
+        nakitModal?.classList.add("hidden");
+      }
+
+      function enforceNumericInput(inputEl, decimals) {
+        if (!inputEl) return;
+        inputEl.addEventListener("input", () => {
+          const before = inputEl.value;
+          const after = sanitizeNumericText(before);
+          if (before !== after) inputEl.value = after;
+          updateKarsilikLive();
+        });
+        inputEl.addEventListener("blur", () => {
+          const n = parseTrNumber(inputEl.value);
+          inputEl.value = decimals === 2 ? fmt2.format(n) : fmt4.format(n);
+          updateKarsilikLive();
+        });
+      }
+
+      function makeEditableKarsilik() {
+        if (!ntKarsilik) return;
+        ntKarsilik.setAttribute("contenteditable", "true");
+        ntKarsilik.style.outline = "none";
+
+        ntKarsilik.addEventListener("input", () => {
+          const before = ntKarsilik.textContent;
+          const after = sanitizeNumericText(before);
+          if (before !== after) ntKarsilik.textContent = after;
+        });
+
+        ntKarsilik.addEventListener("keydown", (e) => {
+          if (e.key === "Enter") { e.preventDefault(); ntKarsilik.blur(); }
+        });
+
+        ntKarsilik.addEventListener("blur", () => {
+          const n = parseTrNumber(ntKarsilik.textContent);
+          ntKarsilik.textContent = fmt2.format(n);
+        });
+      }
+
+      function updateKarsilikLive() {
+        if (!ntTutar || !ntKur || !ntKarsilik) return;
+
+        // kullanıcı karsilik üzerinde iken otomatik yazma
+        if (document.activeElement === ntKarsilik) return;
+
+        const tutar = parseTrNumber(ntTutar.value);
+        const kur = parseTrNumber(ntKur.value);
+        const res = tutar * kur;
+        ntKarsilik.textContent = fmt2.format(res);
+      }
+
+      function getActiveTabName() {
+        if (!nakitModal) return "kasalar";
+        const active = nakitModal.querySelector(".nt-tab.bg-white");
+        return active?.dataset?.tab ?? "kasalar";
+      }
+
+      function getSelectedAccountName(activeTab) {
+        if (activeTab === "bankalar") return el("nt-banka")?.selectedOptions?.[0]?.textContent?.trim() || "BANKA";
+        if (activeTab === "poslar")   return el("nt-pos")?.selectedOptions?.[0]?.textContent?.trim() || "POS";
+        return el("nt-kasa")?.selectedOptions?.[0]?.textContent?.trim() || "KASA";
+      }
+
+      function ensureSection(id, title, colorMode /* green|red */) {
+        if (!receiptLog) return null;
+        let section = el(id);
+        if (section) return section;
+
+        section = document.createElement("div");
+        section.id = id;
+        section.className = "theme-border-50 rounded-xl overflow-hidden mb-3";
+
+        const borderClass = colorMode === "red" ? "border-red-200 text-red-700" : "border-green-200 text-green-700";
+
+        section.innerHTML = `
+          <div class="px-4 py-2 border-b ${borderClass} font-extrabold tracking-widest text-xs">
+            ${title}
+          </div>
+          <div class="p-3 space-y-2" data-items></div>
+        `;
+        receiptLog.prepend(section);
+        return section;
+      }
+
+      function addReceiptItemToUI(item) {
+        // item: { type, currency, tutar, kur, karsilikTry, hesapAdi }
+        const isGiris = item.type === "GIRIS";
+        const section = ensureSection(
+          isGiris ? "section-nakit-girisler" : "section-nakit-cikislar",
+          isGiris ? "NAKİT GİRİŞLER" : "NAKİT ÇIKIŞLAR",
+          isGiris ? "green" : "red"
+        );
+        if (!section) return;
+
+        const wrap = section.querySelector("[data-items]");
+        const row = document.createElement("div");
+        row.setAttribute("data-receipt-item", "1");
+        row.className = `rounded-lg border ${isGiris ? "border-green-100" : "border-red-100"} bg-white px-3 py-2`;
+
+        const leftTop = `${isGiris ? "+" : "-"}${fmt2.format(item.tutar)} ${item.currency}`;
+        const rightTop = `${fmt2.format(item.karsilikTry)} TRY`;
+        const leftBottom = `${item.hesapAdi} - ${isGiris ? "Nakit Giriş" : "Nakit Çıkış"}`;
+        const rightBottom = `TRY Kuru: ${fmt4.format(item.kur)}`;
+
+        row.innerHTML = `
+          <div class="flex items-start justify-between gap-3">
+            <div class="min-w-0">
+              <div class="${isGiris ? "text-green-700" : "text-red-700"} font-extrabold text-sm">${leftTop}</div>
+              <div class="text-gray-700 font-mono text-xs mt-1 truncate">${leftBottom}</div>
+            </div>
+            <div class="text-right">
+              <div class="${isGiris ? "text-green-700" : "text-red-700"} font-extrabold text-sm">${rightTop}</div>
+              <div class="text-gray-500 font-mono text-xs mt-1">${rightBottom}</div>
+            </div>
+          </div>
+        `;
+
+        wrap.appendChild(row);
+      }
+
+      function wireNakitModal() {
+        if (!nakitModal) return;
+
+        // open
+        btnNakitTahsilat?.addEventListener("click", () => openNakitModal("GIRIS"));
+        btnNakitOdeme?.addEventListener("click", () => openNakitModal("CIKIS"));
+
+        // close
+        nakitClose?.addEventListener("click", closeNakitModal);
+        nakitCancel?.addEventListener("click", closeNakitModal);
+        nakitModal.addEventListener("click", (e) => { if (e.target === nakitModal) closeNakitModal(); });
+        document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !nakitModal.classList.contains("hidden")) closeNakitModal(); });
+
+        // tabs
+        ntTabs.forEach(t => t.addEventListener("click", () => setActiveTab(t.dataset.tab)));
+
+        // numeric inputs + karsilik
+        enforceNumericInput(ntTutar, 2);
+        enforceNumericInput(ntKur, 4);
+        makeEditableKarsilik();
+
+        // initial format
+        if (ntTutar) ntTutar.value = fmt2.format(parseTrNumber(ntTutar.value));
+        if (ntKur) ntKur.value = fmt4.format(parseTrNumber(ntKur.value));
+        updateKarsilikLive();
+
+        // submit => add to receipt
+        nakitSubmit?.addEventListener("click", () => {
+          const activeTab = getActiveTabName();
+          const hesapAdi = getSelectedAccountName(activeTab);
+
+          const currency = ntBirim?.selectedOptions?.[0]?.textContent?.trim() || "TRY";
+          const tutar = parseTrNumber(ntTutar?.value);
+          const kur = parseTrNumber(ntKur?.value);
+          const karsilikTry = parseTrNumber(ntKarsilik?.textContent);
+
+          // basic validation: hesap seçilmiş mi?
+          if (!hesapAdi || hesapAdi === "Seçiniz..." || hesapAdi === "KASA") {
+            // seçili option boşsa da düşebilir; çok kasmadan geçiyorum
+          }
+
+          const item = {
+            type: state.currentCashOperation, // GIRIS / CIKIS
+            currency,
+            tutar,
+            kur,
+            karsilikTry,
+            hesapAdi
+          };
+
+          state.receiptItems.push(item);
+          addReceiptItemToUI(item);
+
+          // totals update
+          const { giren, cikan } = readTotals();
+          if (item.type === "GIRIS") writeTotals(giren + item.karsilikTry, cikan);
+          else writeTotals(giren, cikan + item.karsilikTry);
+
+          closeNakitModal();
+        });
+      }
+
+      // ---------- INIT ----------
+      document.addEventListener("DOMContentLoaded", () => {
+        // body initial class (satis)
+        if (!document.body.classList.contains("satis-active") && !document.body.classList.contains("cari-active")) {
+          document.body.classList.add("satis-active");
+        }
+
+        wireToggle();
+        wireNakitModal();
+
+        // label initial
+        setButtonLabels(toggle?.checked ?? false);
+      });
+    })();
 </script>
+
+
+
+
+
+
 

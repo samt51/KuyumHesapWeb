@@ -18,6 +18,7 @@
   <ItemGroup>
     <Folder Include="Feature\AuthFeature\Queries\" />
     <Folder Include="Feature\DashboardFeature\Commands\" />
+    <Folder Include="Feature\NewFolder\" />
     <Folder Include="Feature\SellAndCariFeature\Commands\" />
     <Folder Include="Feature\SellAndCariFeature\Queries\" />
     <Folder Include="Feature\StockTypeFeature\Dtos\" />

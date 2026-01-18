@@ -17,16 +17,24 @@ namespace KuyumHesapWeb.Core
             var assembly = Assembly.GetExecutingAssembly();
             services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(assembly));
 
-        
+
             services.AddTransient<JwtHandler>();
             services.AddAutoMapper(typeof(MappingProfile).Assembly);
             services.AddScoped<KuyumHesapWeb.Core.Commond.Abstract.Mapper.IMapper, Mapper>();
 
 
 
+
+
             services.AddHttpClient<IApiService, ApiService>(client =>
             {
-                client.BaseAddress = new Uri("https://localhost:5000/api/");
+                var apiAddress = configuration["ApiAdress"];
+
+                if (string.IsNullOrEmpty(apiAddress))
+                    throw new Exception("ApiAdress configuration is missing");
+
+
+                client.BaseAddress = new Uri(apiAddress);
                 client.DefaultRequestHeaders.Accept.Add(
                     new MediaTypeWithQualityHeaderValue("application/json"));
             })
