@@ -970,12 +970,28 @@
             display: flex;
             flex-direction: column;
         }
+        /* customer alanı kesin büyüsün */
+        .app-shell-customer {
+            display: flex;
+            flex: 1 1 auto;
+            min-width: 0;
+        }
+
+            .app-shell-customer .ss-main {
+                width: 100% !important;
+                flex: 1 1 auto !important;
+                min-width: 0 !important;
+            }
+
     </style>
 </head>
 <body class="text-gray-800 p-2 overflow-hidden">
 
     <header class="bg-white p-3 rounded-xl shadow-sm theme-border">
-        <div class="flex justify-between items-center gap-3 flex-nowrap">
+        <!-- DEĞİŞTİ: justify-between kalktı -->
+        <div class="flex items-center gap-3 flex-nowrap">
+
+            <!-- SOL BLOK -->
             <div class="flex items-center gap-3 flex-1 min-w-0">
                 <div class="toggle-container flex-shrink-0">
                     <input type="checkbox" id="operation-type-toggle" class="toggle-checkbox" name="operation-type-toggle">
@@ -984,13 +1000,17 @@
                         <span class="toggle-text">CARİ</span>
                     </label>
                 </div>
-                <select id="currency-select" name="currency-select" class="flex-shrink-0 form-select w-auto bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-1.5 h-[38px]">
+
+                <select id="currency-select" name="currency-select"
+                        class="flex-shrink-0 form-select w-auto bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-1.5 h-[38px]">
                     @foreach (var item in Model.getAllCurrencyQueryResponses)
                     {
                         <option value="@item.Id">@item.CurrencyCode</option>
                     }
                 </select>
-                <div class="flex-1 min-w-0 app-shell-customer">
+
+                <!-- customer alanı kalan yeri dolduracak -->
+                <div class="app-shell-customer flex-1 min-w-0">
                     <select id="customer-select" name="customer-select">
                         @foreach (var item in Model.getAllAccountQueryResponses.Where(x => !x.Tezgahtar))
                         {
@@ -999,21 +1019,33 @@
                     </select>
                 </div>
             </div>
-            <div class="flex items-center gap-2 flex-shrink-0">
-                <button class="bg-white hover:bg-gray-100 text-gray-800 font-semibold py-1.5 px-3 border border-gray-300 rounded-lg shadow-sm text-xs"><i class="fas fa-users mr-1.5"></i>CRM</button>
-                <button id="ekstre-button" class="bg-white hover:bg-gray-100 text-gray-800 font-semibold py-1.5 px-3 border border-gray-300 rounded-lg shadow-sm text-xs"><i class="fas fa-file-invoice mr-1.5"></i>Ekstre</button>
-                <button id="sales-list-button" class="bg-white hover:bg-gray-100 text-gray-800 font-semibold py-1.5 px-3 border border-gray-300 rounded-lg shadow-sm text-xs"><i class="fas fa-list mr-1.5"></i>Satış Listesi</button>
+
+            <!-- ORTA BLOK: ml-auto eklendi (sağa yasla) -->
+            <div class="flex items-center gap-2 flex-shrink-0 ml-auto">
+                <button class="bg-white hover:bg-gray-100 text-gray-800 font-semibold py-1.5 px-3 border border-gray-300 rounded-lg shadow-sm text-xs">
+                    <i class="fas fa-users mr-1.5"></i>CRM
+                </button>
+                <button id="ekstre-button" class="bg-white hover:bg-gray-100 text-gray-800 font-semibold py-1.5 px-3 border border-gray-300 rounded-lg shadow-sm text-xs">
+                    <i class="fas fa-file-invoice mr-1.5"></i>Ekstre
+                </button>
+                <button id="sales-list-button" class="bg-white hover:bg-gray-100 text-gray-800 font-semibold py-1.5 px-3 border border-gray-300 rounded-lg shadow-sm text-xs">
+                    <i class="fas fa-list mr-1.5"></i>Satış Listesi
+                </button>
             </div>
-            <div class="flex items-center min-w-[200px] flex-shrink-0">
+
+            <!-- SAĞ BLOK: sabit kalsın -->
+            <div class="salesperson-wrap flex items-center">
                 <select id="salesperson-select" name="salesperson-select">
-                    @foreach (var item in Model.getAllAccountQueryResponses.Where(x => x.Tezgahtar))
+                    @foreach (var item in Model.getAllAccountQueryResponses.Where(x => x.AccountTypeId == 13))
                     {
                         <option value="@item.AccountId">@item.AccountName</option>
                     }
                 </select>
             </div>
+
         </div>
     </header>
+
     <main class="pt-3 h-[calc(100vh-92px)]">
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 h-full">
             <div class="lg:col-span-4 flex flex-col gap-3 h-full">
@@ -1021,7 +1053,7 @@
                     <div class="p-3 border-b border-gray-200 flex-shrink-0">
                         <div class="flex justify-between items-center">
                             <h5 id="receipt-title" class="text-lg font-bold text-gray-700">Satış Fişi</h5>
-                            <input type="datetime-local" id="fis-tarihi" asp-for="@DateTime.Now" value="@DateTime.Now" class="text-sm bg-transparent text-gray-600 border-none focus:ring-0 p-0 w-auto">
+                            <input type="datetime-local" id="fis-tarihi" class="text-sm bg-transparent text-gray-600 border-none focus:ring-0 p-0 w-auto">
                         </div>
                     </div>
                     <div id="receipt-log" class="flex-grow p-3 overflow-y-auto custom-scrollbar min-h-0"></div>
@@ -1329,7 +1361,7 @@
         <div class="bg-white w-full max-w-3xl rounded-2xl shadow-2xl overflow-hidden theme-border">
             <!-- Header -->
             <div class="px-6 pt-5 pb-4 border-b border-gray-200 flex items-center justify-between">
-                <h3 class="text-xl font-extrabold text-gray-900">Nakit Tahsilat</h3>
+                <h3 id="nakit-modal-title" class="text-xl font-extrabold text-gray-900">Nakit Tahsilat</h3>
                 <button id="nakit-tahsilat-close" class="text-gray-500 hover:text-gray-900 text-2xl leading-none">&times;</button>
             </div>
 
@@ -1442,6 +1474,11 @@
 
             <!-- Footer -->
             <div class="px-6 py-4 border-t border-gray-200 flex justify-end gap-3 bg-gray-50">
+                   <button type="button" id="nt-delete"
+            class="hidden bg-red-200 hover:bg-red-300 text-red-900 font-bold px-6 py-2 rounded-xl border border-red-300">
+        <i class="fas fa-trash mr-2"></i>Sil
+    </button>
+                
                 <button type="button" id="nt-submit"
                         class="bg-blue-200 hover:bg-blue-300 text-blue-900 font-bold px-6 py-2 rounded-xl border border-blue-300">
                     <i class="fas fa-check mr-2"></i>Ekle
@@ -1504,88 +1541,607 @@
             </div>
         </div>
     </div>
+    <div id="fis-list-modal" class="hidden fixed inset-0 z-50 flex justify-end">
+        <div class="modal-bg absolute inset-0"></div>
+        <div class="modal-content bg-white w-full max-w-4xl h-full flex flex-col shadow-2xl relative">
+            <div class="flex justify-between items-center p-4 border-b sticky top-0 bg-white z-10">
+                <h3 id="fis-list-modal-title" class="text-lg font-bold text-gray-800"></h3>
+                <button id="fis-list-modal-close-button" class="text-gray-500 hover:text-gray-800 text-2xl">&times;</button>
+            </div>
+
+            <div id="fis-list-filters" class="p-3 border-b bg-gray-50 flex flex-wrap gap-3 items-end">
+                <div class="flex-grow min-w-[250px]">
+                    <label for="fis-list-customer-filter" class="text-xs font-semibold text-gray-600">Hesap Filtresi</label>
+                    <select id="fis-list-customer-filter"></select>
+                </div>
+                <div>
+                    <label for="fis-list-start-date" class="text-xs font-semibold text-gray-600">Başlangıç Tarihi</label>
+                    <input type="date" id="fis-list-start-date" class="block w-full px-3 py-1.5 bg-white border border-gray-300 rounded-md shadow-sm text-sm h-[38px]">
+                </div>
+                <div>
+                    <label for="fis-list-end-date" class="text-xs font-semibold text-gray-600">Bitiş Tarihi</label>
+                    <input type="date" id="fis-list-end-date" class="block w-full px-3 py-1.5 bg-white border border-gray-300 rounded-md shadow-sm text-sm h-[38px]">
+                </div>
+                <div>
+                    <button id="fis-list-filter-button" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-md text-sm h-[38px]">
+                        <i class="fas fa-filter mr-1.5"></i>Filtrele
+                    </button>
+                </div>
+            </div>
+
+            <div id="fis-list-content" class="flex-grow overflow-y-auto">
+            </div>
+        </div>
+    </div>
 </body>
 </html>
 
 <script>
     document.addEventListener("DOMContentLoaded", () => {
 
-            const openBtn  = document.getElementById("ekstre-button");
-    const modal    = document.getElementById("ekstre-modal");
-    const closeBtn = document.getElementById("ekstre-modal-close-button");
-            const ekstreBaslangic = document.getElementById('ekstre-baslangic-tarihi');
-                         const ekstreBitis = document.getElementById('ekstre-bitis-tarihi');
+      // =======================
+      // EKSTRE MODAL + TARİHLER
+      // =======================
+      const openBtn  = document.getElementById("ekstre-button");
+      const modal    = document.getElementById("ekstre-modal");
+      const closeBtn = document.getElementById("ekstre-modal-close-button");
+      const ekstreBaslangic = document.getElementById('ekstre-baslangic-tarihi');
+      const ekstreBitis = document.getElementById('ekstre-bitis-tarihi');
+      const fisTarihiInput = document.getElementById('fis-tarihi');
 
+      const toLocalISOString = (date) => {
+        const tzoffset = (new Date()).getTimezoneOffset() * 60000;
+        const localISOTime = (new Date(date - tzoffset)).toISOString().slice(0, -1);
+        return localISOTime.substring(0, 16);
+      };
 
-                            const getLocalDateString = (date) =>
-                    {
-                        const year = date.getFullYear();
-                        const month = (date.getMonth() + 1).toString().padStart(2, '0');
-                        const day = date.getDate().toString().padStart(2, '0');
-                        return `${year}-${month}-${day}`;
-                    };
+      const getLocalDateString = (date) => {
+        const year = date.getFullYear();
+        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+        const day = date.getDate().toString().padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      };
 
+      if (fisTarihiInput) fisTarihiInput.value = toLocalISOString(new Date());
 
-                             const today = new Date();
-            const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+      const today = new Date();
+      const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+      if (ekstreBitis) ekstreBitis.value = getLocalDateString(today);
+      if (ekstreBaslangic) ekstreBaslangic.value = getLocalDateString(firstDayOfMonth);
 
-                ekstreBitis.value = getLocalDateString(today);
-            ekstreBaslangic.value = getLocalDateString(firstDayOfMonth);
+      if (openBtn && modal) {
+        function openModal() { modal.classList.remove("hidden"); }
+        function closeModal() { modal.classList.add("hidden"); }
 
-    if (!openBtn || !modal) return;
+        openBtn.addEventListener("click", openModal);
+        closeBtn?.addEventListener("click", closeModal);
 
-    function openModal() {
-      modal.classList.remove("hidden");
-    }
-
-    function closeModal() {
-      modal.classList.add("hidden");
-    }
-
-    // Ekstre butonu
-    openBtn.addEventListener("click", openModal);
-
-    // X butonu
-    closeBtn?.addEventListener("click", closeModal);
-
-    // Modal dışına tıkla kapat
-    modal.addEventListener("click", (e) => {
-      if (e.target === modal) closeModal();
-    });
-
-    // ESC ile kapat
-    document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape" && !modal.classList.contains("hidden")) {
-        closeModal();
+        modal.addEventListener("click", (e) => { if (e.target === modal) closeModal(); });
+        document.addEventListener("keydown", (e) => {
+          if (e.key === "Escape" && !modal.classList.contains("hidden")) closeModal();
+        });
       }
-    });
+
+      // =======================
+      // SATIŞ/CARİ TOGGLE -> KUR SELECT GİZLE
+      // =======================
       const currencySelect = document.getElementById("currency-select");
-      const toggle = document.getElementById("operation-type-toggle");
+      const opToggle = document.getElementById("operation-type-toggle");
 
-      if (!currencySelect || !toggle) return;
-
-      function updateCurrencyVisibility() {
-        const isCari = toggle.checked;
-        currencySelect.classList.toggle("hidden", isCari);
+      if (currencySelect && opToggle) {
+        function updateCurrencyVisibility() {
+          const isCari = opToggle.checked;
+          currencySelect.classList.toggle("hidden", isCari);
+        }
+        updateCurrencyVisibility();
+        opToggle.addEventListener("change", updateCurrencyVisibility);
       }
 
-      // ilk yükleme
-      updateCurrencyVisibility();
+      // =======================
+      // SLIMSELECT (DOMContentLoaded içinde)
+      // =======================
+      try {
+        if (document.querySelector('#customer-select')) {
+          new SlimSelect({
+            select: '#customer-select',
+            settings: {
+              placeholderText: 'Hesap Seçiniz...',
+              searchPlaceholder: 'Hesap Ara...',
+              allowDeselect: true
+            }
+          });
+        }
 
-      // toggle değişince
-      toggle.addEventListener("change", updateCurrencyVisibility);
+        if (document.querySelector('#salesperson-select')) {
+          new SlimSelect({
+            select: '#salesperson-select',
+            settings: {
+              placeholderText: 'Tezgahtar Seç',
+              searchPlaceholder: 'Ara',
+              allowDeselect: true
+            }
+          });
+        }
+      } catch (e) {
+        console.warn("SlimSelect init error:", e);
+      }
+
+      // init sonrası width fix
+      setTimeout(() => {
+        const c = document.querySelector('.app-shell-customer .ss-main');
+        if (c) c.style.width = '100%';
+
+        const s = document.querySelector('.salesperson-wrap .ss-main');
+        if (s) s.style.width = '100%';
+      }, 0);
+
+
+      // =======================
+      // ANA APP (IIFE)
+      // =======================
+      (() => {
+        // ---------- STATE ----------
+        const state = {
+          receiptItems: [],
+          pendingSwitchToCari: false,
+          suppressToggle: false,
+          currentCashOperation: "GIRIS",
+          isEditing: false,
+          editingIndex: null
+        };
+
+        // ---------- HELPERS ----------
+        const fmt2 = new Intl.NumberFormat("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        const fmt4 = new Intl.NumberFormat("tr-TR", { minimumFractionDigits: 4, maximumFractionDigits: 4 });
+
+        function sanitizeNumericText(raw) {
+          let s = (raw ?? "").toString().trim().replace(/[^\d,.\-]/g, "");
+          s = s.replace(/(?!^)-/g, "");
+          s = s.replace(/\./g, "");
+          const firstComma = s.indexOf(",");
+          if (firstComma !== -1) {
+            s = s.slice(0, firstComma + 1) + s.slice(firstComma + 1).replace(/,/g, "");
+          }
+          return s;
+        }
+
+        function parseTrNumber(raw) {
+          const s = sanitizeNumericText(raw);
+          if (!s || s === "-" || s === ",") return 0;
+          const normalized = s.replace(",", ".");
+          const n = Number.parseFloat(normalized);
+          return Number.isFinite(n) ? n : 0;
+        }
+
+        function textToTryNumber(text) {
+          return parseTrNumber(String(text || "").replace("TRY", "").trim());
+        }
+
+        function el(id) { return document.getElementById(id); }
+
+        // ---------- UI ELEMENTS ----------
+        const toggle = el("operation-type-toggle");
+        const receiptTitle = el("receipt-title");
+        const receiptLog = el("receipt-log");
+        const girenToplamEl = el("giren-toplam");
+        const cikanToplamEl = el("cikan-toplam");
+        const farkToplamEl  = el("fark-toplam");
+
+        const lblNakitTahsilat = el("label-nakit-tahsilat");
+        const lblNakitOdeme    = el("label-nakit-odeme");
+        const lblUrunAlis      = el("label-urun-alis");
+        const lblUrunSatis     = el("label-urun-satis");
+        const btnSatisListesi  = el("sales-list-button");
+
+        const confirmModal  = el("confirmation-modal");
+        const modalMessage  = el("modal-message");
+        const modalCancel   = el("modal-cancel");
+        const modalConfirm  = el("modal-confirm");
+
+            const fisListModal = el("fis-list-modal");
+    const fisListModalClose = el("fis-list-modal-close-button");
+    const fisListModalBg = fisListModal?.querySelector(".modal-bg");
+
+        // Nakit modal
+        const nakitModal = el("nakit-tahsilat-modal");
+        const btnNakitTahsilat = el("btn-nakit-tahsilat");
+        const btnNakitOdeme = el("btn-nakit-odeme");
+        const nakitClose = el("nakit-tahsilat-close");
+        const nakitCancel = el("nt-cancel");
+        const nakitSubmit = el("nt-submit");
+
+        const ntTutar = el("nt-tutar");
+        const ntKur = el("nt-kur");
+        const ntKarsilik = el("nt-karsilik");
+        const ntBirim = el("nt-birim");
+
+        // Tabs
+        const ntTabs = nakitModal ? Array.from(nakitModal.querySelectorAll(".nt-tab")) : [];
+        const ntPanels = nakitModal ? {
+          kasalar:  nakitModal.querySelector("#nt-tab-kasalar"),
+          bankalar: nakitModal.querySelector("#nt-tab-bankalar"),
+          poslar:   nakitModal.querySelector("#nt-tab-poslar"),
+        } : {};
+
+        // ---------- MODE ----------
+        function setButtonLabels(isCari) {
+          if (lblNakitTahsilat) lblNakitTahsilat.textContent = isCari ? "Nakit Giriş" : "Nakit Tahsilat";
+          if (lblNakitOdeme)    lblNakitOdeme.textContent    = isCari ? "Nakit Çıkış" : "Nakit Ödeme";
+          if (lblUrunAlis)      lblUrunAlis.textContent      = isCari ? "Ürün Giriş"  : "Ürün Alış";
+          if (lblUrunSatis)     lblUrunSatis.textContent     = isCari ? "Ürün Çıkış"  : "Ürün Satış";
+          if (btnSatisListesi)  btnSatisListesi.textContent  = isCari ? "Cari Listesi" : "Satış Listesi";
+        }
+
+        function applyMode(isCari) {
+          document.body.classList.toggle("cari-active", isCari);
+          document.body.classList.toggle("satis-active", !isCari);
+
+          if (receiptTitle) receiptTitle.textContent = isCari ? "Cari Fişi" : "Satış Fişi";
+          setButtonLabels(isCari);
+        }
+
+        function hasReceiptData() {
+          return state.receiptItems.length > 0;
+        }
+
+        function readTotals() {
+          const giren = textToTryNumber(girenToplamEl?.textContent);
+          const cikan = textToTryNumber(cikanToplamEl?.textContent);
+          return { giren, cikan };
+        }
+            function wireFisListModal() {
+      if (!btnSatisListesi || !fisListModal) return;
+
+      const open = () => fisListModal.classList.remove("hidden");
+      const close = () => fisListModal.classList.add("hidden");
+
+      // buton -> aç
+      btnSatisListesi.addEventListener("click", open);
+
+      // X -> kapa
+      fisListModalClose?.addEventListener("click", close);
+
+      // arkaplana tıkla -> kapa (en doğru yer burası)
+      fisListModalBg?.addEventListener("click", close);
+
+      // ESC -> kapa
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && !fisListModal.classList.contains("hidden")) close();
+      });
+    }
+
+
+        function writeTotals(giren, cikan) {
+          const fark = giren - cikan;
+          if (girenToplamEl) girenToplamEl.textContent = `${fmt2.format(giren)} TRY`;
+          if (cikanToplamEl) cikanToplamEl.textContent = `${fmt2.format(cikan)} TRY`;
+          if (farkToplamEl)  farkToplamEl.textContent  = `${fmt2.format(fark)} TRY`;
+        }
+
+        function clearReceipt() {
+          state.receiptItems = [];
+          if (receiptLog) receiptLog.innerHTML = "";
+          writeTotals(0, 0);
+        }
+
+        // ---------- CONFIRM MODAL ----------
+        function showConfirmationModal(message, onConfirm, onCancel) {
+          if (!confirmModal) return;
+          if (modalMessage) modalMessage.textContent = message;
+
+          const cancelClone = modalCancel?.cloneNode(true);
+          const confirmClone = modalConfirm?.cloneNode(true);
+
+          if (modalCancel && cancelClone) modalCancel.parentNode.replaceChild(cancelClone, modalCancel);
+          if (modalConfirm && confirmClone) modalConfirm.parentNode.replaceChild(confirmClone, modalConfirm);
+
+          const cBtn = el("modal-cancel");
+          const okBtn = el("modal-confirm");
+
+          cBtn?.addEventListener("click", () => {
+            confirmModal.classList.add("hidden");
+            onCancel?.();
+          });
+
+          okBtn?.addEventListener("click", () => {
+            confirmModal.classList.add("hidden");
+            onConfirm?.();
+          });
+
+          confirmModal.addEventListener("click", (e) => {
+            if (e.target === confirmModal) {
+              confirmModal.classList.add("hidden");
+              onCancel?.();
+            }
+          }, { once: true });
+
+          confirmModal.classList.remove("hidden");
+        }
+
+        // ---------- TOGGLE HANDLER ----------
+        function wireToggle() {
+          if (!toggle) return;
+
+          applyMode(toggle.checked);
+
+          toggle.addEventListener("change", (e) => {
+            if (state.suppressToggle) return;
+
+            const wantCari = e.target.checked;
+            const currentlySales = !document.body.classList.contains("cari-active");
+
+            if (currentlySales && wantCari && hasReceiptData()) {
+              showConfirmationModal(
+                "Yapılan işlemler kaybolacak. Devam etmek istiyor musunuz?",
+                () => {
+                  clearReceipt();
+                  applyMode(true);
+                  state.suppressToggle = true;
+                  toggle.checked = true;
+                  state.suppressToggle = false;
+                },
+                () => {
+                  state.suppressToggle = true;
+                  toggle.checked = false;
+                  state.suppressToggle = false;
+                }
+              );
+              return;
+            }
+
+            applyMode(wantCari);
+          });
+        }
+
+        // ---------- NAKIT MODAL ----------
+        function setActiveTab(name) {
+          Object.keys(ntPanels).forEach(k => {
+            const p = ntPanels[k];
+            if (!p) return;
+            p.classList.toggle("hidden", k !== name);
+          });
+
+          ntTabs.forEach(t => {
+            const isActive = t.dataset.tab === name;
+            t.classList.toggle("bg-white", isActive);
+            t.classList.toggle("shadow", isActive);
+            t.classList.toggle("text-blue-700", isActive);
+
+            t.classList.toggle("text-gray-600", !isActive);
+            t.classList.toggle("bg-transparent", !isActive);
+          });
+        }
+
+        function openNakitModal(operationType /* GIRIS|CIKIS */) {
+          if (!nakitModal) return;
+
+          // ✅ her açılışta Ekle moduna reset
+          state.isEditing = false;
+          state.editingIndex = null;
+
+          if (nakitSubmit) {
+            nakitSubmit.innerHTML = `<i class="fas fa-check mr-2"></i>Ekle`;
+          }
+
+          // ✅ title
+          const titleEl = nakitModal.querySelector("h3");
+          if (titleEl) titleEl.textContent = operationType === "GIRIS" ? "Nakit Tahsilat" : "Nakit Ödeme";
+
+          state.currentCashOperation = operationType;
+
+          nakitModal.classList.remove("hidden");
+          setActiveTab("kasalar");
+          updateKarsilikLive();
+        }
+
+        function closeNakitModal() {
+          nakitModal?.classList.add("hidden");
+        }
+
+        function enforceNumericInput(inputEl, decimals) {
+          if (!inputEl) return;
+          inputEl.addEventListener("input", () => {
+            const before = inputEl.value;
+            const after = sanitizeNumericText(before);
+            if (before !== after) inputEl.value = after;
+            updateKarsilikLive();
+          });
+          inputEl.addEventListener("blur", () => {
+            const n = parseTrNumber(inputEl.value);
+            inputEl.value = decimals === 2 ? fmt2.format(n) : fmt4.format(n);
+            updateKarsilikLive();
+          });
+        }
+
+        function makeEditableKarsilik() {
+          if (!ntKarsilik) return;
+          ntKarsilik.setAttribute("contenteditable", "true");
+          ntKarsilik.style.outline = "none";
+
+          ntKarsilik.addEventListener("input", () => {
+            const before = ntKarsilik.textContent;
+            const after = sanitizeNumericText(before);
+            if (before !== after) ntKarsilik.textContent = after;
+          });
+
+          ntKarsilik.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") { e.preventDefault(); ntKarsilik.blur(); }
+          });
+
+          ntKarsilik.addEventListener("blur", () => {
+            const n = parseTrNumber(ntKarsilik.textContent);
+            ntKarsilik.textContent = fmt2.format(n);
+          });
+        }
+
+        function updateKarsilikLive() {
+          if (!ntTutar || !ntKur || !ntKarsilik) return;
+          if (document.activeElement === ntKarsilik) return;
+
+          const tutar = parseTrNumber(ntTutar.value);
+          const kur = parseTrNumber(ntKur.value);
+          ntKarsilik.textContent = fmt2.format(tutar * kur);
+        }
+
+        function getActiveTabName() {
+          if (!nakitModal) return "kasalar";
+          const active = nakitModal.querySelector(".nt-tab.bg-white");
+          return active?.dataset?.tab ?? "kasalar";
+        }
+
+        function getSelectedAccountName(activeTab) {
+          if (activeTab === "bankalar") return el("nt-banka")?.selectedOptions?.[0]?.textContent?.trim() || "BANKA";
+          if (activeTab === "poslar")   return el("nt-pos")?.selectedOptions?.[0]?.textContent?.trim() || "POS";
+          return el("nt-kasa")?.selectedOptions?.[0]?.textContent?.trim() || "KASA";
+        }
+
+        function ensureSection(id, title, colorMode /* green|red */) {
+          if (!receiptLog) return null;
+          let section = el(id);
+          if (section) return section;
+
+          section = document.createElement("div");
+          section.id = id;
+          section.className = "theme-border-50 rounded-xl overflow-hidden mb-3";
+
+          const borderClass = colorMode === "red" ? "border-red-200 text-red-700" : "border-green-200 text-green-700";
+
+          section.innerHTML = `
+            <div class="px-4 py-2 border-b ${borderClass} font-extrabold tracking-widest text-xs">
+              ${title}
+            </div>
+            <div class="p-3 space-y-2" data-items></div>
+          `;
+          receiptLog.prepend(section);
+          return section;
+        }
+
+        function getCashRowLabel(itemType /* "GIRIS"|"CIKIS" */) {
+          const isCari = document.body.classList.contains("cari-active");
+          if (isCari) return itemType === "GIRIS" ? "Nakit Giriş" : "Nakit Çıkış";
+          return itemType === "GIRIS" ? "Nakit Tahsilat" : "Nakit Ödeme";
+        }
+
+        function addReceiptItemToUI(item) {
+          const isGiris = item.type === "GIRIS";
+          const section = ensureSection(
+            isGiris ? "section-nakit-girisler" : "section-nakit-cikislar",
+            isGiris ? "NAKİT GİRİŞLER" : "NAKİT ÇIKIŞLAR",
+            isGiris ? "green" : "red"
+          );
+          if (!section) return;
+
+          const wrap = section.querySelector("[data-items]");
+          const row = document.createElement("div");
+          row.setAttribute("data-receipt-item", "1");
+          row.className = `rounded-lg border ${isGiris ? "border-green-100" : "border-red-100"} bg-white px-3 py-2`;
+
+          const leftTop = `${isGiris ? "+" : "-"}${fmt2.format(item.tutar)} ${item.currency}`;
+          const rightTop = `${fmt2.format(item.karsilikTry)} TRY`;
+          const leftBottom = `${item.hesapAdi} - ${getCashRowLabel(item.type)}`;
+          const rightBottom = `TRY Kuru: ${fmt4.format(item.kur)}`;
+
+          row.innerHTML = `
+            <div class="flex items-start justify-between gap-3">
+              <div class="min-w-0">
+                <div class="${isGiris ? "text-green-700" : "text-red-700"} font-extrabold text-sm">${leftTop}</div>
+                <div class="text-gray-700 font-mono text-xs mt-1 truncate">${leftBottom}</div>
+              </div>
+              <div class="text-right">
+                <div class="${isGiris ? "text-green-700" : "text-red-700"} font-extrabold text-sm">${rightTop}</div>
+                <div class="text-gray-500 font-mono text-xs mt-1">${rightBottom}</div>
+              </div>
+            </div>
+          `;
+
+          wrap.appendChild(row);
+        }
+
+        function wireNakitModal() {
+          if (!nakitModal) return;
+
+          // open
+          btnNakitTahsilat?.addEventListener("click", () => openNakitModal("GIRIS"));
+          btnNakitOdeme?.addEventListener("click", () => openNakitModal("CIKIS"));
+
+          // close
+          nakitClose?.addEventListener("click", closeNakitModal);
+          nakitCancel?.addEventListener("click", closeNakitModal);
+          nakitModal.addEventListener("click", (e) => { if (e.target === nakitModal) closeNakitModal(); });
+          document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !nakitModal.classList.contains("hidden")) closeNakitModal(); });
+
+          // tabs
+          ntTabs.forEach(t => t.addEventListener("click", () => setActiveTab(t.dataset.tab)));
+
+          // numeric + karsilik
+          enforceNumericInput(ntTutar, 2);
+          enforceNumericInput(ntKur, 4);
+          makeEditableKarsilik();
+
+          // initial format
+          if (ntTutar) ntTutar.value = fmt2.format(parseTrNumber(ntTutar.value));
+          if (ntKur) ntKur.value = fmt4.format(parseTrNumber(ntKur.value));
+          updateKarsilikLive();
+
+          // submit => add to receipt
+          nakitSubmit?.addEventListener("click", () => {
+            const activeTab = getActiveTabName();
+            const hesapAdi = getSelectedAccountName(activeTab);
+
+            const currency = ntBirim?.selectedOptions?.[0]?.textContent?.trim() || "TRY";
+            const tutar = parseTrNumber(ntTutar?.value);
+            const kur = parseTrNumber(ntKur?.value);
+            const karsilikTry = parseTrNumber(ntKarsilik?.textContent);
+
+            const item = {
+              type: state.currentCashOperation,
+              currency,
+              tutar,
+              kur,
+              karsilikTry,
+              hesapAdi
+            };
+
+            state.receiptItems.push(item);
+            addReceiptItemToUI(item);
+
+            const { giren, cikan } = readTotals();
+            if (item.type === "GIRIS") writeTotals(giren + item.karsilikTry, cikan);
+            else writeTotals(giren, cikan + item.karsilikTry);
+
+            closeNakitModal();
+          });
+        }
+
+        // ---------- INIT ----------
+        if (!document.body.classList.contains("satis-active") && !document.body.classList.contains("cari-active")) {
+          document.body.classList.add("satis-active");
+        }
+
+        wireToggle();
+        wireNakitModal();
+        wireFisListModal();
+        setButtonLabels(toggle?.checked ?? false);
+
+
+      })();
+
     });
 </script>
+
 
 
 <script>
     (() => {
       // ---------- STATE ----------
       const state = {
-        receiptItems: [], // { type: 'GIRIS'|'CIKIS', tryAmount:number, html:string }
-        pendingSwitchToCari: false,
+        receiptItems: [], // { type:"GIRIS"|"CIKIS", currency, tutar, kur, karsilikTry, hesapAdi, tab }
         suppressToggle: false,
-        currentCashOperation: "GIRIS" // default
+        currentCashOperation: "GIRIS",
+
+        // edit state
+        isEditing: false,
+        editingIndex: null,
       };
 
       // ---------- HELPERS ----------
@@ -1594,8 +2150,8 @@
 
       function sanitizeNumericText(raw) {
         let s = (raw ?? "").toString().trim().replace(/[^\d,.\-]/g, "");
-        s = s.replace(/(?!^)-/g, "");   // sadece en başta -
-        s = s.replace(/\./g, "");       // binlik noktalarını sil
+        s = s.replace(/(?!^)-/g, "");
+        s = s.replace(/\./g, "");
         const firstComma = s.indexOf(",");
         if (firstComma !== -1) {
           s = s.slice(0, firstComma + 1) + s.slice(firstComma + 1).replace(/,/g, "");
@@ -1612,7 +2168,6 @@
       }
 
       function textToTryNumber(text) {
-        // "43,11 TRY" gibi yerlerden de okuyabilmek için
         return parseTrNumber(String(text || "").replace("TRY", "").trim());
       }
 
@@ -1620,7 +2175,7 @@
 
       // ---------- UI ELEMENTS ----------
       const toggle = el("operation-type-toggle");
-      const receiptTitle = el("receipt-title"); // doğru id bu
+      const receiptTitle = el("receipt-title");
       const receiptLog = el("receipt-log");
       const girenToplamEl = el("giren-toplam");
       const cikanToplamEl = el("cikan-toplam");
@@ -1641,9 +2196,12 @@
       const nakitModal = el("nakit-tahsilat-modal");
       const btnNakitTahsilat = el("btn-nakit-tahsilat");
       const btnNakitOdeme = el("btn-nakit-odeme");
+      const nakitModalTitle = el("nakit-modal-title");
+
       const nakitClose = el("nakit-tahsilat-close");
       const nakitCancel = el("nt-cancel");
       const nakitSubmit = el("nt-submit");
+      const nakitDelete = el("nt-delete"); // YENI
 
       const ntTutar = el("nt-tutar");
       const ntKur = el("nt-kur");
@@ -1673,6 +2231,10 @@
 
         if (receiptTitle) receiptTitle.textContent = isCari ? "Cari Fişi" : "Satış Fişi";
         setButtonLabels(isCari);
+
+        // mod değişince edit mod kapansın
+        state.isEditing = false;
+        state.editingIndex = null;
       }
 
       function hasReceiptData() {
@@ -1704,7 +2266,6 @@
 
         if (modalMessage) modalMessage.textContent = message;
 
-        // mevcut handlerlar birikmesin diye önce clone ile sıfırla
         const cancelClone = modalCancel?.cloneNode(true);
         const confirmClone = modalConfirm?.cloneNode(true);
 
@@ -1724,7 +2285,6 @@
           onConfirm?.();
         });
 
-        // dışarı tıkla = vazgeç
         confirmModal.addEventListener("click", (e) => {
           if (e.target === confirmModal) {
             confirmModal.classList.add("hidden");
@@ -1735,12 +2295,10 @@
         confirmModal.classList.remove("hidden");
       }
 
-
       // ---------- TOGGLE HANDLER ----------
       function wireToggle() {
         if (!toggle) return;
 
-        // initial
         applyMode(toggle.checked);
 
         toggle.addEventListener("change", (e) => {
@@ -1749,7 +2307,6 @@
           const wantCari = e.target.checked;
           const currentlySales = !document.body.classList.contains("cari-active");
 
-          // SADECE Satış -> Cari geçerken kontrol
           if (currentlySales && wantCari && hasReceiptData()) {
             showConfirmationModal(
               "Yapılan işlemler kaybolacak. Devam etmek istiyor musunuz?",
@@ -1761,7 +2318,6 @@
                 state.suppressToggle = false;
               },
               () => {
-                // toggle geri al
                 state.suppressToggle = true;
                 toggle.checked = false;
                 state.suppressToggle = false;
@@ -1771,6 +2327,7 @@
           }
 
           applyMode(wantCari);
+          rerenderReceipt(); // mod sonrası UI toparla
         });
       }
 
@@ -1791,25 +2348,6 @@
           t.classList.toggle("text-gray-600", !isActive);
           t.classList.toggle("bg-transparent", !isActive);
         });
-      }
-
-      function openNakitModal(operationType /* GIRIS|CIKIS */) {
-        if (!nakitModal) return;
-        state.currentCashOperation = operationType;
-
-        // modal title'ı değiştirelim
-        const h3 = nakitModal.querySelector("h3");
-        if (h3) h3.textContent = operationType === "GIRIS" ? "Nakit Tahsilat" : "Nakit Ödeme";
-
-        nakitModal.classList.remove("hidden");
-        setActiveTab("kasalar");
-        // inputları sıfırlamak istersen:
-        // ntTutar.value = "0,00"; ntKur.value = "1,0000"; ntKarsilik.textContent = "0,00";
-        updateKarsilikLive();
-      }
-
-      function closeNakitModal() {
-        nakitModal?.classList.add("hidden");
       }
 
       function enforceNumericInput(inputEl, decimals) {
@@ -1850,8 +2388,6 @@
 
       function updateKarsilikLive() {
         if (!ntTutar || !ntKur || !ntKarsilik) return;
-
-        // kullanıcı karsilik üzerinde iken otomatik yazma
         if (document.activeElement === ntKarsilik) return;
 
         const tutar = parseTrNumber(ntTutar.value);
@@ -1867,9 +2403,9 @@
       }
 
       function getSelectedAccountName(activeTab) {
-        if (activeTab === "bankalar") return el("nt-banka")?.selectedOptions?.[0]?.textContent?.trim() || "BANKA";
-        if (activeTab === "poslar")   return el("nt-pos")?.selectedOptions?.[0]?.textContent?.trim() || "POS";
-        return el("nt-kasa")?.selectedOptions?.[0]?.textContent?.trim() || "KASA";
+        if (activeTab === "bankalar") return el("nt-banka")?.selectedOptions?.[0]?.textContent?.trim() || "";
+        if (activeTab === "poslar")   return el("nt-pos")?.selectedOptions?.[0]?.textContent?.trim() || "";
+        return el("nt-kasa")?.selectedOptions?.[0]?.textContent?.trim() || "";
       }
 
       function ensureSection(id, title, colorMode /* green|red */) {
@@ -1893,9 +2429,104 @@
         return section;
       }
 
-      function addReceiptItemToUI(item) {
-        // item: { type, currency, tutar, kur, karsilikTry, hesapAdi }
+      function getCashRowLabel(itemType) {
+        const isCari = document.body.classList.contains("cari-active");
+        if (isCari) return itemType === "GIRIS" ? "Nakit Giriş" : "Nakit Çıkış";
+        return itemType === "GIRIS" ? "Nakit Tahsilat" : "Nakit Ödeme";
+      }
+
+      function closeNakitModal() {
+        nakitModal?.classList.add("hidden");
+      }
+
+      function setModalModeUI(operationType) {
+        // Title
+        const titleEl = nakitModalTitle || nakitModal?.querySelector("h3");
+        if (titleEl) titleEl.textContent = (operationType === "GIRIS") ? "Nakit Tahsilat" : "Nakit Ödeme";
+
+        // Buttons
+        if (state.isEditing) {
+          if (nakitSubmit) nakitSubmit.innerHTML = `<i class="fas fa-save mr-2"></i>Güncelle`;
+          nakitDelete?.classList.remove("hidden");
+        } else {
+          if (nakitSubmit) nakitSubmit.innerHTML = `<i class="fas fa-check mr-2"></i>Ekle`;
+          nakitDelete?.classList.add("hidden");
+        }
+      }
+
+      function openNakitModal(operationType /* GIRIS|CIKIS */) {
+        if (!nakitModal) return;
+
+        state.currentCashOperation = operationType;
+
+        // open normal mode
+        state.isEditing = false;
+        state.editingIndex = null;
+
+        nakitModal.classList.remove("hidden");
+        setActiveTab("kasalar");
+        setModalModeUI(operationType);
+        updateKarsilikLive();
+      }
+
+      // Edit için modal aç
+      function openNakitModalForEdit(index) {
+        const item = state.receiptItems[index];
+        if (!item || !nakitModal) return;
+
+        state.isEditing = true;
+        state.editingIndex = index;
+        state.currentCashOperation = item.type;
+
+        // tab
+        setActiveTab(item.tab || "kasalar");
+
+        // birim seç (text'e göre)
+        if (ntBirim) {
+          const wanted = (item.currency || "TRY").trim();
+          const opt = Array.from(ntBirim.options).find(o => (o.textContent || "").trim() === wanted);
+          if (opt) ntBirim.value = opt.value;
+        }
+
+        // inputları doldur
+        if (ntTutar) ntTutar.value = fmt2.format(item.tutar ?? 0);
+        if (ntKur) ntKur.value = fmt4.format(item.kur ?? 0);
+        if (ntKarsilik) ntKarsilik.textContent = fmt2.format(item.karsilikTry ?? 0);
+
+        // ilgili hesabı seçmeye çalış (tab'a göre)
+        const tab = item.tab || "kasalar";
+        const selectId = tab === "bankalar" ? "nt-banka" : (tab === "poslar" ? "nt-pos" : "nt-kasa");
+        const sel = el(selectId);
+        if (sel && item.hesapAdi) {
+          const opt = Array.from(sel.options).find(o => (o.textContent || "").trim() === item.hesapAdi.trim());
+          if (opt) sel.value = opt.value;
+        }
+
+        nakitModal.classList.remove("hidden");
+        setModalModeUI(item.type);
+      }
+
+      // ---------- RENDER / RERENDER ----------
+      function rerenderReceipt() {
+        if (!receiptLog) return;
+        receiptLog.innerHTML = "";
+
+        let giren = 0;
+        let cikan = 0;
+
+        state.receiptItems.forEach((item, index) => {
+          addReceiptItemToUI(item, index);
+
+          if (item.type === "GIRIS") giren += (item.karsilikTry || 0);
+          else cikan += (item.karsilikTry || 0);
+        });
+
+        writeTotals(giren, cikan);
+      }
+
+      function addReceiptItemToUI(item, index) {
         const isGiris = item.type === "GIRIS";
+
         const section = ensureSection(
           isGiris ? "section-nakit-girisler" : "section-nakit-cikislar",
           isGiris ? "NAKİT GİRİŞLER" : "NAKİT ÇIKIŞLAR",
@@ -1906,11 +2537,13 @@
         const wrap = section.querySelector("[data-items]");
         const row = document.createElement("div");
         row.setAttribute("data-receipt-item", "1");
+        row.dataset.index = index;
+        row.style.cursor = "pointer";
         row.className = `rounded-lg border ${isGiris ? "border-green-100" : "border-red-100"} bg-white px-3 py-2`;
 
         const leftTop = `${isGiris ? "+" : "-"}${fmt2.format(item.tutar)} ${item.currency}`;
         const rightTop = `${fmt2.format(item.karsilikTry)} TRY`;
-        const leftBottom = `${item.hesapAdi} - ${isGiris ? "Nakit Giriş" : "Nakit Çıkış"}`;
+        const leftBottom = `${item.hesapAdi} - ${getCashRowLabel(item.type)}`;
         const rightBottom = `TRY Kuru: ${fmt4.format(item.kur)}`;
 
         row.innerHTML = `
@@ -1926,21 +2559,57 @@
           </div>
         `;
 
+        row.addEventListener("click", () => openNakitModalForEdit(index));
         wrap.appendChild(row);
       }
 
+      // ---------- SUBMIT / UPDATE / DELETE ----------
+      function readItemFromModal() {
+        const tab = getActiveTabName();
+        const hesapAdi = getSelectedAccountName(tab);
+
+        const currency = ntBirim?.selectedOptions?.[0]?.textContent?.trim() || "TRY";
+        const tutar = parseTrNumber(ntTutar?.value);
+        const kur = parseTrNumber(ntKur?.value);
+        const karsilikTry = parseTrNumber(ntKarsilik?.textContent);
+
+        return {
+          type: state.currentCashOperation,
+          currency,
+          tutar,
+          kur,
+          karsilikTry,
+          hesapAdi,
+          tab
+        };
+      }
+
+      function validateItem(item) {
+        // çok sıkı değil ama boş hesap adı gelmesin
+        if (!item.hesapAdi) return false;
+        return true;
+      }
+
+      // ---------- WIRE MODAL ----------
       function wireNakitModal() {
         if (!nakitModal) return;
 
-        // open
+        // open buttons
         btnNakitTahsilat?.addEventListener("click", () => openNakitModal("GIRIS"));
         btnNakitOdeme?.addEventListener("click", () => openNakitModal("CIKIS"));
 
         // close
         nakitClose?.addEventListener("click", closeNakitModal);
-        nakitCancel?.addEventListener("click", closeNakitModal);
+        nakitCancel?.addEventListener("click", () => {
+          closeNakitModal();
+          state.isEditing = false;
+          state.editingIndex = null;
+        });
+
         nakitModal.addEventListener("click", (e) => { if (e.target === nakitModal) closeNakitModal(); });
-        document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !nakitModal.classList.contains("hidden")) closeNakitModal(); });
+        document.addEventListener("keydown", (e) => {
+          if (e.key === "Escape" && !nakitModal.classList.contains("hidden")) closeNakitModal();
+        });
 
         // tabs
         ntTabs.forEach(t => t.addEventListener("click", () => setActiveTab(t.dataset.tab)));
@@ -1955,57 +2624,58 @@
         if (ntKur) ntKur.value = fmt4.format(parseTrNumber(ntKur.value));
         updateKarsilikLive();
 
-        // submit => add to receipt
+        // submit => add or update
         nakitSubmit?.addEventListener("click", () => {
-          const activeTab = getActiveTabName();
-          const hesapAdi = getSelectedAccountName(activeTab);
+          const item = readItemFromModal();
+          if (!validateItem(item)) return;
 
-          const currency = ntBirim?.selectedOptions?.[0]?.textContent?.trim() || "TRY";
-          const tutar = parseTrNumber(ntTutar?.value);
-          const kur = parseTrNumber(ntKur?.value);
-          const karsilikTry = parseTrNumber(ntKarsilik?.textContent);
+          // EDIT
+          if (state.isEditing && state.editingIndex !== null) {
+            state.receiptItems[state.editingIndex] = item;
+            state.isEditing = false;
+            state.editingIndex = null;
 
-          // basic validation: hesap seçilmiş mi?
-          if (!hesapAdi || hesapAdi === "Seçiniz..." || hesapAdi === "KASA") {
-            // seçili option boşsa da düşebilir; çok kasmadan geçiyorum
+            rerenderReceipt();
+            closeNakitModal();
+            return;
           }
 
-          const item = {
-            type: state.currentCashOperation, // GIRIS / CIKIS
-            currency,
-            tutar,
-            kur,
-            karsilikTry,
-            hesapAdi
-          };
-
+          // ADD
           state.receiptItems.push(item);
-          addReceiptItemToUI(item);
+          rerenderReceipt();
+          closeNakitModal();
+        });
 
-          // totals update
-          const { giren, cikan } = readTotals();
-          if (item.type === "GIRIS") writeTotals(giren + item.karsilikTry, cikan);
-          else writeTotals(giren, cikan + item.karsilikTry);
+        // delete
+        nakitDelete?.addEventListener("click", () => {
+          if (!state.isEditing || state.editingIndex === null) return;
 
+          const idx = state.editingIndex;
+          state.receiptItems.splice(idx, 1);
+
+          state.isEditing = false;
+          state.editingIndex = null;
+
+          rerenderReceipt();
           closeNakitModal();
         });
       }
 
       // ---------- INIT ----------
       document.addEventListener("DOMContentLoaded", () => {
-        // body initial class (satis)
         if (!document.body.classList.contains("satis-active") && !document.body.classList.contains("cari-active")) {
           document.body.classList.add("satis-active");
         }
 
         wireToggle();
         wireNakitModal();
-
-        // label initial
         setButtonLabels(toggle?.checked ?? false);
+        rerenderReceipt();
+        wireFisListModal();
       });
     })();
 </script>
+
 
 
 
