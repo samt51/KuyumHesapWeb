@@ -1,10 +1,8 @@
-﻿using KuyumHesapWeb.Core.Commond.Models;
-using KuyumHesapWeb.Core.Feature.AuthFeature.Commands.Login;
+﻿using KuyumHesapWeb.Core.Feature.AuthFeature.Commands.Login;
 using MediatR;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
-using NuGet.Common;
 using System.Security.Claims;
 
 namespace KuyumHesapWeb.UI.Controllers
@@ -12,66 +10,100 @@ namespace KuyumHesapWeb.UI.Controllers
     public class AuthController : Controller
     {
         private readonly IMediator _mediator;
+        private readonly IWebHostEnvironment _env;
 
-        public AuthController(IMediator mediator)
+
+        public AuthController(IMediator mediator, IWebHostEnvironment env)
         {
             _mediator = mediator;
+            _env = env;
         }
 
-        [HttpGet]
-        public IActionResult Login()
+        private CookieOptions BuildAuthCookieOptions(DateTimeOffset expires)
         {
-            return View();
-        }
-        [HttpPost]
-        public async Task<IActionResult> LoginAsync(LoginCommandRequest request)
-        {
-            var data = await _mediator.Send(request);
-            Response.Cookies.Append("AuthToken", data.data.token, new CookieOptions
+            var host = Request.Host.Host;
+            var isLocalhost = host.Equals("localhost", StringComparison.OrdinalIgnoreCase);
+
+            return new CookieOptions
             {
                 HttpOnly = true,
-                Secure = false,                 // localhost http
-                SameSite = SameSiteMode.Lax,
-                Path = "/",                     // ✅ çok önemli
-                MaxAge = TimeSpan.FromHours(1)
-            });
-            var claims = new List<Claim>
-    {
-        new Claim(ClaimTypes.Name,  "user"),
-    };
+                Secure = !isLocalhost,                    // prod true
+                SameSite = isLocalhost ? SameSiteMode.Lax : SameSiteMode.None,
+                Domain = isLocalhost ? null : ".kuyumhesap.com",
+                Path = "/",
+                Expires = expires,
+                IsEssential = true
+            };
+        }
+
+
+        [HttpGet]
+        public IActionResult Login(string? returnUrl = null)
+        {
+            ViewData["ReturnUrl"] = returnUrl;
+            return View();
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> LoginAsync(LoginCommandRequest request, string? returnUrl = null)
+        {
+            var data = await _mediator.Send(request);
+
+            if (!data.isSuccess)
+            {
+                ModelState.AddModelError(string.Empty, data.errors?.FirstOrDefault() ?? "Giriş başarısız.");
+                ViewData["ReturnUrl"] = returnUrl;
+                return View("Login", request);
+            }
+
+            // JWT cookie
+            Response.Cookies.Append("AuthToken", data.data.token, BuildAuthCookieOptions(data.data.tokenExpireDate));
+
+            // MVC cookie (Authorize bunu okur)
+            var claims = new List<Claim> { new Claim(ClaimTypes.Name, request.Email) };
             var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-            var principal = new ClaimsPrincipal(identity);
 
             await HttpContext.SignInAsync(
                 CookieAuthenticationDefaults.AuthenticationScheme,
-                principal,
+                new ClaimsPrincipal(identity),
                 new AuthenticationProperties
                 {
                     IsPersistent = true,
-                    ExpiresUtc = DateTimeOffset.UtcNow.AddHours(1)
+                    ExpiresUtc = data.data.tokenExpireDate
                 });
+
+            if (!string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl))
+                return LocalRedirect(returnUrl);
 
             return RedirectToAction("Dashboard", "Dashboard");
         }
+
+
+
+
+
         [HttpPost]
         public async Task<IActionResult> LogoutAsync()
         {
-            // 1️⃣ Authentication cookie temizle
+            
             await HttpContext.SignOutAsync(
                 CookieAuthenticationDefaults.AuthenticationScheme
             );
 
-            // 2️⃣ AuthToken cookie sil
+        
             if (Request.Cookies.ContainsKey("AuthToken"))
             {
                 Response.Cookies.Delete("AuthToken", new CookieOptions
                 {
-                    Path = "/" // ⚠️ Login'de verdiğin Path ile aynı olmalı
+                    Path = "/" 
                 });
             }
 
-            // 3️⃣ Login sayfasına yönlendir
+        
             return RedirectToAction("Login", "Auth");
         }
+
+       
+
     }
 }

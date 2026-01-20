@@ -1122,6 +1122,16 @@
             </div>
         </div>
     </div>
+    <div id="error-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center z-50 pt-10">
+        <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-sm rolex-green-border">
+            <h3 class="text-lg font-bold text-gray-800 mb-4">Uyarı</h3>
+            <p id="error-modal-message" class="text-sm text-gray-600 mb-6"></p>
+            <div class="flex justify-end gap-3">
+                <button id="error-modal-cancel" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg text-sm">Vazgeç</button>
+                
+            </div>
+        </div>
+    </div>
     <div id="toast-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center z-[60] pt-20">
         <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-sm rolex-green-border transform transition-all duration-300 scale-95 opacity-0">
             <h3 class="text-lg font-bold mb-4">Uyarı</h3>
@@ -1137,88 +1147,8 @@
             <p class="text-lg font-semibold">Lütfen Bekleyiniz...</p>
         </div>
     </div>
-    <div id="ekstre-modal" class="hidden fixed inset-0 modal-bg flex items-start justify-center z-50 pt-10">
-        <div class="bg-gray-50 rounded-lg shadow-xl w-full max-w-7xl max-h-[90vh] flex flex-col">
 
-            <div class="flex justify-between items-center p-4 ekstre-modal-header rounded-t-lg">
-                <h3 class="text-lg font-bold text-gray-700 flex items-center">
-                    <i class="fas fa-file-invoice-dollar text-gray-500 mr-3"></i>
-                    Hesap Ekstresi
-                </h3>
-                <button id="ekstre-modal-close-button" class="text-gray-500 hover:text-red-600 text-2xl transition-colors">&times;</button>
-            </div>
-
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 p-4 border-b">
-                <!-- Müşteri Bilgi Kartı -->
-                <div class="ekstre-info-card lg:col-span-1">
-                    <h4 class="card-title-absolute"><i class="fas fa-user-circle"></i>Müşteri Bilgileri</h4>
-                    <span id="ekstre-hesap-adi" class="font-bold text-gray-800 text-base truncate block" title="Hesap Adı"></span>
-                    <span id="ekstre-hesap-tipi" class="block text-sm text-gray-500 mt-1"></span>
-                    <span id="ekstre-hesap-telefon" class="block text-sm text-gray-600 mt-1"></span>
-                    <span id="ekstre-hesap-id" class="text-xs font-mono text-gray-400 block mt-2"></span>
-                </div>
-
-                <!-- Bakiye Özeti Kartı -->
-                <div class="ekstre-info-card lg:col-span-1">
-                    <h4 class="card-title-absolute"><i class="fas fa-balance-scale"></i>Bakiye Özeti</h4>
-                    <div id="ekstre-bakiye-ozeti" class="custom-scrollbar pr-2 ekstre-bakiye-ozeti-v2">
-                        <!-- Bakiye içeriği JS ile dolacak -->
-                    </div>
-                </div>
-
-                <!-- Tarih Filtreleme & Pozisyon Kartı -->
-                <div class="ekstre-info-card lg:col-span-1">
-                    <h4 class="card-title-absolute"><i class="fas fa-calendar-alt"></i>Tarih Aralığı</h4>
-                    <div class="flex items-stretch">
-                        <input type="date" id="ekstre-baslangic-tarihi" class="block w-full px-3 py-2 bg-white border border-gray-300 rounded-l-md shadow-sm text-sm h-[38px] border-r-0">
-                        <input type="date" id="ekstre-bitis-tarihi" class="block w-full px-3 py-2 bg-white border border-gray-300 shadow-sm text-sm h-[38px] rounded-none">
-                        <button id="ekstre-getir-button" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-r-md text-sm h-[38px] border border-blue-600 flex items-center justify-center">
-                            <i class="fas fa-search"></i>
-                        </button>
-                    </div>
-                    <div class="mt-3 text-center w-full border-t pt-3">
-                        <span id="ekstre-has-pozisyon" class="text-base font-semibold"></span>
-                    </div>
-                </div>
-            </div>
-
-            <div id="ekstre-content" class="p-4 overflow-y-auto bg-white rounded-b-lg">
-                <!-- Ekstre içeriği JS ile dolacak -->
-            </div>
-        </div>
-    </div>
-    <div id="fis-list-modal" class="hidden fixed inset-0 z-50 flex justify-end">
-        <div class="modal-bg absolute inset-0"></div>
-        <div class="modal-content bg-white w-full max-w-4xl h-full flex flex-col shadow-2xl relative">
-            <div class="flex justify-between items-center p-4 border-b sticky top-0 bg-white z-10">
-                <h3 id="fis-list-modal-title" class="text-lg font-bold text-gray-800"></h3>
-                <button id="fis-list-modal-close-button" class="text-gray-500 hover:text-gray-800 text-2xl">&times;</button>
-            </div>
-
-            <div id="fis-list-filters" class="p-3 border-b bg-gray-50 flex flex-wrap gap-3 items-end">
-                <div class="flex-grow min-w-[250px]">
-                    <label for="fis-list-customer-filter" class="text-xs font-semibold text-gray-600">Hesap Filtresi</label>
-                    <select id="fis-list-customer-filter"></select>
-                </div>
-                <div>
-                    <label for="fis-list-start-date" class="text-xs font-semibold text-gray-600">Başlangıç Tarihi</label>
-                    <input type="date" id="fis-list-start-date" class="block w-full px-3 py-1.5 bg-white border border-gray-300 rounded-md shadow-sm text-sm h-[38px]">
-                </div>
-                <div>
-                    <label for="fis-list-end-date" class="text-xs font-semibold text-gray-600">Bitiş Tarihi</label>
-                    <input type="date" id="fis-list-end-date" class="block w-full px-3 py-1.5 bg-white border border-gray-300 rounded-md shadow-sm text-sm h-[38px]">
-                </div>
-                <div>
-                    <button id="fis-list-filter-button" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-md text-sm h-[38px]">
-                        <i class="fas fa-filter mr-1.5"></i>Filtrele
-                    </button>
-                </div>
-            </div>
-
-            <div id="fis-list-content" class="flex-grow overflow-y-auto">
-            </div>
-        </div>
-    </div>
+   
     <template id="product-form-template">
         <h1 id="product-form-title" class="text-xl font-bold text-gray-800 mb-4">Ürün Giriş</h1>
 
@@ -1551,7 +1481,7 @@
 
             <div id="fis-list-filters" class="p-3 border-b bg-gray-50 flex flex-wrap gap-3 items-end">
                 <div class="flex-grow min-w-[250px]">
-                    <label for="fis-list-customer-filter" class="text-xs font-semibold text-gray-600">Hesap Filtresi</label>
+                    <label for="lbl-fis-list-customer-filter" class="text-xs font-semibold text-gray-600">Hesap Filtresi</label>
                     <select id="fis-list-customer-filter"></select>
                 </div>
                 <div>
@@ -1573,6 +1503,361 @@
             </div>
         </div>
     </div>
+    <!-- İSKONTO MODAL -->
+    <div id="iskonto-panel" class="hidden fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+        <!-- Modal Card (Header + Body + Footer tek container içinde olmalı) -->
+        <div class="bg-white w-full max-w-3xl rounded-2xl shadow-2xl overflow-hidden theme-border flex flex-col"
+             data-active-tab="borcuna">
+
+            <!-- Header -->
+            <div class="px-6 pt-5 pb-4 border-b border-gray-200 flex items-center justify-between hat-red">
+                <h3 class="text-lg font-bold text-gray-800">İskonto İşlemi</h3>
+                <button type="button" id="iskonto-modal-close" class="text-gray-500 hover:text-gray-900 text-2xl leading-none">&times;</button>
+            </div>
+
+            <!-- Body -->
+            <div class="px-6 py-5 space-y-4 overflow-y-auto max-h-[70vh]">
+                <div>
+                    <div id="iskonto-tipi-toggle" class="tri-toggle-container" data-selected="borcuna">
+                        <div class="tri-toggle-slider" style="width: calc((100% - 6px) / 2);"></div>
+                        <div class="tri-toggle-options">
+                            <div class="tri-toggle-option active" data-value="borcuna" style="color: rgb(220, 38, 38);">HESABIN BORCUNA</div>
+                            <div class="tri-toggle-option" data-value="alacagina">HESABIN ALACAĞINA</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="iskonto-form-content">
+                    <div class="grid grid-cols-12 gap-x-1 gap-y-1 items-end">
+                        <div class="float-label-container col-span-2">
+                            <select id="form-iskonto-currency" class="float-label-input float-label-select" disabled="">
+                                <option value="3">TRY</option>
+                            </select>
+                            <label for="form-iskonto-currency" class="float-label">Birim</label>
+                        </div>
+                        <div class="float-label-container col-span-7">
+                            <input type="text" id="form-iskonto-amount" class="float-label-input text-right font-mono px-3" placeholder=" " value="6.338,11">
+                            <label for="form-iskonto-amount" class="float-label">Miktar</label>
+                        </div>
+                        <div class="float-label-container col-span-3">
+                            <input type="text" id="form-iskonto-rate" class="float-label-input text-right font-mono px-3" placeholder=" " value="1,0000">
+                            <label for="form-iskonto-rate" class="float-label">Kur</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="float-label-container">
+                    <input type="text" id="form-iskonto-karsi-hesap" class="float-label-input" value="İSKONTO SATIŞTAN" readonly="">
+                    <label for="form-iskonto-karsi-hesap" class="float-label">Karşı Hesap</label>
+                </div>
+
+                <div id="iskonto-has-container">
+                    <div class="grid grid-cols-12 gap-x-1 gap-y-1 items-end">
+                        <div class="float-label-container col-span-2">
+                            <select id="form-iskonto-equiv-currency" class="float-label-input float-label-select" disabled="">
+                                <option value="1">HAS</option>
+                            </select>
+                            <label for="form-iskonto-equiv-currency" class="float-label">Bilanço</label>
+                        </div>
+                        <div class="float-label-container col-span-7">
+                            <input type="text" id="form-iskonto-equiv-amount" class="float-label-input text-right font-mono px-3" placeholder=" " value="0,00" readonly="">
+                            <label for="form-iskonto-equiv-amount" class="float-label">HAS Karşılığı</label>
+                        </div>
+                        <div class="float-label-container col-span-3">
+                            <input type="text" id="form-iskonto-equiv-rate" class="float-label-input text-right font-mono px-3" placeholder=" " value="0,0000" readonly="">
+                            <label for="form-iskonto-equiv-rate" class="float-label">HAS Kuru</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="float-label-container mt-4">
+                    <textarea id="form-iskonto-aciklama" class="float-label-input" placeholder=" " rows="3"></textarea>
+                    <label for="form-iskonto-aciklama" class="float-label">Açıklama</label>
+                </div>
+            </div>
+
+
+
+            <!-- Footer (sticky) -->
+            <div class="p-4 border-t border-gray-200 flex justify-end gap-2 flex-shrink-0 bg-white">
+                <button id="iskonto-delete-button"
+                        class="hidden bg-red-100 hover:bg-red-200 text-red-800 font-semibold py-1.5 px-4 rounded-md text-sm transition-colors border border-red-200">
+                    <i class="fas fa-trash mr-1.5"></i>Sil
+                </button>
+
+                <button id="iskonto-add-button"
+                        class="bg-blue-100 hover:bg-blue-200 text-blue-800 font-semibold py-1.5 px-4 rounded-md text-sm transition-colors border border-blue-200">
+                    <i class="fas fa-check mr-1.5"></i>Ekle
+                </button>
+
+                <button id="iskonto-cancel-button"
+                        class="bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold py-1.5 px-4 rounded-md text-sm transition-colors border border-gray-200">
+                    <i class="fas fa-times mr-1.5"></i>Vazgeç
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- VİRMAN MODAL -->
+    <div id="virman-panel" class="hidden fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+
+        <!-- Modal Card -->
+        <div class="bg-white w-full max-w-3xl rounded-2xl shadow-2xl theme-border hat-green overflow-hidden flex flex-col max-h-[90vh]">
+
+            <!-- Header -->
+            <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+                <h3 class="font-bold text-lg text-gray-800">Virman İşlemi</h3>
+
+                <!-- X butonu istersen -->
+                <button id="virman-close"
+                        class="text-gray-500 hover:text-gray-800 text-2xl leading-none">
+                    &times;
+                </button>
+            </div>
+
+            <!-- Body (scrollable) -->
+            <div class="p-6 overflow-y-auto custom-scrollbar flex-grow" data-active-tab="alacagina">
+
+                <div class="space-y-4">
+
+                    <div>
+                        <div id="virman-tipi-toggle" class="tri-toggle-container" data-selected="alacagina">
+                            <div class="tri-toggle-slider" style="width: calc((100% - 6px) / 2);"></div>
+                            <div class="tri-toggle-options">
+                                <div class="tri-toggle-option" data-value="borcuna" style="color: rgb(107, 114, 128);">
+                                    HESABIN BORCUNA (-)
+                                </div>
+                                <div class="tri-toggle-option active" data-value="alacagina" style="color: rgb(5, 150, 105);">
+                                    HESABIN ALACAĞINA (+)
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-6 gap-x-2 gap-y-1 items-end">
+                        <div class="float-label-container col-span-1 select-has-value">
+                            <select id="form-virman-currency" class="float-label-input float-label-select" required disabled>
+                                <option value=""></option>
+                                <option value="1">HAS</option>
+                                <option value="2">USD</option>
+                                <option value="3">TRY</option>
+                                <option value="4">EUR</option>
+                                <option value="6">CHF</option>
+                                <option value="7">SAR</option>
+                                <option value="8">GHS</option>
+                            </select>
+                            <label for="form-virman-currency" class="float-label">Birim</label>
+                        </div>
+
+                        <div class="float-label-container col-span-3">
+                            <input type="text" id="form-virman-amount" class="float-label-input text-right font-mono" placeholder=" " value="0,00">
+                            <label for="form-virman-amount" class="float-label">Miktar</label>
+                        </div>
+
+                        <div class="float-label-container col-span-2">
+                            <input type="text" id="form-virman-rate" class="float-label-input text-right font-mono" placeholder=" " value="1,0000">
+                            <label for="form-virman-rate" class="float-label">Kur</label>
+                        </div>
+                    </div>
+
+                    <div class="float-label-container">
+                        <select id="form-virman-karsi-hesap" class="float-label-input float-label-select" required>
+                            <option value=""></option>
+                            <option value="68">AHLATÇI</option>
+                            <option value="14">AHMET KAVALCI</option>
+                            <option value="7">ANA SERMAYE</option>
+                            <option value="53">DOVİZ ALIŞ-SATIŞ K/Z</option>
+                            <option value="65">ELMAS TAŞ GRUBU STOKLARI</option>
+                            <option value="30">GİDER AİDAT</option>
+                            <option value="31">GİDER ALARM TESİSAT BAKIM</option>
+                            <option value="32">GİDER AMBALAJ</option>
+                            <option value="34">GİDER BAĞIŞ YARDIM</option>
+                            <option value="36">GİDER BANKA KOMİSYONLARI</option>
+                            <option value="35">GİDER BANKA MASRAFLARI</option>
+                            <option value="50">GİDER DİĞER</option>
+                            <option value="38">GİDER ELEKTRİK FATURASI</option>
+                            <option value="39">GİDER İKRAM ve YEMEK</option>
+                            <option value="33">GİDER İNTERNET</option>
+                            <option value="40">GİDER KARGO</option>
+                            <option value="41">GİDER KİRA</option>
+                            <option value="37">GİDER MAĞAZA TAMİR BAKIM</option>
+                            <option value="42">GİDER MUHASEBE</option>
+                            <option value="43">GİDER PERSONEL MAAŞ</option>
+                            <option value="44">GİDER PERSONEL PRİMLERİ</option>
+                            <option value="46">GİDER PERSONEL SİGORTA</option>
+                            <option value="47">GİDER PERSONEL YEMEK</option>
+                            <option value="45">GİDER REKLAM</option>
+                            <option value="49">GİDER ULAŞIM</option>
+                            <option value="48">GİDER VERGİ</option>
+                            <option value="60">HAKİ MUSTAFA ALKAN</option>
+                            <option value="52">HURDA ALIŞ-SATIŞ K/Z</option>
+                            <option value="62">HURDA GRUBU STOKLARI</option>
+                            <option value="55">İSKONTO CARİDEN</option>
+                            <option value="54">İSKONTO SATIŞTAN</option>
+                            <option value="61">MADEN GRUBU STOKLARI</option>
+                            <option value="27">MAHMUT KAVALCI</option>
+                            <option value="63">MAMUL GRUBU STOKLARI</option>
+                            <option value="4">MAZLUM KUYUMCULUK</option>
+                            <option value="64">PIRLANTA TAŞ GRUBU STOKLARI</option>
+                            <option value="58">RAŞİT DUMAN</option>
+                            <option value="66">RENKLİ TAŞ GRUBU STOKLARI</option>
+                            <option value="51">ÜRÜN SATIŞ-İADE K/Z</option>
+                            <option value="5">ZERAY KUYUMCULUK</option>
+                        </select>
+                        <label for="form-virman-karsi-hesap" class="float-label">Karşı Hesap</label>
+                    </div>
+
+                    <div class="p-2 border border-gray-200 rounded-md bg-gray-50">
+                        <div class="flex justify-between items-center">
+                            <label for="virman-karsilik-toggle" class="text-sm font-medium text-gray-700 select-none">
+                                Farklı Birim Karşılığı
+                            </label>
+                            <div class="karsilik-toggle-container">
+                                <input type="checkbox" id="virman-karsilik-toggle" class="karsilik-toggle">
+                                <label for="virman-karsilik-toggle" class="karsilik-toggle-label"></label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="virman-karsilik-details" class="hidden space-y-3 pt-3 border-t border-gray-200 mt-3">
+                        <div class="grid grid-cols-6 gap-x-2 gap-y-1 items-end">
+                            <div class="float-label-container col-span-1 select-has-value">
+                                <select id="form-virman-karsilik-currency" class="float-label-input float-label-select" required>
+                                    <option value=""></option>
+                                    <option value="1">HAS</option>
+                                    <option value="2">USD</option>
+                                    <option value="3">TRY</option>
+                                    <option value="4">EUR</option>
+                                    <option value="6">CHF</option>
+                                    <option value="7">SAR</option>
+                                    <option value="8">GHS</option>
+                                </select>
+                                <label for="form-virman-karsilik-currency" class="float-label">Karşılık Birim</label>
+                            </div>
+
+                            <div class="float-label-container col-span-3">
+                                <input type="text" id="form-virman-karsilik-amount" class="float-label-input text-right font-mono" placeholder=" " value="0,00">
+                                <label for="form-virman-karsilik-amount" class="float-label">Karşılık Miktar</label>
+                            </div>
+
+                            <div class="float-label-container col-span-2">
+                                <input type="text" id="form-virman-karsilik-rate" class="float-label-input text-right font-mono" placeholder=" " value="1,0000">
+                                <label for="form-virman-karsilik-rate" class="float-label">Karşılık Kur</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="float-label-container mt-6">
+                        <textarea id="form-virman-aciklama" class="float-label-input pt-4" placeholder=" " rows="5"></textarea>
+                        <label for="form-virman-aciklama" class="float-label">Açıklama</label>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Footer (sticky) -->
+            <div class="p-4 border-t border-gray-200 flex justify-end gap-2 flex-shrink-0 bg-white">
+                <button id="virman-delete-button"
+                        class="hidden bg-red-100 hover:bg-red-200 text-red-800 font-semibold py-1.5 px-4 rounded-md text-sm transition-colors border border-red-200">
+                    <i class="fas fa-trash mr-1.5"></i>Sil
+                </button>
+
+                <button id="virman-add-button"
+                        class="bg-blue-100 hover:bg-blue-200 text-blue-800 font-semibold py-1.5 px-4 rounded-md text-sm transition-colors border border-blue-200">
+                    <i class="fas fa-check mr-1.5"></i>Ekle
+                </button>
+
+                <button id="virman-cancel-button"
+                        class="bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold py-1.5 px-4 rounded-md text-sm transition-colors border border-gray-200">
+                    <i class="fas fa-times mr-1.5"></i>Vazgeç
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- AÇIK HESAP MODAL -->
+    <div id="acik-hesap-modal" class="hidden fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-3xl rounded-2xl shadow-2xl overflow-hidden theme-border hat-red">
+
+            <!-- Header -->
+            <div class="px-6 pt-5 pb-4 border-b border-gray-200 flex items-center justify-between">
+                <h3 class="text-xl font-extrabold text-gray-900">Açık Hesap İşlemi</h3>
+                <button type="button" id="acik-hesap-close"
+                        class="text-gray-500 hover:text-gray-900 text-2xl leading-none">
+                    &times;
+                </button>
+            </div>
+
+            <!-- Body -->
+            <div id="acik-hesap-body" class="px-6 py-5 space-y-4" data-active-tab="borcuna">
+
+                <div>
+                    <div id="acikhesap-tipi-toggle" class="tri-toggle-container" data-selected="borcuna">
+                        <div class="tri-toggle-slider" style="width: calc((100% - 6px) / 2);"></div>
+                        <div class="tri-toggle-options">
+                            <div class="tri-toggle-option active" data-value="borcuna" style="color: rgb(220, 38, 38);">
+                                HESABIN BORCUNA (-)
+                            </div>
+                            <div class="tri-toggle-option" data-value="alacagina">
+                                HESABIN ALACAĞINA (+)
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="acikhesap-form-content">
+                    <div class="grid grid-cols-12 gap-x-1 gap-y-1 items-end">
+                        <div class="float-label-container col-span-2">
+                            <select id="form-acikhesap-currency" class="float-label-input float-label-select" disabled>
+                                <option value="3">TRY</option>
+                            </select>
+                            <label for="form-acikhesap-currency" class="float-label">Birim</label>
+                        </div>
+
+                        <div class="float-label-container col-span-7">
+                            <input type="text" id="form-acikhesap-amount"
+                                   class="float-label-input text-right font-mono px-3"
+                                   placeholder=" " value="0,00">
+                            <label for="form-acikhesap-amount" class="float-label">Miktar</label>
+                        </div>
+
+                        <div class="float-label-container col-span-3">
+                            <input type="text" id="form-acikhesap-rate"
+                                   class="float-label-input text-right font-mono px-3"
+                                   placeholder=" " value="1,0000">
+                            <label for="form-acikhesap-rate" class="float-label">Kur</label>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Footer -->
+            <div class="px-6 py-4 border-t border-gray-200 flex justify-end gap-2 bg-gray-50">
+                <button id="acik-hesap-delete"
+                        class="hidden bg-red-100 hover:bg-red-200 text-red-800 font-semibold py-1.5 px-4 rounded-md text-sm transition-colors border border-red-200">
+                    <i class="fas fa-trash mr-1.5"></i>Sil
+                </button>
+
+                <button id="acik-hesap-add"
+                        class="bg-blue-100 hover:bg-blue-200 text-blue-800 font-semibold py-1.5 px-4 rounded-md text-sm transition-colors border border-blue-200">
+                    <i class="fas fa-check mr-1.5"></i>Ekle
+                </button>
+
+                <button id="acik-hesap-cancel"
+                        class="bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold py-1.5 px-4 rounded-md text-sm transition-colors border border-gray-200">
+                    <i class="fas fa-times mr-1.5"></i>Vazgeç
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+
+
+
 </body>
 </html>
 
@@ -1588,6 +1873,61 @@
       const ekstreBaslangic = document.getElementById('ekstre-baslangic-tarihi');
       const ekstreBitis = document.getElementById('ekstre-bitis-tarihi');
       const fisTarihiInput = document.getElementById('fis-tarihi');
+
+          // =======================
+    // İSKONTO MODAL (KAPATMA)
+    // =======================
+    const iskontoPanel = document.getElementById("iskonto-panel");
+    const iskontoCancelBtn = document.getElementById("iskonto-cancel-button");
+    const iskontoCloseBtn = document.getElementById("iskonto-modal-close"); // varsa X
+
+    function closeIskontoModal() {
+      iskontoPanel?.classList.add("hidden");
+    }
+
+    iskontoCancelBtn?.addEventListener("click", closeIskontoModal);
+    iskontoCloseBtn?.addEventListener("click", closeIskontoModal);
+
+    // backdrop'a tıkla kapat
+    iskontoPanel?.addEventListener("click", (e) => {
+      if (e.target === iskontoPanel) closeIskontoModal();
+    });
+
+        // =======================
+    // VİRMAN MODAL
+    // =======================
+    const btnVirman = document.getElementById("btn-virman");
+    const virmanModal = document.getElementById("virman-panel");
+    const virmanClose = document.getElementById("virman-close");
+    const virmanCancel = document.getElementById("virman-cancel-button");
+
+    function openVirmanModal() {
+      virmanModal?.classList.remove("hidden");
+    }
+
+    function closeVirmanModal() {
+      virmanModal?.classList.add("hidden");
+    }
+
+    // Aç
+    btnVirman?.addEventListener("click", openVirmanModal);
+
+    // Kapat
+    virmanClose?.addEventListener("click", closeVirmanModal);
+    virmanCancel?.addEventListener("click", closeVirmanModal);
+
+    // Arka plana tıkla → kapat
+    virmanModal?.addEventListener("click", (e) => {
+      if (e.target === virmanModal) closeVirmanModal();
+    });
+
+    // ESC → kapat
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && !virmanModal?.classList.contains("hidden")) {
+        closeVirmanModal();
+      }
+    });
+
 
       const toLocalISOString = (date) => {
         const tzoffset = (new Date()).getTimezoneOffset() * 60000;
@@ -1621,6 +1961,8 @@
           if (e.key === "Escape" && !modal.classList.contains("hidden")) closeModal();
         });
       }
+
+
 
       // =======================
       // SATIŞ/CARİ TOGGLE -> KUR SELECT GİZLE
@@ -1705,6 +2047,8 @@
           return s;
         }
 
+
+
         function parseTrNumber(raw) {
           const s = sanitizeNumericText(raw);
           if (!s || s === "-" || s === ",") return 0;
@@ -1734,8 +2078,11 @@
         const btnSatisListesi  = el("sales-list-button");
 
         const confirmModal  = el("confirmation-modal");
+        const errorModal  = el("error-modal");
         const modalMessage  = el("modal-message");
+        const errorModalMessage  = el("error-modal-message");
         const modalCancel   = el("modal-cancel");
+        const errorModalCancel   = el("error-modal-cancel");
         const modalConfirm  = el("modal-confirm");
 
             const fisListModal = el("fis-list-modal");
@@ -1754,6 +2101,13 @@
         const ntKur = el("nt-kur");
         const ntKarsilik = el("nt-karsilik");
         const ntBirim = el("nt-birim");
+
+       
+
+            const btnAcikHesap = el("btn-acik-hesap");
+    const acikModal = el("acik-hesap-modal");
+    const acikClose = el("acik-hesap-close");
+    const acikCancel = el("acik-hesap-cancel");
 
         // Tabs
         const ntTabs = nakitModal ? Array.from(nakitModal.querySelectorAll(".nt-tab")) : [];
@@ -1789,26 +2143,27 @@
           const cikan = textToTryNumber(cikanToplamEl?.textContent);
           return { giren, cikan };
         }
+ 
             function wireFisListModal() {
-      if (!btnSatisListesi || !fisListModal) return;
+      const btn = document.getElementById("sales-list-button");
+      const modal = document.getElementById("fis-list-modal");
+      const closeBtn = document.getElementById("fis-list-modal-close-button");
+      const bg = modal?.querySelector(".modal-bg");
 
-      const open = () => fisListModal.classList.remove("hidden");
-      const close = () => fisListModal.classList.add("hidden");
+      if (!btn || !modal) return;
 
-      // buton -> aç
-      btnSatisListesi.addEventListener("click", open);
+      const open = () => modal.classList.remove("hidden");
+      const close = () => modal.classList.add("hidden");
 
-      // X -> kapa
-      fisListModalClose?.addEventListener("click", close);
+      btn.addEventListener("click", open);
+      closeBtn?.addEventListener("click", close);
+      bg?.addEventListener("click", close);
 
-      // arkaplana tıkla -> kapa (en doğru yer burası)
-      fisListModalBg?.addEventListener("click", close);
-
-      // ESC -> kapa
       document.addEventListener("keydown", (e) => {
-        if (e.key === "Escape" && !fisListModal.classList.contains("hidden")) close();
+        if (e.key === "Escape" && !modal.classList.contains("hidden")) close();
       });
     }
+
 
 
         function writeTotals(giren, cikan) {
@@ -1823,6 +2178,143 @@
           if (receiptLog) receiptLog.innerHTML = "";
           writeTotals(0, 0);
         }
+
+              function getReceiptFark() {
+      const { giren, cikan } = readTotals();
+      return giren - cikan;
+    }
+
+        function fillIskontoFromReceiptFark() {
+      const amountInput = document.getElementById("form-iskonto-amount");
+      const rateInput   = document.getElementById("form-iskonto-rate");
+
+      if (!amountInput || !rateInput) return;
+
+      const fark = getReceiptFark();
+
+      // Güvenlik: negatif / null durumlar
+      const safeFark = Math.abs(fark || 0);
+
+      // Miktar = Fark
+      amountInput.value = fmt2.format(safeFark);
+
+      // Kur = 1,0000 (default)
+      rateInput.value = fmt4.format(1);
+
+      // Eğer karşılık otomatik hesaplanıyorsa tetikle
+      amountInput.dispatchEvent(new Event("input"));
+      rateInput.dispatchEvent(new Event("input"));
+    }
+
+
+
+ 
+
+
+    //---------------AÇIK HESAP------------------
+        function wireAcikHesapModal() {
+      if (!btnAcikHesap || !acikModal) return;
+
+      const open = () => acikModal.classList.remove("hidden");
+      const close = () => acikModal.classList.add("hidden");
+
+      // ✅ buton -> önce fark kontrol, sonra aç
+         btnAcikHesap?.addEventListener("click", () => {
+      if (!hasReceiptData()) {
+        showErrorModal("Açık Hesaba atılacak fark bulunamadı (0 TRY)");
+        return;
+      }
+
+      acikModal?.classList.remove("hidden");
+    });
+
+
+      // X / Vazgeç
+      acikClose?.addEventListener("click", close);
+      acikCancel?.addEventListener("click", close);
+
+      // arka plan tıkla -> kapat
+      acikModal.addEventListener("click", (e) => {
+        if (e.target === acikModal) close();
+      });
+
+      // ESC -> kapat
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && !acikModal.classList.contains("hidden")) close();
+      });
+
+      // ✅ Toggle (BORCUNA / ALACAĞINA) tıklanabilir
+      const acikToggle = el("acikhesap-tipi-toggle");
+      if (acikToggle) {
+        const slider = acikToggle.querySelector(".tri-toggle-slider");
+        const options = acikToggle.querySelectorAll(".tri-toggle-option");
+
+        options.forEach((opt) => {
+          opt.addEventListener("click", () => {
+            const value = opt.dataset.value;
+
+            acikToggle.dataset.selected = value;
+
+            options.forEach(o => {
+              o.classList.remove("active");
+              o.style.color = "#6b7280";
+            });
+
+            opt.classList.add("active");
+            opt.style.color = (value === "borcuna") ? "#dc2626" : "#059669";
+
+            if (slider) {
+              slider.style.transform = (value === "borcuna")
+                ? "translateX(0%)"
+                : "translateX(100%)";
+            }
+          });
+        });
+      }
+    }
+
+
+
+
+            // ---------- ERROR MODAL ----------
+         function showErrorModal(message, onCancel) {
+      const errorModal = document.getElementById("error-modal");
+      const errorModalMessage = document.getElementById("error-modal-message");
+      const errorModalCancel = document.getElementById("error-modal-cancel");
+
+      if (!errorModal) return;
+
+      if (errorModalMessage) errorModalMessage.textContent = message;
+
+      // eski handler'ı temizle ve yenisini ata
+      if (errorModalCancel) {
+        errorModalCancel.onclick = null;
+        errorModalCancel.onclick = () => {
+          errorModal.classList.add("hidden");
+          onCancel?.();
+        };
+      }
+
+      // arka plana tıklayınca kapansın (opsiyonel)
+      errorModal.onclick = (e) => {
+        if (e.target === errorModal) {
+          errorModal.classList.add("hidden");
+          onCancel?.();
+        }
+      };
+
+      // ESC ile kapansın (opsiyonel, bir kez bağlamak daha iyi ama böyle de çalışır)
+      document.addEventListener("keydown", function escHandler(e) {
+        if (e.key === "Escape" && !errorModal.classList.contains("hidden")) {
+          errorModal.classList.add("hidden");
+          onCancel?.();
+          document.removeEventListener("keydown", escHandler);
+        }
+      });
+
+      errorModal.classList.remove("hidden");
+    }
+
 
         // ---------- CONFIRM MODAL ----------
         function showConfirmationModal(message, onConfirm, onCancel) {
@@ -1892,6 +2384,180 @@
             applyMode(wantCari);
           });
         }
+          
+        
+        function showWarning(message) {
+      alert(message);
+    }
+
+
+
+        console.log("[ISKONTO] receipt-log:", el("receipt-log"));
+    console.log("[ISKONTO] section before:", el("section-iskontolar"));
+
+    // =======================
+// İSKONTO (OPEN + EKLE + UI RENK)
+// =======================
+
+// elementler
+const btnIskonto = el("btn-iskonto");
+const iskontoModal = el("iskonto-panel");
+const iskontoClose = el("iskonto-modal-close");
+const iskontoCancel = el("iskonto-cancel-button");
+const iskontoAddBtn = el("iskonto-add-button");
+
+// form alanları
+const iskontoTypeToggle = el("iskonto-tipi-toggle"); // data-selected="borcuna|alacagina"
+const iskontoAmountEl   = el("form-iskonto-amount"); // TRY miktar
+const iskontoRateEl     = el("form-iskonto-rate");   // TRY kur (1,0000)
+const iskontoKarsiEl    = el("form-iskonto-karsi-hesap");
+const iskontoHasAmountEl= el("form-iskonto-equiv-amount");
+const iskontoHasRateEl  = el("form-iskonto-equiv-rate");
+
+// toggle yönünü oku
+function getIskontoDirection() {
+  const v = (iskontoTypeToggle?.dataset?.selected || "borcuna").toLowerCase();
+  return v === "alacagina" ? "alacagina" : "borcuna";
+}
+
+// farkı modal'a yaz
+function fillIskontoFromFark() {
+  const fark = getReceiptFark();
+  const safe = Math.abs(fark || 0);
+
+  if (iskontoAmountEl) iskontoAmountEl.value = fmt2.format(safe);
+  if (iskontoRateEl)   iskontoRateEl.value = "1,0000";
+}
+
+// modal open/close
+function openIskontoModal() {
+  iskontoModal?.classList.remove("hidden");
+}
+function closeIskontoModal() {
+  iskontoModal?.classList.add("hidden");
+}
+
+// İskontolar section
+function ensureIskontoSection() {
+  return ensureSection("section-iskontolar", "İSKONTOLAR", "red");
+}
+
+// ✅ İskonto satırını fişe bas (RENK +/-, BORCUNA/ALACAĞINA)
+function addIskontoItemToUI(item) {
+  const section = ensureIskontoSection();
+  if (!section) return;
+
+  const wrap = section.querySelector("[data-items]");
+  const row = document.createElement("div");
+  row.setAttribute("data-receipt-item", "1");
+
+  const isBorcuna = item.direction === "borcuna";
+  const sign = isBorcuna ? "-" : "+";
+  const label = isBorcuna ? "BORCUNA" : "ALACAĞINA";
+
+  const toneText  = isBorcuna ? "text-red-700" : "text-green-700";
+  const toneBorder= isBorcuna ? "border-red-100" : "border-green-100";
+
+  row.className = `rounded-lg border ${toneBorder} bg-white px-3 py-2`;
+
+  const leftTop   = `${sign}${fmt2.format(item.amountTry)} TRY ${label}`;
+  const rightTop  = `${sign}${fmt2.format(item.amountTry)} TRY`;
+
+  const leftBottom  = `${item.karsiHesap} (${fmt2.format(item.hasAmount)} HAS)`;
+  const rightBottom = `HAS Kuru: ${fmt4.format(item.hasRate)}`;
+
+  row.innerHTML = `
+    <div class="flex items-start justify-between gap-3">
+      <div class="min-w-0">
+        <div class="${toneText} font-extrabold text-sm">${leftTop}</div>
+        <div class="text-gray-700 font-mono text-xs mt-1 truncate">${leftBottom}</div>
+      </div>
+      <div class="text-right">
+        <div class="${toneText} font-extrabold text-sm">${rightTop}</div>
+        <div class="text-gray-500 font-mono text-xs mt-1">${rightBottom}</div>
+      </div>
+    </div>
+  `;
+
+  wrap.appendChild(row);
+}
+
+// ✅ İskonto modali bağla (open)
+function wireIskontoModal() {
+  if (!btnIskonto || !iskontoModal) return;
+
+  btnIskonto.onclick = () => {
+    // fişte hiç satır yoksa uyarı + modal açma
+    if (!hasReceiptData()) {
+      showErrorModal("İskonto için fark bulunamadı (0 TRY)");
+      return;
+    }
+
+    fillIskontoFromFark();
+    openIskontoModal();
+  };
+
+  iskontoClose?.addEventListener("click", closeIskontoModal);
+  iskontoCancel?.addEventListener("click", closeIskontoModal);
+
+  iskontoModal.addEventListener("click", (e) => {
+    if (e.target === iskontoModal) closeIskontoModal();
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && !iskontoModal.classList.contains("hidden")) closeIskontoModal();
+  });
+}
+
+// ✅ Ekle butonu: fişe ekle + totals güncelle + modal kapat
+function wireIskontoAddToReceipt() {
+  if (!iskontoAddBtn) return;
+
+  iskontoAddBtn.onclick = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const direction = getIskontoDirection();
+
+    const amountTry = parseTrNumber(iskontoAmountEl?.value);
+    const hasAmount = parseTrNumber(iskontoHasAmountEl?.value || iskontoHasAmountEl?.textContent);
+    const hasRate   = parseTrNumber(iskontoHasRateEl?.value || iskontoHasRateEl?.textContent);
+
+    const karsiHesap = (iskontoKarsiEl?.value || iskontoKarsiEl?.textContent || "İSKONTO SATIŞTAN").trim();
+
+    if (!amountTry || Math.abs(amountTry) < 0.01) {
+      showErrorModal("İskonto miktarı 0 olamaz.");
+      return;
+    }
+
+    const item = {
+      kind: "ISKONTO",
+      direction,   // borcuna/alacagina
+      amountTry,
+      hasAmount,
+      hasRate,
+      karsiHesap
+    };
+
+    // state'e ekle
+    state.receiptItems.push(item);
+
+    // totals güncelle (borcuna: çıkış, alacağına: giriş)
+    const { giren, cikan } = readTotals();
+    if (direction === "alacagina") writeTotals(giren + amountTry, cikan);
+    else writeTotals(giren, cikan + amountTry);
+
+    // fişe bas
+    addIskontoItemToUI(item);
+
+    // kapat
+    closeIskontoModal();
+  };
+}
+
+
+
+
 
         // ---------- NAKIT MODAL ----------
         function setActiveTab(name) {
@@ -2112,569 +2778,157 @@
             closeNakitModal();
           });
         }
+            // =======================
+    // İSKONTO TİPİ TOGGLE
+    // =======================
+    const iskontoToggle = document.getElementById("iskonto-tipi-toggle");
+
+    if (iskontoToggle) {
+      const slider = iskontoToggle.querySelector(".tri-toggle-slider");
+      const options = iskontoToggle.querySelectorAll(".tri-toggle-option");
+
+      options.forEach((opt, index) => {
+        opt.addEventListener("click", () => {
+          // aktif class temizle
+          options.forEach(o => o.classList.remove("active"));
+          opt.classList.add("active");
+
+          // seçili değer
+          const value = opt.dataset.value;
+          iskontoToggle.dataset.selected = value;
+
+          // slider pozisyonu
+          slider.style.transform =
+            value === "borcuna"
+              ? "translateX(0%)"
+              : "translateX(100%)";
+
+          // (ileride lazım olacak) console
+          console.log("İskonto tipi:", value);
+        });
+      });
+    }
+
+      const virmanToggle = document.getElementById("virman-tipi-toggle");
+    if (!virmanToggle) return;
+
+    const options = virmanToggle.querySelectorAll(".tri-toggle-option");
+
+    options.forEach(option => {
+      option.addEventListener("click", () => {
+
+        const selectedValue = option.dataset.value;
+
+        // data-selected güncelle
+        virmanToggle.setAttribute("data-selected", selectedValue);
+
+        // active class + renk reset
+        options.forEach(o => {
+          o.classList.remove("active");
+          o.style.color = "#6b7280"; // gray-500
+        });
+
+        // seçili option
+        option.classList.add("active");
+
+        // renklendirme
+        if (selectedValue === "borcuna") {
+          option.style.color = "#dc2626"; // red-600
+        } else {
+          option.style.color = "#059669"; // green-600
+        }
+
+        // 🔁 burada istersen form davranışı değiştirebilirsin
+        // console.log("Virman tipi:", selectedValue);
+      });
+    });
+
+
+        function hasReceiptDataSafe() {
+      // 1) state varsa onu kullan
+      if (typeof state !== "undefined" && Array.isArray(state.receiptItems)) {
+        return state.receiptItems.length > 0;
+      }
+
+      // 2) state yoksa DOM’dan bak (en güvenlisi)
+      const log = el("receipt-log");
+      if (!log) return false;
+      return log.querySelectorAll("[data-receipt-item]").length > 0;
+    }
+
+    function wireIskontoModal() {
+      const btn = el("btn-iskonto");
+      const modal = el("iskonto-panel");
+
+      console.log("[ISKONTO] wireIskontoModal init:", { btn: !!btn, modal: !!modal });
+
+      if (!btn || !modal) return;
+
+      // ÖNEMLİ: aynı event iki kere bağlanmasın
+      if (btn.dataset.wired === "1") return;
+      btn.dataset.wired = "1";
+
+      btn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        console.log("[ISKONTO] click");
+
+        if (!hasReceiptDataSafe()) {
+          console.log("[ISKONTO] no receipt data -> show error");
+          showErrorModal("İskonto için fark bulunamadı (0 TRY)");
+          return;
+        }
+
+        // fişte veri var -> miktarı doldur + modal aç
+        fillIskontoFromFark();
+        modal.classList.remove("hidden");
+      });
+
+      // kapatma butonları
+      el("iskonto-modal-close")?.addEventListener("click", () => modal.classList.add("hidden"));
+      el("iskonto-cancel-button")?.addEventListener("click", () => modal.classList.add("hidden"));
+
+      // arka plana tıkla kapat
+      modal.addEventListener("click", (ev) => {
+        if (ev.target === modal) modal.classList.add("hidden");
+      });
+
+      // ESC ile kapat
+      document.addEventListener("keydown", (ev) => {
+        if (ev.key === "Escape" && !modal.classList.contains("hidden")) {
+          modal.classList.add("hidden");
+        }
+      });
+    }
+
 
         // ---------- INIT ----------
         if (!document.body.classList.contains("satis-active") && !document.body.classList.contains("cari-active")) {
           document.body.classList.add("satis-active");
         }
 
-        wireToggle();
-        wireNakitModal();
-        wireFisListModal();
+            wireToggle();
+    wireNakitModal();
+    wireFisListModal();
+    wireAcikHesapModal();
+    wireIskontoModal();
+    wireIskontoAddToReceipt();
+
         setButtonLabels(toggle?.checked ?? false);
+
 
 
       })();
 
     });
+
+   
+
 </script>
 
 
 
-<script>
-    (() => {
-      // ---------- STATE ----------
-      const state = {
-        receiptItems: [], // { type:"GIRIS"|"CIKIS", currency, tutar, kur, karsilikTry, hesapAdi, tab }
-        suppressToggle: false,
-        currentCashOperation: "GIRIS",
-
-        // edit state
-        isEditing: false,
-        editingIndex: null,
-      };
-
-      // ---------- HELPERS ----------
-      const fmt2 = new Intl.NumberFormat("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-      const fmt4 = new Intl.NumberFormat("tr-TR", { minimumFractionDigits: 4, maximumFractionDigits: 4 });
-
-      function sanitizeNumericText(raw) {
-        let s = (raw ?? "").toString().trim().replace(/[^\d,.\-]/g, "");
-        s = s.replace(/(?!^)-/g, "");
-        s = s.replace(/\./g, "");
-        const firstComma = s.indexOf(",");
-        if (firstComma !== -1) {
-          s = s.slice(0, firstComma + 1) + s.slice(firstComma + 1).replace(/,/g, "");
-        }
-        return s;
-      }
-
-      function parseTrNumber(raw) {
-        const s = sanitizeNumericText(raw);
-        if (!s || s === "-" || s === ",") return 0;
-        const normalized = s.replace(",", ".");
-        const n = Number.parseFloat(normalized);
-        return Number.isFinite(n) ? n : 0;
-      }
-
-      function textToTryNumber(text) {
-        return parseTrNumber(String(text || "").replace("TRY", "").trim());
-      }
-
-      function el(id) { return document.getElementById(id); }
-
-      // ---------- UI ELEMENTS ----------
-      const toggle = el("operation-type-toggle");
-      const receiptTitle = el("receipt-title");
-      const receiptLog = el("receipt-log");
-      const girenToplamEl = el("giren-toplam");
-      const cikanToplamEl = el("cikan-toplam");
-      const farkToplamEl  = el("fark-toplam");
-
-      const lblNakitTahsilat = el("label-nakit-tahsilat");
-      const lblNakitOdeme    = el("label-nakit-odeme");
-      const lblUrunAlis      = el("label-urun-alis");
-      const lblUrunSatis     = el("label-urun-satis");
-      const btnSatisListesi  = el("sales-list-button");
-
-      const confirmModal  = el("confirmation-modal");
-      const modalMessage  = el("modal-message");
-      const modalCancel   = el("modal-cancel");
-      const modalConfirm  = el("modal-confirm");
-
-      // Nakit modal
-      const nakitModal = el("nakit-tahsilat-modal");
-      const btnNakitTahsilat = el("btn-nakit-tahsilat");
-      const btnNakitOdeme = el("btn-nakit-odeme");
-      const nakitModalTitle = el("nakit-modal-title");
-
-      const nakitClose = el("nakit-tahsilat-close");
-      const nakitCancel = el("nt-cancel");
-      const nakitSubmit = el("nt-submit");
-      const nakitDelete = el("nt-delete"); // YENI
-
-      const ntTutar = el("nt-tutar");
-      const ntKur = el("nt-kur");
-      const ntKarsilik = el("nt-karsilik");
-      const ntBirim = el("nt-birim");
-
-      // Tabs
-      const ntTabs = nakitModal ? Array.from(nakitModal.querySelectorAll(".nt-tab")) : [];
-      const ntPanels = nakitModal ? {
-        kasalar:  nakitModal.querySelector("#nt-tab-kasalar"),
-        bankalar: nakitModal.querySelector("#nt-tab-bankalar"),
-        poslar:   nakitModal.querySelector("#nt-tab-poslar"),
-      } : {};
-
-      // ---------- MODE ----------
-      function setButtonLabels(isCari) {
-        if (lblNakitTahsilat) lblNakitTahsilat.textContent = isCari ? "Nakit Giriş" : "Nakit Tahsilat";
-        if (lblNakitOdeme)    lblNakitOdeme.textContent    = isCari ? "Nakit Çıkış" : "Nakit Ödeme";
-        if (lblUrunAlis)      lblUrunAlis.textContent      = isCari ? "Ürün Giriş"  : "Ürün Alış";
-        if (lblUrunSatis)     lblUrunSatis.textContent     = isCari ? "Ürün Çıkış"  : "Ürün Satış";
-        if (btnSatisListesi)  btnSatisListesi.textContent  = isCari ? "Cari Listesi" : "Satış Listesi";
-      }
-
-      function applyMode(isCari) {
-        document.body.classList.toggle("cari-active", isCari);
-        document.body.classList.toggle("satis-active", !isCari);
-
-        if (receiptTitle) receiptTitle.textContent = isCari ? "Cari Fişi" : "Satış Fişi";
-        setButtonLabels(isCari);
-
-        // mod değişince edit mod kapansın
-        state.isEditing = false;
-        state.editingIndex = null;
-      }
-
-      function hasReceiptData() {
-        return state.receiptItems.length > 0;
-      }
-
-      function readTotals() {
-        const giren = textToTryNumber(girenToplamEl?.textContent);
-        const cikan = textToTryNumber(cikanToplamEl?.textContent);
-        return { giren, cikan };
-      }
-
-      function writeTotals(giren, cikan) {
-        const fark = giren - cikan;
-        if (girenToplamEl) girenToplamEl.textContent = `${fmt2.format(giren)} TRY`;
-        if (cikanToplamEl) cikanToplamEl.textContent = `${fmt2.format(cikan)} TRY`;
-        if (farkToplamEl)  farkToplamEl.textContent  = `${fmt2.format(fark)} TRY`;
-      }
-
-      function clearReceipt() {
-        state.receiptItems = [];
-        if (receiptLog) receiptLog.innerHTML = "";
-        writeTotals(0, 0);
-      }
-
-      // ---------- CONFIRM MODAL ----------
-      function showConfirmationModal(message, onConfirm, onCancel) {
-        if (!confirmModal) return;
-
-        if (modalMessage) modalMessage.textContent = message;
-
-        const cancelClone = modalCancel?.cloneNode(true);
-        const confirmClone = modalConfirm?.cloneNode(true);
-
-        if (modalCancel && cancelClone) modalCancel.parentNode.replaceChild(cancelClone, modalCancel);
-        if (modalConfirm && confirmClone) modalConfirm.parentNode.replaceChild(confirmClone, modalConfirm);
-
-        const cBtn = el("modal-cancel");
-        const okBtn = el("modal-confirm");
-
-        cBtn?.addEventListener("click", () => {
-          confirmModal.classList.add("hidden");
-          onCancel?.();
-        });
-
-        okBtn?.addEventListener("click", () => {
-          confirmModal.classList.add("hidden");
-          onConfirm?.();
-        });
-
-        confirmModal.addEventListener("click", (e) => {
-          if (e.target === confirmModal) {
-            confirmModal.classList.add("hidden");
-            onCancel?.();
-          }
-        }, { once: true });
-
-        confirmModal.classList.remove("hidden");
-      }
-
-      // ---------- TOGGLE HANDLER ----------
-      function wireToggle() {
-        if (!toggle) return;
-
-        applyMode(toggle.checked);
-
-        toggle.addEventListener("change", (e) => {
-          if (state.suppressToggle) return;
-
-          const wantCari = e.target.checked;
-          const currentlySales = !document.body.classList.contains("cari-active");
-
-          if (currentlySales && wantCari && hasReceiptData()) {
-            showConfirmationModal(
-              "Yapılan işlemler kaybolacak. Devam etmek istiyor musunuz?",
-              () => {
-                clearReceipt();
-                applyMode(true);
-                state.suppressToggle = true;
-                toggle.checked = true;
-                state.suppressToggle = false;
-              },
-              () => {
-                state.suppressToggle = true;
-                toggle.checked = false;
-                state.suppressToggle = false;
-              }
-            );
-            return;
-          }
-
-          applyMode(wantCari);
-          rerenderReceipt(); // mod sonrası UI toparla
-        });
-      }
-
-      // ---------- NAKIT MODAL ----------
-      function setActiveTab(name) {
-        Object.keys(ntPanels).forEach(k => {
-          const p = ntPanels[k];
-          if (!p) return;
-          p.classList.toggle("hidden", k !== name);
-        });
-
-        ntTabs.forEach(t => {
-          const isActive = t.dataset.tab === name;
-          t.classList.toggle("bg-white", isActive);
-          t.classList.toggle("shadow", isActive);
-          t.classList.toggle("text-blue-700", isActive);
-
-          t.classList.toggle("text-gray-600", !isActive);
-          t.classList.toggle("bg-transparent", !isActive);
-        });
-      }
-
-      function enforceNumericInput(inputEl, decimals) {
-        if (!inputEl) return;
-        inputEl.addEventListener("input", () => {
-          const before = inputEl.value;
-          const after = sanitizeNumericText(before);
-          if (before !== after) inputEl.value = after;
-          updateKarsilikLive();
-        });
-        inputEl.addEventListener("blur", () => {
-          const n = parseTrNumber(inputEl.value);
-          inputEl.value = decimals === 2 ? fmt2.format(n) : fmt4.format(n);
-          updateKarsilikLive();
-        });
-      }
-
-      function makeEditableKarsilik() {
-        if (!ntKarsilik) return;
-        ntKarsilik.setAttribute("contenteditable", "true");
-        ntKarsilik.style.outline = "none";
-
-        ntKarsilik.addEventListener("input", () => {
-          const before = ntKarsilik.textContent;
-          const after = sanitizeNumericText(before);
-          if (before !== after) ntKarsilik.textContent = after;
-        });
-
-        ntKarsilik.addEventListener("keydown", (e) => {
-          if (e.key === "Enter") { e.preventDefault(); ntKarsilik.blur(); }
-        });
-
-        ntKarsilik.addEventListener("blur", () => {
-          const n = parseTrNumber(ntKarsilik.textContent);
-          ntKarsilik.textContent = fmt2.format(n);
-        });
-      }
-
-      function updateKarsilikLive() {
-        if (!ntTutar || !ntKur || !ntKarsilik) return;
-        if (document.activeElement === ntKarsilik) return;
-
-        const tutar = parseTrNumber(ntTutar.value);
-        const kur = parseTrNumber(ntKur.value);
-        const res = tutar * kur;
-        ntKarsilik.textContent = fmt2.format(res);
-      }
-
-      function getActiveTabName() {
-        if (!nakitModal) return "kasalar";
-        const active = nakitModal.querySelector(".nt-tab.bg-white");
-        return active?.dataset?.tab ?? "kasalar";
-      }
-
-      function getSelectedAccountName(activeTab) {
-        if (activeTab === "bankalar") return el("nt-banka")?.selectedOptions?.[0]?.textContent?.trim() || "";
-        if (activeTab === "poslar")   return el("nt-pos")?.selectedOptions?.[0]?.textContent?.trim() || "";
-        return el("nt-kasa")?.selectedOptions?.[0]?.textContent?.trim() || "";
-      }
-
-      function ensureSection(id, title, colorMode /* green|red */) {
-        if (!receiptLog) return null;
-        let section = el(id);
-        if (section) return section;
-
-        section = document.createElement("div");
-        section.id = id;
-        section.className = "theme-border-50 rounded-xl overflow-hidden mb-3";
-
-        const borderClass = colorMode === "red" ? "border-red-200 text-red-700" : "border-green-200 text-green-700";
-
-        section.innerHTML = `
-          <div class="px-4 py-2 border-b ${borderClass} font-extrabold tracking-widest text-xs">
-            ${title}
-          </div>
-          <div class="p-3 space-y-2" data-items></div>
-        `;
-        receiptLog.prepend(section);
-        return section;
-      }
-
-      function getCashRowLabel(itemType) {
-        const isCari = document.body.classList.contains("cari-active");
-        if (isCari) return itemType === "GIRIS" ? "Nakit Giriş" : "Nakit Çıkış";
-        return itemType === "GIRIS" ? "Nakit Tahsilat" : "Nakit Ödeme";
-      }
-
-      function closeNakitModal() {
-        nakitModal?.classList.add("hidden");
-      }
-
-      function setModalModeUI(operationType) {
-        // Title
-        const titleEl = nakitModalTitle || nakitModal?.querySelector("h3");
-        if (titleEl) titleEl.textContent = (operationType === "GIRIS") ? "Nakit Tahsilat" : "Nakit Ödeme";
-
-        // Buttons
-        if (state.isEditing) {
-          if (nakitSubmit) nakitSubmit.innerHTML = `<i class="fas fa-save mr-2"></i>Güncelle`;
-          nakitDelete?.classList.remove("hidden");
-        } else {
-          if (nakitSubmit) nakitSubmit.innerHTML = `<i class="fas fa-check mr-2"></i>Ekle`;
-          nakitDelete?.classList.add("hidden");
-        }
-      }
-
-      function openNakitModal(operationType /* GIRIS|CIKIS */) {
-        if (!nakitModal) return;
-
-        state.currentCashOperation = operationType;
-
-        // open normal mode
-        state.isEditing = false;
-        state.editingIndex = null;
-
-        nakitModal.classList.remove("hidden");
-        setActiveTab("kasalar");
-        setModalModeUI(operationType);
-        updateKarsilikLive();
-      }
-
-      // Edit için modal aç
-      function openNakitModalForEdit(index) {
-        const item = state.receiptItems[index];
-        if (!item || !nakitModal) return;
-
-        state.isEditing = true;
-        state.editingIndex = index;
-        state.currentCashOperation = item.type;
-
-        // tab
-        setActiveTab(item.tab || "kasalar");
-
-        // birim seç (text'e göre)
-        if (ntBirim) {
-          const wanted = (item.currency || "TRY").trim();
-          const opt = Array.from(ntBirim.options).find(o => (o.textContent || "").trim() === wanted);
-          if (opt) ntBirim.value = opt.value;
-        }
-
-        // inputları doldur
-        if (ntTutar) ntTutar.value = fmt2.format(item.tutar ?? 0);
-        if (ntKur) ntKur.value = fmt4.format(item.kur ?? 0);
-        if (ntKarsilik) ntKarsilik.textContent = fmt2.format(item.karsilikTry ?? 0);
-
-        // ilgili hesabı seçmeye çalış (tab'a göre)
-        const tab = item.tab || "kasalar";
-        const selectId = tab === "bankalar" ? "nt-banka" : (tab === "poslar" ? "nt-pos" : "nt-kasa");
-        const sel = el(selectId);
-        if (sel && item.hesapAdi) {
-          const opt = Array.from(sel.options).find(o => (o.textContent || "").trim() === item.hesapAdi.trim());
-          if (opt) sel.value = opt.value;
-        }
-
-        nakitModal.classList.remove("hidden");
-        setModalModeUI(item.type);
-      }
-
-      // ---------- RENDER / RERENDER ----------
-      function rerenderReceipt() {
-        if (!receiptLog) return;
-        receiptLog.innerHTML = "";
-
-        let giren = 0;
-        let cikan = 0;
-
-        state.receiptItems.forEach((item, index) => {
-          addReceiptItemToUI(item, index);
-
-          if (item.type === "GIRIS") giren += (item.karsilikTry || 0);
-          else cikan += (item.karsilikTry || 0);
-        });
-
-        writeTotals(giren, cikan);
-      }
-
-      function addReceiptItemToUI(item, index) {
-        const isGiris = item.type === "GIRIS";
-
-        const section = ensureSection(
-          isGiris ? "section-nakit-girisler" : "section-nakit-cikislar",
-          isGiris ? "NAKİT GİRİŞLER" : "NAKİT ÇIKIŞLAR",
-          isGiris ? "green" : "red"
-        );
-        if (!section) return;
-
-        const wrap = section.querySelector("[data-items]");
-        const row = document.createElement("div");
-        row.setAttribute("data-receipt-item", "1");
-        row.dataset.index = index;
-        row.style.cursor = "pointer";
-        row.className = `rounded-lg border ${isGiris ? "border-green-100" : "border-red-100"} bg-white px-3 py-2`;
-
-        const leftTop = `${isGiris ? "+" : "-"}${fmt2.format(item.tutar)} ${item.currency}`;
-        const rightTop = `${fmt2.format(item.karsilikTry)} TRY`;
-        const leftBottom = `${item.hesapAdi} - ${getCashRowLabel(item.type)}`;
-        const rightBottom = `TRY Kuru: ${fmt4.format(item.kur)}`;
-
-        row.innerHTML = `
-          <div class="flex items-start justify-between gap-3">
-            <div class="min-w-0">
-              <div class="${isGiris ? "text-green-700" : "text-red-700"} font-extrabold text-sm">${leftTop}</div>
-              <div class="text-gray-700 font-mono text-xs mt-1 truncate">${leftBottom}</div>
-            </div>
-            <div class="text-right">
-              <div class="${isGiris ? "text-green-700" : "text-red-700"} font-extrabold text-sm">${rightTop}</div>
-              <div class="text-gray-500 font-mono text-xs mt-1">${rightBottom}</div>
-            </div>
-          </div>
-        `;
-
-        row.addEventListener("click", () => openNakitModalForEdit(index));
-        wrap.appendChild(row);
-      }
-
-      // ---------- SUBMIT / UPDATE / DELETE ----------
-      function readItemFromModal() {
-        const tab = getActiveTabName();
-        const hesapAdi = getSelectedAccountName(tab);
-
-        const currency = ntBirim?.selectedOptions?.[0]?.textContent?.trim() || "TRY";
-        const tutar = parseTrNumber(ntTutar?.value);
-        const kur = parseTrNumber(ntKur?.value);
-        const karsilikTry = parseTrNumber(ntKarsilik?.textContent);
-
-        return {
-          type: state.currentCashOperation,
-          currency,
-          tutar,
-          kur,
-          karsilikTry,
-          hesapAdi,
-          tab
-        };
-      }
-
-      function validateItem(item) {
-        // çok sıkı değil ama boş hesap adı gelmesin
-        if (!item.hesapAdi) return false;
-        return true;
-      }
-
-      // ---------- WIRE MODAL ----------
-      function wireNakitModal() {
-        if (!nakitModal) return;
-
-        // open buttons
-        btnNakitTahsilat?.addEventListener("click", () => openNakitModal("GIRIS"));
-        btnNakitOdeme?.addEventListener("click", () => openNakitModal("CIKIS"));
-
-        // close
-        nakitClose?.addEventListener("click", closeNakitModal);
-        nakitCancel?.addEventListener("click", () => {
-          closeNakitModal();
-          state.isEditing = false;
-          state.editingIndex = null;
-        });
-
-        nakitModal.addEventListener("click", (e) => { if (e.target === nakitModal) closeNakitModal(); });
-        document.addEventListener("keydown", (e) => {
-          if (e.key === "Escape" && !nakitModal.classList.contains("hidden")) closeNakitModal();
-        });
-
-        // tabs
-        ntTabs.forEach(t => t.addEventListener("click", () => setActiveTab(t.dataset.tab)));
-
-        // numeric inputs + karsilik
-        enforceNumericInput(ntTutar, 2);
-        enforceNumericInput(ntKur, 4);
-        makeEditableKarsilik();
-
-        // initial format
-        if (ntTutar) ntTutar.value = fmt2.format(parseTrNumber(ntTutar.value));
-        if (ntKur) ntKur.value = fmt4.format(parseTrNumber(ntKur.value));
-        updateKarsilikLive();
-
-        // submit => add or update
-        nakitSubmit?.addEventListener("click", () => {
-          const item = readItemFromModal();
-          if (!validateItem(item)) return;
-
-          // EDIT
-          if (state.isEditing && state.editingIndex !== null) {
-            state.receiptItems[state.editingIndex] = item;
-            state.isEditing = false;
-            state.editingIndex = null;
-
-            rerenderReceipt();
-            closeNakitModal();
-            return;
-          }
-
-          // ADD
-          state.receiptItems.push(item);
-          rerenderReceipt();
-          closeNakitModal();
-        });
-
-        // delete
-        nakitDelete?.addEventListener("click", () => {
-          if (!state.isEditing || state.editingIndex === null) return;
-
-          const idx = state.editingIndex;
-          state.receiptItems.splice(idx, 1);
-
-          state.isEditing = false;
-          state.editingIndex = null;
-
-          rerenderReceipt();
-          closeNakitModal();
-        });
-      }
-
-      // ---------- INIT ----------
-      document.addEventListener("DOMContentLoaded", () => {
-        if (!document.body.classList.contains("satis-active") && !document.body.classList.contains("cari-active")) {
-          document.body.classList.add("satis-active");
-        }
-
-        wireToggle();
-        wireNakitModal();
-        setButtonLabels(toggle?.checked ?? false);
-        rerenderReceipt();
-        wireFisListModal();
-      });
-    })();
-</script>
 
 
 

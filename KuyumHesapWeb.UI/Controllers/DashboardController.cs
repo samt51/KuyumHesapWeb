@@ -1,11 +1,10 @@
 ﻿using KuyumHesapWeb.Core.Feature.DashboardFeature.Queries.GetAllDashboard;
 using MediatR;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace KuyumHesapWeb.UI.Controllers
 {
-    [Authorize]
+
     public class DashboardController : Controller
     {
         private readonly IMediator _mediator;

@@ -15,7 +15,7 @@ namespace KuyumHesapWeb.Core.Feature.AuthFeature.Commands.Login
         {
             var requestUrl = await _apiService.PostAsync<LoginCommandRequest, LoginCommandResponse>("Auth/Login", request);
 
-            return new ResponseDto<LoginCommandResponse>().Success(requestUrl.data);
+            return requestUrl;
         }
     }
 }

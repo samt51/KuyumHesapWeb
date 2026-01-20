@@ -23,7 +23,7 @@ namespace KuyumHesapWeb.Core
             services.AddScoped<KuyumHesapWeb.Core.Commond.Abstract.Mapper.IMapper, Mapper>();
 
 
-
+           
 
 
             services.AddHttpClient<IApiService, ApiService>(client =>
