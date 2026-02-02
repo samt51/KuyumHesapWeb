@@ -46,19 +46,19 @@
             visibility: visible;
         }
 
-        /* --- GEÇİCİ GENİŞLEME (Overlay) Durumları --- */
-        /* Sabitlenmemişken, hover veya alt menü aktif olduğunda, içerik ÜZERİNE AÇILIR */
-        #sidebar-menu:not(.sidebar-pinned):hover,
-        #sidebar-menu.submenu-active:not(.sidebar-pinned) {
-            width: 16rem; /* w-64 */
-            z-index: 50; /* İçeriğin üzerine çıkması için */
+        body:not(.sidebar-pinned) #sidebar-menu:hover,
+        body:not(.sidebar-pinned) #sidebar-menu.submenu-active {
+            width: 16rem;
+            z-index: 50;
         }
 
-            #sidebar-menu:not(.sidebar-pinned):hover .sidebar-text,
-            #sidebar-menu.submenu-active:not(.sidebar-pinned) .sidebar-text {
+            body:not(.sidebar-pinned) #sidebar-menu:hover .sidebar-text,
+            body:not(.sidebar-pinned) #sidebar-menu.submenu-active .sidebar-text {
                 opacity: 1;
                 visibility: visible;
             }
+
+      
 
         .rolex-green-border {
             border: 1px solid rgba(30, 132, 73, 0.35);
@@ -151,17 +151,17 @@
 
         #content-frames {
             position: relative;
-            flex-grow: 1;
+            flex: 1 1 auto;
+            min-height: 0;
+            overflow: hidden; /* iframe içi yönetsin */
         }
 
             #content-frames iframe {
                 position: absolute;
-                top: 0;
-                left: 0;
+                inset: 0;
                 width: 100%;
                 height: 100%;
-                border: none;
-                display: none;
+                border: 0;
             }
 
                 #content-frames iframe.active {
@@ -175,7 +175,63 @@
             .chevron-icon.rotate-180 {
                 transform: rotate(180deg);
             }
+
+        body {
+            overflow: hidden; /* sayfanın değil, iframe alanının yönetmesini istiyoruz */
+        }
+
+        #content-frames {
+            height: 100%;
+        }
+
+            #content-frames iframe {
+                height: 100%;
+            }
+
+        html, body {
+            height: 100%;
+            overflow-x: hidden; /* yatay taşmayı kes */
+        }
+
+        /* default sidebar 4rem */
+        #main-content {
+            margin-left: 4rem;
+            width: calc(100% - 4rem); /* <-- kritik */
+            min-width: 0; /* flex/iframe içi taşmaları engeller */
+        }
+
+        /* pinned sidebar 16rem */
+        body.sidebar-pinned #main-content {
+            margin-left: 16rem;
+            width: calc(100% - 16rem); /* <-- kritik */
+        }
+
+        /* flex içinde taşma sorunlarını kesmek için */
+        #content-frames {
+            min-width: 0;
+            min-height: 0;
+        }
+        @@media (max-width: 768px) {
+            #main-content
+
+        {
+            margin-left: 4rem;
+            width: calc(100% - 4rem);
+        }
+
+        body.sidebar-pinned #main-content {
+            margin-left: 4rem; /* mobilde sabitleme içerik kaydırmasın */
+            width: calc(100% - 4rem);
+        }
+
+        body.sidebar-pinned #sidebar-menu {
+            width: 16rem;
+            z-index: 60;
+        }
+
+        }
     </style>
+    @RenderSection("Styles", required: false)
 </head>
 <body class="bg-gray-100">
 
@@ -262,15 +318,20 @@
     <div id="submenu-flyout" class="fixed top-0 h-full z-30 bg-white shadow-lg rolex-green-border transition-opacity duration-200 ease-in-out opacity-0 pointer-events-none" style="width: 220px;"></div>
 
     <main id="main-content"
-          class="h-screen flex flex-col"
+          class="h-screen flex flex-col min-h-0 overflow-hidden"
           data-login-url="@Url.Action("Login", "Auth")"
           data-dashboard-url="@Url.Action("Dashboard", "Home")">
+
         <div id="tabs-container" class="flex-shrink-0"></div>
-        <div id="content-frames" class="flex-grow relative"></div>
-        @RenderBody()
+
+        <div id="content-frames" class="flex-1 min-h-0 relative overflow-hidden">
+            @RenderBody()
+        </div>
+ 
     </main>
 
     <!-- JavaScript Kodları Yeniden Düzenlendi ve Sadeleştirildi -->
+
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const mainElement = document.getElementById('main-content');
@@ -381,11 +442,13 @@
                 }
             });
 
-            logoutButton.addEventListener('click', (e) => {
-                e.preventDefault();
-                localStorage.removeItem('jwt_token');
-                window.location.href = loginUrl;
-            });
+                 if (logoutButton) {
+          logoutButton.addEventListener('click', (e) => {
+            e.preventDefault();
+            localStorage.removeItem('jwt_token');
+            window.location.href = loginUrl;
+          });
+        }
 
             // --- Sekme Yönetim Fonksiyonları (Değişiklik Gerekmiyor) ---
             window.openTab = function (url, title) {
@@ -486,9 +549,16 @@
                 }
             }
 
-            openTab(dashboardUrl, 'Ana Sayfa');
+                const hasServerRenderedContent =
+          contentFrames.querySelector('[data-server-page="true"]') !== null;
+
+        if (!hasServerRenderedContent) {
+          openTab(dashboardUrl, 'Ana Sayfa');
+        }
         });
     </script>
+    @RenderSection("Scripts", required: false)
+
 </body>
 </html>
 
