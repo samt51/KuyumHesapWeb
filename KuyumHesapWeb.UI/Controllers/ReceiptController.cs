@@ -1,6 +1,8 @@
 ﻿using KuyumHesapWeb.Core.Commond.Abstract.Mapper;
 using KuyumHesapWeb.Core.Commond.Models.Dtos;
 using KuyumHesapWeb.Core.Feature.ReceiptFeature.Commands.Create;
+using KuyumHesapWeb.Core.Feature.ReceiptFeature.Dtos;
+using KuyumHesapWeb.Core.Feature.ReceiptFeature.Queries.GetEkstreByCustomer;
 using KuyumHesapWeb.UI.Controllers.BaseCont;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
@@ -16,7 +18,6 @@ namespace KuyumHesapWeb.UI.Controllers
             _mediator = mediator;
             _mapper = mapper;
         }
-
         public IActionResult Index()
         {
             return View();
@@ -70,8 +71,13 @@ namespace KuyumHesapWeb.UI.Controllers
             };
             var data = await _mediator.Send(request);
 
-            return RedirectToAction("Index");
+            return Redirect("SellAndCari/Index");
         }
-
+        [HttpPost]
+        public async Task<IActionResult> GetEkstreByCustomerIdAndDate([FromBody] GetEkstreByCustomerQueryRequest request)
+        {
+            var data = await _mediator.Send(request);
+            return Ok(data);
+        }
     }
 }

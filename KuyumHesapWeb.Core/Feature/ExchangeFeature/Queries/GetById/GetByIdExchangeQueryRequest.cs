@@ -17,7 +17,5 @@ namespace KuyumHesapWeb.Core.Feature.ExchangeFeature.Queries.GetById
         public GetByIdExchangeQueryResponse GetByIdExchangeQueryResponse { get; set; }
         public List<GetAllCurrencyQueryResponse> GetAllCurrencyQueryResponses { get; set; }
         public int CurrencyId { get; set; }
-
     }
-
 }

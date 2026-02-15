@@ -7,7 +7,7 @@ namespace KuyumHesapWeb.Core.Feature.AccountFeature.Command.Create
 {
     public class CreateAccountCommandRequestDto : IRequest<ResponseDto<CreateAccountCommandResponse>>
     {
-        public CreateAccountCommandRequest request { get; set; }
+        public CreateAccountCommandRequest request { get; set; } = new();
         public List<GetAllAccountTypeQueryResponse> AccountTypeResponses { get; set; }
         public List<GetAllAccountQueryResponse> getAllAccountQueries { get; set; }
     }

@@ -17,7 +17,7 @@
         <link href="https://cdnjs.cloudflare.com/ajax/libs/slim-select/2.8.2/slimselect.min.css" rel="stylesheet">
         <script src="https://cdnjs.cloudflare.com/ajax/libs/slim-select/2.8.2/slimselect.min.js"></script>
         <style>
- 
+
 
             .ekstre-list-container {
                 display: flex;
@@ -1122,71 +1122,59 @@
             /* ====== MOBİL RESPONSIVE ====== */
             @@media (max-width: 1024px) {
                 /* Mobilde sayfanın kendisi scroll alsın ki aşağı inebilesin */
-                body
-
-            {
-                overflow: auto;
-            }
-
-
-            #app-main {
-                overflow: visible; /* mobilde main içerik akışa bırak */
-            }
-
-            /* Grid'i mobilde column gibi davranacak şekilde güçlendir */
-            #app-grid {
-                height: auto;
-            }
-
-            /* Kartların hepsi auto büyüsün */
-            #receipt-card,
-            #middle-panel,
-            #right-panel {
-                height: auto !important;
-            }
-
-            /* Sol fiş kartı: ekranda çok yer kaplamasın, içeride scroll olsun */
-            #receipt-card {
-                max-height: 55vh;
-            }
-
-            /* Orta panel de çok uzamasın */
-            #middle-panel {
-                max-height: 55vh;
-            }
-
-            /* Sağ panel (butonlar): ekranın altında her zaman görünür olsun */
-            #right-panel {
-                position: sticky;
-                bottom: 0;
-                z-index: 20;
-                background: transparent;
-            }
-
-                /* Sağ panel içindeki ilk kutu (aksiyon butonları) scroll alabilsin */
-                #right-panel > .bg-white.rounded-xl.shadow-md.p-3.theme-border {
-                    max-height: 42vh;
-                    overflow-y: auto;
+                body {
+                    overflow: auto;
                 }
 
-                /* Sağ paneldeki Kaydet/Yeni İşlem kutusu sticky gibi dursun */
-                #right-panel > .bg-white.rounded-xl.shadow-md.p-3.flex-grow.flex.flex-col.theme-border {
+
+                #app-main {
+                    overflow: visible; /* mobilde main içerik akışa bırak */
+                }
+                /* Grid'i mobilde column gibi davranacak şekilde güçlendir */
+                #app-grid {
+                    height: auto;
+                }
+                /* Kartların hepsi auto büyüsün */
+                #receipt-card,
+                #middle-panel,
+                #right-panel {
+                    height: auto !important;
+                }
+                /* Sol fiş kartı: ekranda çok yer kaplamasın, içeride scroll olsun */
+                #receipt-card {
+                    max-height: 55vh;
+                }
+                /* Orta panel de çok uzamasın */
+                #middle-panel {
+                    max-height: 55vh;
+                }
+                /* Sağ panel (butonlar): ekranın altında her zaman görünür olsun */
+                #right-panel {
                     position: sticky;
                     bottom: 0;
-                    z-index: 25;
-                    background: white;
+                    z-index: 20;
+                    background: transparent;
                 }
-
+                    /* Sağ panel içindeki ilk kutu (aksiyon butonları) scroll alabilsin */
+                    #right-panel > .bg-white.rounded-xl.shadow-md.p-3.theme-border {
+                        max-height: 42vh;
+                        overflow-y: auto;
+                    }
+                    /* Sağ paneldeki Kaydet/Yeni İşlem kutusu sticky gibi dursun */
+                    #right-panel > .bg-white.rounded-xl.shadow-md.p-3.flex-grow.flex.flex-col.theme-border {
+                        position: sticky;
+                        bottom: 0;
+                        z-index: 25;
+                        background: white;
+                    }
             }
 
             /* ====== Ek küçük düzeltme: Tailwind p-2 yüzünden taşma olmasın ====== */
 
             @@media (max-width: 640px) {
-                body
-
-            {
-                padding: 8px !important;
-            }
+                body {
+                    padding: 8px !important;
+                }
             }
 
             .app-shell-customer .ss-main,
@@ -1207,20 +1195,15 @@
 
             /* Sağ panel çok uzarsa desktop'ta içi scroll alsın (opsiyonel ama iyi) */
             @@media (min-width: 1024px) {
-                #right-panel
-
-            {
-                min-height: 0;
+                #right-panel {
+                    min-height: 0;
+                }
             }
 
-            }
             @@media (min-width: 1024px) {
-                #right-panel
-
-            {
-                overflow-y: auto;
-            }
-
+                #right-panel {
+                    overflow-y: auto;
+                }
             }
 
             html, body {
@@ -1228,12 +1211,9 @@
             }
 
             @@media (max-width: 1023px) {
-                body
-
-            {
-                overflow: auto !important;
-            }
-
+                body {
+                    overflow: auto !important;
+                }
             }
 
             /* Scrollbar görünümü (seninki) */
@@ -1331,41 +1311,38 @@
 
             /* Mobil: body scroll serbest, right-panel sticky yok */
             @@media (max-width:1023px) {
-                body
+                body {
+                    height: auto;
+                    min-height: 100dvh;
+                    overflow: auto; /* mobilde sayfa scroll */
+                    padding: 8px; /* senin p-2 */
+                }
 
-            {
-                height: auto;
-                min-height: 100dvh;
-                overflow: auto; /* mobilde sayfa scroll */
-                padding: 8px; /* senin p-2 */
-            }
+                #app-main {
+                    overflow: visible;
+                }
 
-            #app-main {
-                overflow: visible;
-            }
+                #receiptForm, #app-grid {
+                    height: auto;
+                }
 
-            #receiptForm, #app-grid {
-                height: auto;
-            }
+                #receipt-card {
+                    height: auto;
+                    max-height: 55vh;
+                }
 
-            #receipt-card {
-                height: auto;
-                max-height: 55vh;
-            }
+                #right-panel {
+                    height: auto;
+                }
 
-            #right-panel {
-                height: auto;
-            }
+                #right-actions {
+                    max-height: 45vh; /* mobilde aksiyonlar alanı scroll */
+                    overflow-y: auto;
+                }
 
-            #right-actions {
-                max-height: 45vh; /* mobilde aksiyonlar alanı scroll */
-                overflow-y: auto;
-            }
-
-            #right-footer {
-                position: static;
-            }
-
+                #right-footer {
+                    position: static;
+                }
             }
 
             /* Tri toggle slider tıklamayı engellemesin (senin fix) */
@@ -1378,7 +1355,6 @@
                 cursor: pointer;
                 user-select: none;
             }
-
 
         </style>
     }
@@ -1395,7 +1371,7 @@
             <div class="flex items-center gap-3 flex-wrap lg:flex-nowrap lg:flex-1 min-w-0">
 
                 <div class="toggle-container flex-shrink-0">
-                    <input type="checkbox" id="operation-type-toggle" class="toggle-checkbox" name="operation-type-toggle">
+                    <input type="checkbox" id="operation-type-toggle" class="toggle-checkbox">
                     <label for="operation-type-toggle" class="toggle-label">
                         <span class="toggle-text">SATIŞ</span>
                         <span class="toggle-text">CARİ</span>
@@ -1555,6 +1531,16 @@
                         <div class="h-6"></div>
 
                         <input type="hidden" name="MovementsJson" id="MovementsJson" />
+                        <input type="hidden" name="ReceiptDate" id="hdn-ReceiptDate" />
+                        <input type="hidden" name="CurrentAccountId" id="hdn-CurrentAccountId" />
+                        <input type="hidden" name="EmployeeId" id="hdn-EmployeeId" />
+                        <input type="hidden" name="IsCustomerReceipt" id="hdn-IsCustomerReceipt" />
+
+                        <!-- Eğer bunları da ileride dolduracaksan -->
+                        <input type="hidden" name="CurrencyCode" id="hdn-CurrencyCode" />
+                        <input type="hidden" name="Description" id="hdn-Description" />
+                        <input type="hidden" name="OpenBalanceAmount" id="hdn-OpenBalanceAmount" />
+                        <input type="hidden" name="ReceiptNumber" id="hdn-ReceiptNumber" />
                     </div>
 
                     <!-- ALT BAR -->
@@ -1826,7 +1812,7 @@
                         <div class="col-span-3">
                             <label class="block text-sm font-semibold text-blue-600 mb-1">Birim</label>
                             <select id="nt-birim" class="w-full h-[44px] px-4 rounded-xl border border-gray-300 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                             
+
                                 @foreach (var item in Model.getAllCurrencyQueryResponses)
                                 {
                                     <option value=@item.Id>@item.CurrencyCode</option>
@@ -1949,43 +1935,65 @@
 
     <!-- Satış Fiş Listesi Modal -->
     <div id="fis-list-modal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-        <div class="min-h-full flex items-start justify-center p-0">
-            <div class="modal-content bg-white w-full max-w-4xl shadow-2xl relative flex flex-col max-h-screen overflow-hidden">
+        <div class="modal-bg absolute inset-0"></div>
+        <div class="modal-content bg-white w-full max-w-4xl h-full flex flex-col shadow-2xl relative">
+            <div class="flex justify-between items-center p-4 border-b sticky top-0 bg-white z-10">
+                <h3 id="fis-list-modal-title" class="text-lg font-bold text-gray-800">Satış Fiş Listesi</h3>
+                <button id="fis-list-modal-close-button" class="text-gray-500 hover:text-gray-800 text-2xl">&times;</button>
+            </div>
 
-                <!-- Header (SABİT) -->
-                <div class="flex justify-between items-center p-4 border-b sticky top-0 bg-white z-10 flex-shrink-0">
-                    <h3 id="fis-list-modal-title" class="text-lg font-bold text-gray-800">Satış Fiş Listesi</h3>
-                    <button id="fis-list-modal-close-button" class="text-gray-500 hover:text-gray-800 text-2xl">&times;</button>
-                </div>
+            <div id="fis-list-filters" class="p-3 border-b bg-gray-50">
+                <div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
 
-                <!-- Filters (SABİT) -->
-                <div id="fis-list-filters" class="p-3 border-b bg-gray-50 flex flex-wrap gap-3 items-end flex-shrink-0">
-                    <div class="flex items-end gap-4 w-full">
-                        <div class="flex-1 min-w-0">
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Hesap Filtresi</label>
-                            <select class="w-full border border-gray-300 rounded-md px-3 py-2">
-                                <option>Tüm Hesaplar</option>
-                            </select>
-                        </div>
+                    <!-- Hesap Filtresi -->
+                    <div class="md:col-span-5">
+                        <label for="fis-list-customer-filter" class="block text-xs font-semibold text-gray-600 mb-1">
+                            Hesap Filtresi
+                        </label>
+                        <select id="fis-list-customer-filter"
+                                class="w-full h-[38px] px-3 bg-white border border-gray-300 rounded-md shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
 
-                        <div class="flex items-end gap-3">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Başlangıç Tarihi</label>
-                                <input type="date" class="border border-gray-300 rounded-md px-3 py-2 w-[160px]">
-                            </div>
 
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Bitiş Tarihi</label>
-                                <input type="date" class="border border-gray-300 rounded-md px-3 py-2 w-[160px]">
-                            </div>
+                            @foreach (var item in Model.getAllAccountQueryResponses.Where(x => !x.Tezgahtar))
+                            {
+                                <option value="@item.AccountId">@item.AccountName</option>
+                            }
 
-                            <button class="bg-blue-600 text-white rounded-md px-4 py-2 h-[42px]">Filtrele</button>
-                        </div>
+
+                        </select>
                     </div>
-                </div>
 
-                <!-- Content (SCROLL) -->
-                <div id="fis-list-content" class="flex-1 overflow-y-auto"></div>
+                    <!-- Başlangıç -->
+                    <div class="md:col-span-3">
+                        <label for="fis-list-start-date" class="block text-xs font-semibold text-gray-600 mb-1">
+                            Başlangıç Tarihi
+                        </label>
+                        <input type="date" id="fis-list-start-date"
+                               class="block w-full h-[38px] px-3 py-1.5 bg-white border border-gray-300 rounded-md shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+
+                    <!-- Bitiş -->
+                    <div class="md:col-span-3">
+                        <label for="fis-list-end-date" class="block text-xs font-semibold text-gray-600 mb-1">
+                            Bitiş Tarihi
+                        </label>
+                        <input type="date" id="fis-list-end-date"
+                               class="block w-full h-[38px] px-3 py-1.5 bg-white border border-gray-300 rounded-md shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+
+                    <!-- Filtre Button -->
+                    <div class="md:col-span-1">
+                        <button id="fis-list-filter-button"
+                                class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-md text-sm h-[38px]">
+                            <i class="fas fa-filter mr-1.5"></i>
+                        </button>
+                    </div>
+
+                </div>
+            </div>
+
+
+            <div id="fis-list-content" class="flex-grow overflow-y-auto">
             </div>
         </div>
     </div>
@@ -2344,77 +2352,38 @@
     <script>
         document.addEventListener("DOMContentLoaded", () => {
 
+
+
+                  
+
           // -----------------------------------
-          // Global error logger (debug için)
+          // Global error logger (debug)
           // -----------------------------------
           window.addEventListener("error", (ev) => {
             console.error("JS Error:", ev.message, ev.filename, ev.lineno, ev.colno);
           });
 
+                  ["main-delete-button", "main-delete-button-mobile"].forEach(id => {
+          const b = document.getElementById(id);
+          if (b && b.tagName === "BUTTON") b.type = "button";
+        });
+
+                const deleteBtn = document.getElementById("main-delete-button");
+        const deleteBtnMobile = document.getElementById("main-delete-button-mobile");
+
+        const confirmModal = document.getElementById("confirmation-modal");
+        const confirmMsg = document.getElementById("modal-message");
+        const confirmYes = document.getElementById("modal-confirm");
+        const confirmNo = document.getElementById("modal-cancel");
+
+
           // -----------------------------------
           // Helpers
           // -----------------------------------
-
-                   function wireTriToggle(toggleId, onChange) {
-          const root = document.getElementById(toggleId);
-          if (!root) return;
-
-          if (root.dataset.wired === "1") return;
-          root.dataset.wired = "1";
-
-          const slider = root.querySelector(".tri-toggle-slider");
-          const optionsWrap = root.querySelector(".tri-toggle-options");
-          const options = Array.from(root.querySelectorAll(".tri-toggle-option"));
-
-          const getSelected = () => root.dataset.selected || root.getAttribute("data-selected") || options[0]?.dataset.value;
-
-          function setSelected(value) {
-            root.dataset.selected = value;
-            root.setAttribute("data-selected", value);
-
-            options.forEach(opt => opt.classList.toggle("active", opt.dataset.value === value));
-
-            // slider position: 2 option var
-            if (slider) {
-              const idx = Math.max(0, options.findIndex(o => o.dataset.value === value));
-              slider.style.transform = `translateX(${idx * 100}%)`;
-            }
-
-            if (typeof onChange === "function") onChange(value);
-          }
-
-          // İlk render
-          setSelected(getSelected());
-
-          // Click delegation (en sağlam)
-          optionsWrap?.addEventListener("click", (e) => {
-            const opt = e.target.closest(".tri-toggle-option");
-            if (!opt) return;
-
-            e.preventDefault();
-            e.stopPropagation();
-
-            setSelected(opt.dataset.value);
-          });
-
-          // ekstra: option üzerine click (wrap yoksa)
-          options.forEach(opt => {
-            opt.addEventListener("click", (e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              setSelected(opt.dataset.value);
-            });
-          });
-        }
-
-
           const fmt2 = new Intl.NumberFormat("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
           const fmt4 = new Intl.NumberFormat("tr-TR", { minimumFractionDigits: 4, maximumFractionDigits: 4 });
 
-          function el(id) {
-            if (typeof id !== "string" || !id) return null;
-            return document.getElementById(id);
-          }
+          const el = (id) => (typeof id === "string" ? document.getElementById(id) : null);
 
           function sanitizeNumericText(raw) {
             let s = (raw ?? "").toString().trim().replace(/[^\d,.\-]/g, "");
@@ -2433,6 +2402,15 @@
             const normalized = s.replace(",", ".");
             const n = Number.parseFloat(normalized);
             return Number.isFinite(n) ? n : 0;
+          }
+
+          function parseDecimalTr(value) {
+            if (value == null) return null;
+            let s = String(value).trim();
+            if (!s) return null;
+            s = s.replace(/\./g, "").replace(",", ".");
+            const n = Number(s);
+            return Number.isFinite(n) ? n : null;
           }
 
           function wireTrMoneyInput(inputEl, decimals) {
@@ -2460,15 +2438,6 @@
             return (opt?.textContent || "").trim();
           }
 
-          function parseDecimalTr(value) {
-            if (value == null) return null;
-            let s = String(value).trim();
-            if (!s) return null;
-            s = s.replace(/\./g, "").replace(",", ".");
-            const n = Number(s);
-            return Number.isFinite(n) ? n : null;
-          }
-
           function selectByText(selectEl, wantedText) {
             if (!selectEl) return false;
             const t = (wantedText || "").trim();
@@ -2487,18 +2456,137 @@
           }
 
           // -----------------------------------
-          // MAIN CURRENCY (source of truth)
+          // Form & Hidden fields (KESİN DOLDUR)
           // -----------------------------------
+          const form = el("receiptForm");
+          if (!form) {
+            console.warn("receiptForm bulunamadı");
+            return;
+          }
+
+          const dt = el("fis-tarihi");
+          const customerSelect = el("customer-select");
+          const employeeSelect = el("salesperson-select"); // tezgahtar
+          const opToggle = el("operation-type-toggle");
+          const currencySelect = el("currency-select");
+
+          const hdnDate = el("hdn-ReceiptDate");
+          const hdnCustomer = el("hdn-CurrentAccountId");
+          const hdnEmployee = el("hdn-EmployeeId");
+          const hdnIsCustomer = el("hdn-IsCustomerReceipt");
+          const hdnCurrencyCode = el("hdn-CurrencyCode");
+          const hdnMovements = el("MovementsJson");
+
+
+
+          function normalizeDateTimeLocal(value) {
+            if (!value) return "";
+            return value.length === 16 ? value + ":00" : value;
+          }
+
           function getSelectedCurrencyCode() {
-            const sel = el("currency-select");
-            if (!sel) return "TRY";
-            const opt = sel.options?.[sel.selectedIndex];
-            const code = (opt?.textContent || sel.value || "TRY").trim();
+            if (!currencySelect) return "TRY";
+            const opt = currencySelect.options?.[currencySelect.selectedIndex];
+            const code = (opt?.textContent || currencySelect.value || "TRY").trim();
             return code || "TRY";
           }
 
+          function fillHiddenFields() {
+            if (hdnDate && dt) hdnDate.value = normalizeDateTimeLocal(dt.value);
+            if (hdnCustomer && customerSelect) hdnCustomer.value = customerSelect.value || "";
+            if (hdnEmployee && employeeSelect) hdnEmployee.value = employeeSelect.value || "";
+            if (hdnIsCustomer && opToggle) hdnIsCustomer.value = opToggle.checked ? "true" : "false";
+            if (hdnCurrencyCode) hdnCurrencyCode.value = getSelectedCurrencyCode();
+          }
+
+          dt?.addEventListener("change", fillHiddenFields);
+          customerSelect?.addEventListener("change", fillHiddenFields);
+          employeeSelect?.addEventListener("change", fillHiddenFields);
+          opToggle?.addEventListener("change", fillHiddenFields);
+          currencySelect?.addEventListener("change", fillHiddenFields);
+
+          // En erken submit yakala (capture=true) => her şey garanti
+          form.addEventListener("submit", (event) => {
+
+                      // ---- SATIŞ MODUNDA FARK KONTROLÜ (KAYDETMEYİ ENGELLE) ----
+                const isSalesMode = document.body.classList.contains("satis-active"); // satış modu
+                if (isSalesMode) {
+                  // Fark tutarını DOM'dan çek
+                  const farkText =
+                    document.getElementById("fark-amount")?.textContent ||
+                    document.getElementById("fark-toplam")?.dataset?.amount ||
+                    "0,00";
+
+                  const fark = parseTrNumber(farkText);
+
+                  // 0 değilse (küçük küsuratları da tolere edelim)
+                  if (Math.abs(fark) > 0.000001) {
+                    // submit'i durdur
+                    event.preventDefault();
+                    event.stopPropagation();
+
+                    // Mesajı hazırla
+                    const msg = `Satışta Giren ile Çıkan aynı değerde olmalıdır. Mevcut Fark: ${fmt2.format(fark)} ${getSelectedCurrencyCode()}`;
+
+                    // --- Senin error modalını aç ---
+                    // 1) Eğer hazır modalın varsa: #error-modal / #errorMessageModal / #error-message-modal gibi
+                    const modal =
+                      document.getElementById("error-modal");
+
+                    // 2) Mesajı basacağımız alan (senin yapına göre)
+                    const modalTitle =
+                      document.getElementById("error-modal-title") ||
+                      modal?.querySelector("[data-error-title]") ||
+                      modal?.querySelector(".modal-title");
+
+                    const modalBody =
+                      document.getElementById("error-modal-message") ||
+                      modal?.querySelector("[data-error-message]") ||
+                      modal?.querySelector(".modal-body") ||
+                      modal?.querySelector("p");
+
+                    // Başlık & içerik
+                    if (modalTitle) modalTitle.textContent = "Uyarı";
+                    if (modalBody) modalBody.textContent = msg;
+
+                    // Modal açma (senin mevcut Modal.open'un varsa onu kullanır)
+                    if (modal && typeof Modal !== "undefined" && typeof Modal.open === "function") {
+                      Modal.open(modal);
+                    } else if (modal) {
+                      // basit fallback
+                      modal.classList.remove("hidden");
+                      modal.style.display = "flex";
+                      modal.style.zIndex = "9999";
+                    } else {
+                      // modal bulunamazsa fallback alert
+                      alert("Uyarı\n" + msg);
+                    }
+
+                    return; // devam etmesin
+                  }
+                }
+
+            try {
+              fillHiddenFields();
+              if (hdnMovements) hdnMovements.value = JSON.stringify(state.movements || []);
+              console.log("✅ SUBMIT PAYLOAD", {
+                ReceiptDate: hdnDate?.value,
+                CurrentAccountId: hdnCustomer?.value,
+                EmployeeId: hdnEmployee?.value,
+                IsCustomerReceipt: hdnIsCustomer?.value,
+                CurrencyCode: hdnCurrencyCode?.value,
+                MovementsJson_len: (hdnMovements?.value || "").length
+              });
+            } catch (err) {
+              console.error("submit handler crashed:", err);
+            }
+          }, true);
+
+          // İlk yükleme
+          fillHiddenFields();
+
           // -----------------------------------
-          // Totals DOM safety (0,00 silinmesin)
+          // Totals DOM safety
           // -----------------------------------
           function ensureTotalDom(wrapperId, amountId, currencyId) {
             const wrap = el(wrapperId);
@@ -2553,7 +2641,7 @@
           // DateTime init
           // -----------------------------------
           const fisTarihi = el("fis-tarihi");
-          if (fisTarihi) {
+          if (fisTarihi && !fisTarihi.value) {
             const now = new Date();
             const pad = (n) => String(n).padStart(2, "0");
             fisTarihi.value =
@@ -2568,7 +2656,6 @@
           // UI Elements
           // -----------------------------------
           const receiptLog = el("receipt-log");
-
           const toggleMode = el("operation-type-toggle");
           const receiptTitle = el("receipt-title");
 
@@ -2576,6 +2663,8 @@
           const lblNakitOdeme = el("label-nakit-odeme");
           const lblUrunAlis = el("label-urun-alis");
           const lblUrunSatis = el("label-urun-satis");
+          const lbllistModalTitle = el("fis-list-modal-title");
+          const lblSalesListButton = el("sales-list-button");
 
           // Modals
           const nakitModal = el("nakit-tahsilat-modal");
@@ -2584,6 +2673,8 @@
           const acikModal = el("acik-hesap-modal");
           const ekstreModal = el("ekstre-modal");
           const fisListModal = el("fis-list-modal");
+          const errorsModal = el("error-modal");
+
 
           // -----------------------------------
           // Modal Manager
@@ -2629,33 +2720,30 @@
             if (Modal.isOpen(fisListModal)) return Modal.close(fisListModal);
           });
 
-          function wireBackdropClose(modalEl, backdropSelectorOrClass) {
+          function wireBackdropClose(modalEl) {
             if (!modalEl) return;
             modalEl.addEventListener("click", (e) => {
-              if (backdropSelectorOrClass === "SELF") {
-                if (e.target === modalEl) Modal.close(modalEl);
-                return;
-              }
-              if (typeof backdropSelectorOrClass === "string" && e.target.classList.contains(backdropSelectorOrClass)) {
-                Modal.close(modalEl);
-              }
+              if (e.target === modalEl) Modal.close(modalEl);
             });
           }
 
-          wireBackdropClose(nakitModal, "SELF");
-          wireBackdropClose(iskontoModal, "SELF");
-          wireBackdropClose(virmanModal, "SELF");
-          wireBackdropClose(acikModal, "SELF");
-          wireBackdropClose(ekstreModal, "modal-bg");
-          wireBackdropClose(fisListModal, "modal-bg");
+          wireBackdropClose(nakitModal);
+          wireBackdropClose(iskontoModal);
+          wireBackdropClose(virmanModal);
+          wireBackdropClose(acikModal);
+          wireBackdropClose(ekstreModal);
+          wireBackdropClose(fisListModal);
 
           // -----------------------------------
-          // IMPORTANT: Form içindeki butonları submit olmaktan kurtar
+          // Form içindeki butonlar submit olmasın
           // -----------------------------------
           [
             "btn-nakit-tahsilat", "btn-nakit-odeme", "btn-iskonto", "btn-virman", "btn-acik-hesap",
             "ekstre-button", "sales-list-button", "main-reset-button",
-            "nt-submit", "nt-delete", "nt-cancel", "nakit-tahsilat-close"
+            "nt-submit", "nt-delete", "nt-cancel", "nakit-tahsilat-close",
+            "iskonto-add-button", "iskonto-delete-button", "iskonto-cancel-button", "iskonto-modal-close",
+            "virman-add-button", "virman-delete-button", "virman-cancel-button", "virman-close",
+            "acik-hesap-add-button", "acik-hesap-delete-button", "acik-hesap-cancel", "acik-hesap-close"
           ].forEach(id => {
             const b = el(id);
             if (b && b.tagName === "BUTTON") b.type = "button";
@@ -2677,18 +2765,9 @@
           // -----------------------------------
           function writeTotals(giren, cikan) {
             const fark = giren - cikan;
-
             setTotal("giren-toplam", "giren-toplam-amount", "giren-toplam-currency", fmt2.format(giren));
             setTotal("cikan-toplam", "cikan-toplam-amount", "cikan-toplam-currency", fmt2.format(cikan));
             setTotal("fark-toplam", "fark-amount", "fark-currency", fmt2.format(fark));
-          }
-
-          function readTotals() {
-            const g = ensureTotalDom("giren-toplam", "giren-toplam-amount", "giren-toplam-currency");
-            const c = ensureTotalDom("cikan-toplam", "cikan-toplam-amount", "cikan-toplam-currency");
-            const giren = parseTrNumber(g?.amountEl?.textContent || "0,00");
-            const cikan = parseTrNumber(c?.amountEl?.textContent || "0,00");
-            return { giren, cikan };
           }
 
           function ensureSection(id, title, colorMode /* green|red */) {
@@ -2716,7 +2795,6 @@
 
           function ensureSectionNeutral(id, title) {
             if (!receiptLog) return null;
-
             let section = el(id);
             if (section) return section;
 
@@ -2880,13 +2958,15 @@
           }
 
           // -----------------------------------
-          // Mode Toggle
+          // Mode Toggle (SATIŞ/CARİ) + Uyarı
           // -----------------------------------
           function setButtonLabels(isCari) {
             if (lblNakitTahsilat) lblNakitTahsilat.textContent = isCari ? "Nakit Giriş" : "Nakit Tahsilat";
             if (lblNakitOdeme) lblNakitOdeme.textContent = isCari ? "Nakit Çıkış" : "Nakit Ödeme";
             if (lblUrunAlis) lblUrunAlis.textContent = isCari ? "Ürün Giriş" : "Ürün Alış";
             if (lblUrunSatis) lblUrunSatis.textContent = isCari ? "Ürün Çıkış" : "Ürün Satış";
+            if (lbllistModalTitle) lbllistModalTitle.textContent = isCari ? "Cari Fiş Listesi" : "Satış Fiş Listesi";
+            if (lblSalesListButton) lblSalesListButton.textContent = isCari ? "Cari Listesi" : "Satış Listesi";
           }
 
           function applyMode(isCari) {
@@ -2894,65 +2974,113 @@
             document.body.classList.toggle("satis-active", !isCari);
             if (receiptTitle) receiptTitle.textContent = isCari ? "Cari Fişi" : "Satış Fişi";
             setButtonLabels(isCari);
+            fillHiddenFields();
           }
 
-
-                  function hasAnyReceiptData() {
-          return (state.items?.length || 0) > 0 || (state.movements?.length || 0) > 0;
-        }
-
-                if (toggleMode) {
-          // başlangıç modu (sende default satıştı)
-          if (!document.body.classList.contains("satis-active") && !document.body.classList.contains("cari-active")) {
-            document.body.classList.add("satis-active");
+          function hasAnyReceiptData() {
+            return (state.items?.length || 0) > 0 || (state.movements?.length || 0) > 0;
           }
 
-          applyMode(toggleMode.checked);
-
-          toggleMode.addEventListener("change", (e) => {
-            const wantCari = e.target.checked;               // true => cari
-            const wasCari = document.body.classList.contains("cari-active"); // şu anki durum
-
-            // Sadece SATIŞ -> CARİ geçişinde ve data varsa uyar
-            const goingSalesToCari = (wasCari === false && wantCari === true);
-
-            if (goingSalesToCari && hasAnyReceiptData()) {
-              const ok = confirm("Yapılan işlemler kaybolacak. Devam etmek istiyor musunuz?");
-              if (!ok) {
-                // hayır: toggle eski haline dönsün (cari olmasın)
-                e.target.checked = false;
-                return; // mod değiştirme
-              }
-
-              // evet: satış fişi verilerini sil ve cariye geç
-              clearReceiptState();
-              applyMode(true);
-              return;
-            }
-
-            // diğer tüm geçişler normal
-            applyMode(wantCari);
-          });
-        }
-                  function clearReceiptState() {
-          state.items = [];
-          state.movements = [];
-          state.edit = { kind: null, index: null };
-          state.currentCashOperation = "GIRIS";
-          closeAllModals?.();           // varsa kapatsın
-          rerenderReceipt?.();          // UI temizlensin
-        }
+          function clearReceiptState() {
+            state.items = [];
+            state.movements = [];
+            state.edit = { kind: null, index: null };
+            state.currentCashOperation = "GIRIS";
+            closeAllModals();
+            rerenderReceipt();
+          }
 
           if (toggleMode) {
             if (!document.body.classList.contains("satis-active") && !document.body.classList.contains("cari-active")) {
               document.body.classList.add("satis-active");
             }
+
             applyMode(toggleMode.checked);
-            toggleMode.addEventListener("change", (e) => applyMode(e.target.checked));
+
+            toggleMode.addEventListener("change", (e) => {
+              const wantCari = e.target.checked;
+              const wasCari = document.body.classList.contains("cari-active");
+              const goingSalesToCari = (wasCari === false && wantCari === true);
+
+              if (goingSalesToCari && hasAnyReceiptData()) {
+                const ok = confirm("Yapılan işlemler kaybolacak. Devam etmek istiyor musunuz?");
+                if (!ok) {
+                  e.target.checked = false;
+                  return;
+                }
+                clearReceiptState();
+                applyMode(true);
+                return;
+              }
+
+              applyMode(wantCari);
+            });
           }
 
           // -----------------------------------
-          // NAKIT Modal logic
+          // TRI TOGGLE helper (borcuna/alacagina)
+          // -----------------------------------
+          function wireTriToggle(toggleId, onChange) {
+            const root = el(toggleId);
+            if (!root) return null;
+            if (root.dataset.wired === "1") return root;
+            root.dataset.wired = "1";
+
+            const slider = root.querySelector(".tri-toggle-slider");
+            const options = Array.from(root.querySelectorAll(".tri-toggle-option"));
+
+            const setSelected = (val) => {
+              root.dataset.selected = val;
+              root.setAttribute("data-selected", val);
+
+              options.forEach((opt) => {
+                const active = opt.dataset.value === val;
+                opt.classList.toggle("active", active);
+
+                // renkleri senin html’ine göre ayarla
+                if (toggleId.includes("virman")) {
+                  opt.style.color = active ? "rgb(5, 150, 105)" : "rgb(107, 114, 128)";
+                } else {
+                  opt.style.color = active ? "rgb(220, 38, 38)" : "rgb(107, 114, 128)";
+                }
+              });
+
+              if (slider) {
+                const idx = options.findIndex(o => o.dataset.value === val);
+                slider.style.transform = `translateX(${Math.max(0, idx) * 100}%)`;
+              }
+
+              if (typeof onChange === "function") onChange(val);
+            };
+
+            root.addEventListener("click", (e) => {
+              const opt = e.target.closest(".tri-toggle-option");
+              if (!opt) return;
+              e.preventDefault();
+              setSelected(opt.dataset.value);
+            });
+
+            const initial = root.dataset.selected || root.getAttribute("data-selected") || "borcuna";
+            setSelected(initial);
+            root._setSelected = setSelected;
+
+            return root;
+          }
+
+          function getTriToggleValue(toggleId) {
+            const root = el(toggleId);
+            return root?.dataset?.selected || root?.getAttribute("data-selected") || "borcuna";
+          }
+
+          function mapToggleToType(val) {
+            // borcuna = (-) => CIKIS
+            if (val === "borcuna") return "CIKIS";
+            // alacagina = (+) => GIRIS
+            return "GIRIS";
+          }
+
+          // -----------------------------------
+          // NAKIT Modal
           // -----------------------------------
           const ntTabs = nakitModal ? Array.from(nakitModal.querySelectorAll(".nt-tab")) : [];
           const ntPanels = {
@@ -2968,14 +3096,12 @@
 
           function setActiveTab(tabName) {
             if (!nakitModal) return;
-
             ntTabs.forEach(t => {
               const isActive = (t.dataset.tab === tabName);
               t.classList.toggle("bg-white", isActive);
               t.classList.toggle("text-black", isActive);
               t.classList.toggle("text-gray-600", !isActive);
             });
-
             Object.entries(ntPanels).forEach(([name, panel]) => {
               if (!panel) return;
               panel.classList.toggle("hidden", name !== tabName);
@@ -3045,7 +3171,6 @@
             Modal.open(nakitModal);
           }
 
-          // ✅ EDIT OPEN (NAKİT) - satıra tıklayınca burası çalışacak
           function openNakitEdit(index, item) {
             if (!nakitModal) return;
 
@@ -3056,19 +3181,16 @@
             const titleEl = el("nakit-modal-title");
             if (titleEl) titleEl.textContent = item.type === "GIRIS" ? "Nakit Giriş Güncelle" : "Nakit Çıkış Güncelle";
 
-            // delete görünür
             el("nt-delete")?.classList.remove("hidden");
             const submitBtn = el("nt-submit");
             if (submitBtn) submitBtn.innerHTML = `<i class="fas fa-save mr-2"></i>Güncelle`;
 
-            // tab + hesap seçimi (text ile)
             setActiveTab(item.tab || "kasalar");
             const tab = item.tab || "kasalar";
             if (tab === "kasalar") selectByText(el("nt-kasa"), item.hesapAdi);
             if (tab === "bankalar") selectByText(el("nt-banka"), item.hesapAdi);
             if (tab === "poslar") selectByText(el("nt-pos"), item.hesapAdi);
 
-            // para birimi + tutar + kur + karşılık
             if (ntBirim) selectByText(ntBirim, item.currency);
             if (ntTutar) ntTutar.value = fmt2.format(item.tutar || 0);
             if (ntKur) ntKur.value = fmt4.format(item.kur || 0);
@@ -3078,10 +3200,9 @@
             Modal.open(nakitModal);
           }
 
-          // POS / Banka seçimini DTO için al
+          // DTO (NAKİT için mevcut)
           function getSelectedAccountFromPosOrBank() {
             const tab = getActiveTabName();
-
             const kasaSel = el("nt-kasa");
             const bankaSel = el("nt-banka");
             const posSel = el("nt-pos");
@@ -3097,7 +3218,6 @@
             if (tab === "kasalar") return pick(kasaSel);
             if (tab === "bankalar") return pick(bankaSel);
             if (tab === "poslar") return pick(posSel);
-
             return pick(kasaSel) || pick(posSel) || pick(bankaSel);
           }
 
@@ -3112,20 +3232,14 @@
               return null;
             }
 
-            const counterSel = el("currency-select"); // ana para birimi
-            const foreignSel = el("nt-birim");        // nakit modal para birimi
+            const counterSel = el("currency-select");
+            const foreignSel = el("nt-birim");
 
             const counterCurrencyId = safeNumber(counterSel?.value);
             const foreignCurrencyId = safeNumber(foreignSel?.value);
 
-            if (counterCurrencyId == null) {
-              alert("Ana para birimi seçimi bulunamadı (currency-select).");
-              return null;
-            }
-            if (foreignCurrencyId == null) {
-              alert("Nakit para birimi seçimi bulunamadı (nt-birim).");
-              return null;
-            }
+            if (counterCurrencyId == null) { alert("Ana para birimi seçimi bulunamadı."); return null; }
+            if (foreignCurrencyId == null) { alert("Nakit para birimi seçimi bulunamadı."); return null; }
 
             const foreignCurrencyAmount = parseDecimalTr(ntTutar?.value);
             const foreignExchangeRate = parseDecimalTr(ntKur?.value);
@@ -3135,60 +3249,29 @@
 
             const description =
               transactionTypeId === 1
-                ? `Finansal Hesap: ${customerName} - ${cashAccount.accountName}`
-                : `Karşı Hesap: ${customerName} - ${cashAccount.accountName}`;
+                ? `Finansal Hesap: ${cashAccount.accountName} - Nakit Giriş`
+                : `Karşı Hesap: ${cashAccount.accountName} - Nakit Çıkış`;
 
-            const dto = {
+            return {
               transactionTypeId,
               accountId: customerAccountId,
               stockId: null,
               description,
-
               foreignCurrencyAmount,
               foreignCurrencyId,
               foreignExchangeRate,
-
               counterCurrencyAmount,
               counterCurrencyId,
               counterExchangeRate
             };
-
-            console.log("CASH DTO =>", dto);
-            return dto;
           }
 
-          // ✅ Receipt Row click edit (NAKİT)
-          if (receiptLog) {
-            receiptLog.addEventListener("click", (e) => {
-              const row = e.target.closest("[data-receipt-item='1']");
-              if (!row) return;
-
-              const index = Number(row.dataset.index);
-              const kind = row.dataset.kind;
-              if (!Number.isFinite(index)) return;
-
-              const item = state.items[index];
-              if (!item) return;
-
-              // şimdilik nakit edit
-              if (kind === "NAKIT") {
-                e.preventDefault();
-                return openNakitEdit(index, item);
-              }
-
-              // Diğerleri için modal edit istiyorsan: o modalların input id’lerini paylaş
-              console.log("Row clicked but edit not wired for kind:", kind);
-            });
-          }
-
-          // Inputs formatting
           wireTrMoneyInput(ntTutar, 2);
           wireTrMoneyInput(ntKur, 4);
           makeEditableKarsilik();
           ntTutar?.addEventListener("input", updateKarsilikLive);
           ntKur?.addEventListener("input", updateKarsilikLive);
 
-          // ✅ Nakit submit (Ekle / Güncelle)
           el("nt-submit")?.addEventListener("click", (e) => {
             e.preventDefault();
 
@@ -3201,530 +3284,1000 @@
             const karsilikTry = parseTrNumber(ntKarsilik?.textContent);
 
             const uiItem = { kind: "NAKIT", type: state.currentCashOperation, currency, tutar, kur, karsilikTry, hesapAdi, tab: activeTab };
-
             const transactionTypeId = (state.currentCashOperation === "GIRIS") ? 1 : 2;
             const dto = buildCashMovementDto(transactionTypeId);
             if (!dto) return;
 
-            // EDIT MODE
             if (state.edit.kind === "NAKIT" && Number.isFinite(state.edit.index)) {
               const i = state.edit.index;
-
               state.items[i] = uiItem;
               state.movements[i] = dto;
-
               state.edit.kind = null;
               state.edit.index = null;
-
               rerenderReceipt();
               Modal.close(nakitModal);
               return;
             }
 
-            // ADD MODE
             state.items.push(uiItem);
             state.movements.push(dto);
-
             rerenderReceipt();
             Modal.close(nakitModal);
           });
 
-          // ✅ Nakit delete
           el("nt-delete")?.addEventListener("click", (e) => {
             e.preventDefault();
-
             if (!(state.edit.kind === "NAKIT" && Number.isFinite(state.edit.index))) {
               Modal.close(nakitModal);
               return;
             }
-
             const i = state.edit.index;
-
             state.items.splice(i, 1);
             state.movements.splice(i, 1);
-
             state.edit.kind = null;
             state.edit.index = null;
-
             rerenderReceipt();
             Modal.close(nakitModal);
           });
 
           el("nakit-tahsilat-close")?.addEventListener("click", () => Modal.close(nakitModal));
           el("nt-cancel")?.addEventListener("click", () => Modal.close(nakitModal));
+          el("error-modal-cancel")?.addEventListener("click", () => Modal.close(errorsModal));
 
           ntTabs.forEach(t => t.addEventListener("click", (e) => {
             e.preventDefault();
             setActiveTab(t.dataset.tab);
           }));
 
-          // MAIN BUTTONS
+          // -----------------------------------
+          // İSKONTO
+          // -----------------------------------
+          wireTriToggle("iskonto-tipi-toggle");
+
+          const iskAmount = el("form-iskonto-amount");
+          const iskRate   = el("form-iskonto-rate");
+          const iskCurr   = el("form-iskonto-currency");
+          const iskKarsi  = el("form-iskonto-karsi-hesap");
+          const iskHasAmt = el("form-iskonto-equiv-amount");
+          const iskHasRate= el("form-iskonto-equiv-rate");
+          const iskAcik   = el("form-iskonto-aciklama");
+
+          wireTrMoneyInput(iskAmount, 2);
+          wireTrMoneyInput(iskRate, 4);
+
+          function openIskontoForCreate() {
+            state.edit.kind = null;
+            state.edit.index = null;
+            el("iskonto-tipi-toggle")?._setSelected?.("borcuna");
+
+            el("iskonto-delete-button")?.classList.add("hidden");
+            const btn = el("iskonto-add-button");
+            if (btn) btn.innerHTML = `<i class="fas fa-check mr-1.5"></i>Ekle`;
+
+            Modal.open(iskontoModal);
+          }
+
+          function openIskontoForEdit(index) {
+            const item = state.items[index];
+            if (!item || item.kind !== "ISKONTO") return;
+
+            state.edit.kind = "ISKONTO";
+            state.edit.index = index;
+
+            const toggleVal = (item.type === "GIRIS") ? "alacagina" : "borcuna";
+            el("iskonto-tipi-toggle")?._setSelected?.(toggleVal);
+
+            if (iskAmount) iskAmount.value = fmt2.format(item.amount || 0);
+            if (iskRate) iskRate.value = fmt4.format(item.rate || 1);
+
+            if (iskCurr) selectByText(iskCurr, item.currency);
+            if (iskKarsi) iskKarsi.value = item.karsiHesapAdi || iskKarsi.value || "";
+
+            if (iskHasAmt) iskHasAmt.value = fmt2.format(item.hasAmount || 0);
+            if (iskHasRate) iskHasRate.value = fmt4.format(item.hasRate || 0);
+            if (iskAcik) iskAcik.value = item.aciklama || "";
+
+            el("iskonto-delete-button")?.classList.remove("hidden");
+            const btn = el("iskonto-add-button");
+            if (btn) btn.innerHTML = `<i class="fas fa-check mr-1.5"></i>Güncelle`;
+
+            Modal.open(iskontoModal);
+          }
+
+          function buildIskontoUiItem() {
+            const toggleVal = getTriToggleValue("iskonto-tipi-toggle");
+            const type = mapToggleToType(toggleVal);
+
+            const currencyText = iskCurr?.selectedOptions?.[0]?.textContent?.trim() || "TRY";
+            const amount = parseTrNumber(iskAmount?.value);
+            const rate = parseTrNumber(iskRate?.value);
+            const karsilikTry = amount * rate;
+
+            return {
+              kind: "ISKONTO",
+              type,
+              currency: currencyText,
+              amount,
+              rate,
+              karsilikTry,
+              karsiHesapAdi: iskKarsi?.value || "İSKONTO",
+              hasAmount: parseTrNumber(iskHasAmt?.value),
+              hasRate: parseTrNumber(iskHasRate?.value),
+              aciklama: iskAcik?.value || ""
+            };
+          }
+
+          el("iskonto-add-button")?.addEventListener("click", (e) => {
+            e.preventDefault();
+            const uiItem = buildIskontoUiItem();
+
+            if (state.edit.kind === "ISKONTO" && Number.isFinite(state.edit.index)) {
+              state.items[state.edit.index] = uiItem;
+              // movements DTO gerekiyorsa sonra ekleriz
+            } else {
+              state.items.push(uiItem);
+            }
+
+            rerenderReceipt();
+            Modal.close(iskontoModal);
+          });
+
+          el("iskonto-delete-button")?.addEventListener("click", (e) => {
+            e.preventDefault();
+            if (state.edit.kind !== "ISKONTO") return;
+            const i = state.edit.index;
+            if (!Number.isFinite(i)) return;
+
+            state.items.splice(i, 1);
+            state.edit.kind = null;
+            state.edit.index = null;
+
+            rerenderReceipt();
+            Modal.close(iskontoModal);
+          });
+
+          // -----------------------------------
+          // VİRMAN
+          // -----------------------------------
+          wireTriToggle("virman-tipi-toggle");
+
+          const virAmount = el("form-virman-amount");
+          const virRate   = el("form-virman-rate");
+          const virCurr   = el("form-virman-currency");
+          const virKarsi  = el("form-virman-karsi-hesap");
+          const virAcik   = el("form-virman-aciklama");
+
+          wireTrMoneyInput(virAmount, 2);
+          wireTrMoneyInput(virRate, 4);
+
+          function openVirmanForCreate() {
+            state.edit.kind = null;
+            state.edit.index = null;
+
+            el("virman-tipi-toggle")?._setSelected?.("alacagina");
+            el("virman-delete-button")?.classList.add("hidden");
+
+            const btn = el("virman-add-button");
+            if (btn) btn.innerHTML = `<i class="fas fa-check mr-1.5"></i>Ekle`;
+
+            Modal.open(virmanModal);
+          }
+
+          function openVirmanForEdit(index) {
+            const item = state.items[index];
+            if (!item || item.kind !== "VIRMAN") return;
+
+            state.edit.kind = "VIRMAN";
+            state.edit.index = index;
+
+            el("virman-tipi-toggle")?._setSelected?.(item.toggleVal || "alacagina");
+
+            if (virAmount) virAmount.value = fmt2.format(item.amount || 0);
+            if (virRate) virRate.value = fmt4.format(item.rate || 1);
+
+            if (virAcik) virAcik.value = item.aciklama || "";
+
+            el("virman-delete-button")?.classList.remove("hidden");
+            const btn = el("virman-add-button");
+            if (btn) btn.innerHTML = `<i class="fas fa-check mr-1.5"></i>Güncelle`;
+
+            Modal.open(virmanModal);
+          }
+
+          function buildVirmanUiItem() {
+            const toggleVal = getTriToggleValue("virman-tipi-toggle");
+            const currencyText = virCurr?.selectedOptions?.[0]?.textContent?.trim() || "TRY";
+            const amount = parseTrNumber(virAmount?.value);
+            const rate = parseTrNumber(virRate?.value);
+            const karsilikTry = amount * rate;
+            const toName = virKarsi?.selectedOptions?.[0]?.textContent?.trim() || "KARŞI HESAP";
+
+            return {
+              kind: "VIRMAN",
+              toggleVal,
+              currency: currencyText,
+              amount,
+              rate,
+              karsilikTry,
+              from: "ANA HESAP",
+              to: toName,
+              aciklama: virAcik?.value || ""
+            };
+          }
+
+          el("virman-add-button")?.addEventListener("click", (e) => {
+            e.preventDefault();
+            const uiItem = buildVirmanUiItem();
+
+            if (state.edit.kind === "VIRMAN" && Number.isFinite(state.edit.index)) {
+              state.items[state.edit.index] = uiItem;
+            } else {
+              state.items.push(uiItem);
+            }
+
+            rerenderReceipt();
+            Modal.close(virmanModal);
+          });
+
+          el("virman-delete-button")?.addEventListener("click", (e) => {
+            e.preventDefault();
+            if (state.edit.kind !== "VIRMAN") return;
+            const i = state.edit.index;
+            if (!Number.isFinite(i)) return;
+
+            state.items.splice(i, 1);
+            state.edit.kind = null;
+            state.edit.index = null;
+
+            rerenderReceipt();
+            Modal.close(virmanModal);
+          });
+
+          // -----------------------------------
+          // AÇIK HESAP
+          // -----------------------------------
+          wireTriToggle("acikhesap-tipi-toggle");
+
+          const ahAmount = el("form-acikhesap-amount");
+          const ahRate   = el("form-acikhesap-rate");
+
+          wireTrMoneyInput(ahAmount, 2);
+          wireTrMoneyInput(ahRate, 4);
+
+          function openAcikHesapForCreate() {
+            state.edit.kind = null;
+            state.edit.index = null;
+
+            el("acikhesap-tipi-toggle")?._setSelected?.("borcuna");
+            el("acik-hesap-delete-button")?.classList.add("hidden");
+
+            const btn = el("acik-hesap-add-button");
+            if (btn) btn.innerHTML = `<i class="fas fa-check mr-1.5"></i>Ekle`;
+
+            Modal.open(acikModal);
+          }
+
+          function openAcikHesapForEdit(index) {
+            const item = state.items[index];
+            if (!item || item.kind !== "ACIK_HESAP") return;
+
+            state.edit.kind = "ACIK_HESAP";
+            state.edit.index = index;
+
+            const toggleVal = (item.type === "GIRIS") ? "alacagina" : "borcuna";
+            el("acikhesap-tipi-toggle")?._setSelected?.(toggleVal);
+
+            if (ahAmount) ahAmount.value = fmt2.format(item.amount || 0);
+            if (ahRate) ahRate.value = fmt4.format(item.rate || 1);
+
+            el("acik-hesap-delete-button")?.classList.remove("hidden");
+            const btn = el("acik-hesap-add-button");
+            if (btn) btn.innerHTML = `<i class="fas fa-check mr-1.5"></i>Güncelle`;
+
+            Modal.open(acikModal);
+          }
+
+          function buildAcikHesapUiItem() {
+            const toggleVal = getTriToggleValue("acikhesap-tipi-toggle");
+            const type = mapToggleToType(toggleVal);
+
+            const amount = parseTrNumber(ahAmount?.value);
+            const rate = parseTrNumber(ahRate?.value);
+
+            return {
+              kind: "ACIK_HESAP",
+              type,
+              amount,
+              rate,
+              karsiHesapAdi: "Açık Hesap",
+              aciklama: ""
+            };
+          }
+
+          el("acik-hesap-add-button")?.addEventListener("click", (e) => {
+            e.preventDefault();
+            const uiItem = buildAcikHesapUiItem();
+
+            if (state.edit.kind === "ACIK_HESAP" && Number.isFinite(state.edit.index)) {
+              state.items[state.edit.index] = uiItem;
+            } else {
+              state.items.push(uiItem);
+            }
+
+            rerenderReceipt();
+            Modal.close(acikModal);
+          });
+
+          el("acik-hesap-delete-button")?.addEventListener("click", (e) => {
+            e.preventDefault();
+            if (state.edit.kind !== "ACIK_HESAP") return;
+            const i = state.edit.index;
+            if (!Number.isFinite(i)) return;
+
+            state.items.splice(i, 1);
+            state.edit.kind = null;
+            state.edit.index = null;
+
+            rerenderReceipt();
+            Modal.close(acikModal);
+          });
+
+          // -----------------------------------
+          // Receipt satır tıklayınca edit
+          // -----------------------------------
+          if (receiptLog) {
+            receiptLog.addEventListener("click", (e) => {
+              const row = e.target.closest("[data-receipt-item='1']");
+              if (!row) return;
+
+              const index = Number(row.dataset.index);
+              const kind = row.dataset.kind;
+              if (!Number.isFinite(index)) return;
+
+              const item = state.items[index];
+              if (!item) return;
+
+              if (kind === "NAKIT") return openNakitEdit(index, item);
+              if (kind === "ISKONTO") return openIskontoForEdit(index);
+              if (kind === "VIRMAN") return openVirmanForEdit(index);
+              if (kind === "ACIK_HESAP") return openAcikHesapForEdit(index);
+            });
+          }
+
+          // -----------------------------------
+          // Top bar buttons + modal open
+          // -----------------------------------
           document.addEventListener("click", (e) => {
             const t = e.target;
 
             if (t.closest("#btn-nakit-tahsilat")) { e.preventDefault(); return openNakit("GIRIS"); }
             if (t.closest("#btn-nakit-odeme")) { e.preventDefault(); return openNakit("CIKIS"); }
 
-          if (t.closest("#btn-iskonto")) { e.preventDefault(); return openIskontoForCreate(); }
-
+            if (t.closest("#btn-iskonto")) { e.preventDefault(); return openIskontoForCreate(); }
             if (t.closest("#btn-virman")) { e.preventDefault(); return openVirmanForCreate(); }
-        if (t.closest("#btn-acik-hesap")) { e.preventDefault(); return openAcikHesapForCreate(); }
+            if (t.closest("#btn-acik-hesap")) { e.preventDefault(); return openAcikHesapForCreate(); }
+
             if (t.closest("#ekstre-button")) { e.preventDefault(); Modal.open(ekstreModal); return; }
             if (t.closest("#sales-list-button")) { e.preventDefault(); Modal.open(fisListModal); return; }
           });
 
-          (function wireAllCloseButtons() {
-            el("iskonto-modal-close")?.addEventListener("click", (e) => { e.preventDefault(); Modal.close(iskontoModal); });
-            el("iskonto-cancel-button")?.addEventListener("click", (e) => { e.preventDefault(); Modal.close(iskontoModal); });
+          // Close buttons
+          el("iskonto-modal-close")?.addEventListener("click", (e) => { e.preventDefault(); Modal.close(iskontoModal); });
+          el("iskonto-cancel-button")?.addEventListener("click", (e) => { e.preventDefault(); Modal.close(iskontoModal); });
 
-            el("virman-close")?.addEventListener("click", (e) => { e.preventDefault(); Modal.close(virmanModal); });
-            el("virman-cancel-button")?.addEventListener("click", (e) => { e.preventDefault(); Modal.close(virmanModal); });
+          el("virman-close")?.addEventListener("click", (e) => { e.preventDefault(); Modal.close(virmanModal); });
+          el("virman-cancel-button")?.addEventListener("click", (e) => { e.preventDefault(); Modal.close(virmanModal); });
 
-            el("acik-hesap-close")?.addEventListener("click", (e) => { e.preventDefault(); Modal.close(acikModal); });
-            el("acik-hesap-cancel")?.addEventListener("click", (e) => { e.preventDefault(); Modal.close(acikModal); });
+          el("acik-hesap-close")?.addEventListener("click", (e) => { e.preventDefault(); Modal.close(acikModal); });
+          el("acik-hesap-cancel")?.addEventListener("click", (e) => { e.preventDefault(); Modal.close(acikModal); });
 
-            el("ekstre-modal-close-button")?.addEventListener("click", (e) => { e.preventDefault(); Modal.close(ekstreModal); });
+          el("ekstre-modal-close-button")?.addEventListener("click", (e) => { e.preventDefault(); Modal.close(ekstreModal); });
+          el("fis-list-modal-close-button")?.addEventListener("click", (e) => { e.preventDefault(); Modal.close(fisListModal); });
 
-            el("fis-list-modal-close-button")?.addEventListener("click", (e) => { e.preventDefault(); Modal.close(fisListModal); });
-          })();
 
-          // FORM SUBMIT -> MovementsJson doldur
-          const receiptForm = el("receiptForm");
-          if (receiptForm) {
-            receiptForm.addEventListener("submit", function () {
-              const hidden = el("MovementsJson");
-              if (hidden) hidden.value = JSON.stringify(state.movements || []);
-            });
-          } else {
-            console.warn("❗ receiptForm bulunamadı. Form'a id='receiptForm' eklemelisin.");
+
+         const isSalesMode = document.body.classList.contains("satis-active");
+
+          // Currency label sync
+          currencySelect?.addEventListener("change", syncTotalsCurrencyOnly);
+
+                  // modal aç / kapa
+        function openConfirmModal(message) {
+          if (!confirmModal) return;
+          if (confirmMsg) confirmMsg.textContent = message;
+          confirmModal.classList.remove("hidden");
+          document.body.classList.add("overflow-hidden");
+        }
+
+        function closeConfirmModal() {
+          if (!confirmModal) return;
+          confirmModal.classList.add("hidden");
+          document.body.classList.remove("overflow-hidden");
+        }
+
+        // fiş datası var mı?
+        function hasReceiptData() {
+          return (window.state?.items?.length || 0) > 0 ||
+                 (window.state?.movements?.length || 0) > 0;
+        }
+
+         function fillEkstreHeader(apiResponse) {
+          // apiResponse: { data: [ { ... } ], statusCode, isSuccess, errors }
+
+          const elName = document.getElementById("ekstre-hesap-adi");
+          const elType = document.getElementById("ekstre-hesap-tipi");
+          const elId   = document.getElementById("ekstre-hesap-id");
+
+          if (!apiResponse || apiResponse.isSuccess !== true) {
+            if (elName) elName.textContent = "-";
+            if (elType) elType.textContent = "Hesap Tipi: -";
+            if (elId)   elId.textContent = "Müşteri No: -";
+            return;
           }
 
-          // CURRENCY CHANGE: sadece currency label günceller
-          const mainCurrencySel = el("currency-select");
-          if (mainCurrencySel) {
-            mainCurrencySel.addEventListener("change", () => {
-              syncTotalsCurrencyOnly();
-            });
-          }
-                  // -----------------------------------
-        // TRI TOGGLE (borcuna / alacagina) - GENEL
-        // -----------------------------------
-        function wireTriToggle(toggleId, onChange) {
-          const root = el(toggleId);
-          if (!root) return null;
-          if (root.dataset.wired === "1") return root;
-          root.dataset.wired = "1";
-
-          const slider = root.querySelector(".tri-toggle-slider");
-          const options = Array.from(root.querySelectorAll(".tri-toggle-option"));
-
-          const setSelected = (val) => {
-            root.dataset.selected = val;
-
-            options.forEach((opt) => {
-              const active = opt.dataset.value === val;
-              opt.classList.toggle("active", active);
-
-              // renkleri senin html’ine göre basit ayarla
-              if (toggleId.includes("virman")) {
-                opt.style.color = active ? "rgb(5, 150, 105)" : "rgb(107, 114, 128)";
-              } else {
-                // iskonto / acikhesap kırmızı ağırlıklı
-                opt.style.color = active ? "rgb(220, 38, 38)" : "rgb(107, 114, 128)";
-              }
-            });
-
-            // slider pozisyonu (2 seçenek)
-            if (slider) {
-              const idx = options.findIndex(o => o.dataset.value === val);
-              slider.style.transform = `translateX(${idx * 100}%)`;
-            }
-
-            if (typeof onChange === "function") onChange(val);
-          };
-
-          // click handler
-          root.addEventListener("click", (e) => {
-            const opt = e.target.closest(".tri-toggle-option");
-            if (!opt) return;
-            e.preventDefault();
-            setSelected(opt.dataset.value);
-          });
-
-          // ilk değer
-          const initial = root.dataset.selected || root.getAttribute("data-selected") || "borcuna";
-          setSelected(initial);
-
-          // dışarıdan set etmek için expose
-          root._setSelected = setSelected;
-
-          return root;
-        }
-
-        function getTriToggleValue(toggleId) {
-          const root = el(toggleId);
-          return root?.dataset?.selected || "borcuna";
-        }
-
-        // borcuna/alacagina -> GIRIS/CIKIS map (senin toplam hesabına uyumlu)
-        function mapToggleToType(val) {
-          // BORCUNA = çıkış (-)
-          if (val === "borcuna") return "CIKIS";
-          // ALACAĞINA = giriş (+)
-          return "GIRIS";
-        }
-
-        // -----------------------------------
-        // İSKONTO - OPEN / FILL / ADD / UPDATE / DELETE
-        // -----------------------------------
-        const iskToggle = wireTriToggle("iskonto-tipi-toggle");
-        const iskAmount = el("form-iskonto-amount");
-        const iskRate   = el("form-iskonto-rate");
-        const iskCurr   = el("form-iskonto-currency");
-        const iskKarsi  = el("form-iskonto-karsi-hesap");
-        const iskHasAmt = el("form-iskonto-equiv-amount");
-        const iskHasRate= el("form-iskonto-equiv-rate");
-        const iskAcik   = el("form-iskonto-aciklama");
-
-        wireTrMoneyInput(iskAmount, 2);
-        wireTrMoneyInput(iskRate, 4);
-
-        function openIskontoForCreate() {
-          state.edit.kind = null;
-          state.edit.index = null;
-
-          // varsayılan borcuna
-          el("iskonto-tipi-toggle")?._setSelected?.("borcuna");
-
-          el("iskonto-delete-button")?.classList.add("hidden");
-          const btn = el("iskonto-add-button");
-          if (btn) btn.innerHTML = `<i class="fas fa-check mr-1.5"></i>Ekle`;
-
-          Modal.open(iskontoModal);
-        }
-
-        function openIskontoForEdit(index) {
-          const item = state.items[index];
-          if (!item || item.kind !== "ISKONTO") return;
-
-          state.edit.kind = "ISKONTO";
-          state.edit.index = index;
-
-          // type -> toggle
-          const toggleVal = (item.type === "GIRIS") ? "alacagina" : "borcuna";
-          el("iskonto-tipi-toggle")?._setSelected?.(toggleVal);
-
-          if (iskAmount) iskAmount.value = fmt2.format(item.amount || 0);
-          if (iskRate) iskRate.value = fmt4.format(item.rate || 1);
-          if (iskCurr) iskCurr.value = String(item.currencyId || iskCurr.value || ""); // opsiyonel
-          if (iskKarsi) iskKarsi.value = item.karsiHesapAdi || iskKarsi.value || "";
-
-          if (iskHasAmt) iskHasAmt.value = fmt2.format(item.hasAmount || 0);
-          if (iskHasRate) iskHasRate.value = fmt4.format(item.hasRate || 0);
-          if (iskAcik) iskAcik.value = item.aciklama || "";
-
-          el("iskonto-delete-button")?.classList.remove("hidden");
-          const btn = el("iskonto-add-button");
-          if (btn) btn.innerHTML = `<i class="fas fa-check mr-1.5"></i>Güncelle`;
-
-          Modal.open(iskontoModal);
-        }
-
-        function buildIskontoUiItem() {
-          const toggleVal = getTriToggleValue("iskonto-tipi-toggle");
-          const type = mapToggleToType(toggleVal);
-
-          const currencyText = iskCurr?.selectedOptions?.[0]?.textContent?.trim() || "TRY";
-          const amount = parseTrNumber(iskAmount?.value);
-          const rate = parseTrNumber(iskRate?.value);
-
-          // basit karşılık hesap (senin mantığına göre)
-          const karsilikTry = amount * rate;
-
-          return {
-            kind: "ISKONTO",
-            type,
-            currency: currencyText,
-            amount,
-            rate,
-            karsilikTry,
-            karsiHesapAdi: iskKarsi?.value || "İSKONTO",
-            hasAmount: parseTrNumber(iskHasAmt?.value),
-            hasRate: parseTrNumber(iskHasRate?.value),
-            aciklama: iskAcik?.value || ""
-          };
-        }
-
-        el("iskonto-add-button")?.addEventListener("click", (e) => {
-          e.preventDefault();
-
-          const uiItem = buildIskontoUiItem();
-
-          if (state.edit.kind === "ISKONTO" && Number.isFinite(state.edit.index)) {
-            state.items[state.edit.index] = uiItem;
-            // movements tarafın varsa burada update et (index map’ine göre)
-          } else {
-            state.items.push(uiItem);
-            // movements tarafın varsa burada push et
+          const first = Array.isArray(apiResponse.data) ? apiResponse.data[0] : null;
+          if (!first) {
+            if (elName) elName.textContent = "-";
+            if (elType) elType.textContent = "Hesap Tipi: -";
+            if (elId)   elId.textContent = "Müşteri No: -";
+            return;
           }
 
-          rerenderReceipt();
-          Modal.close(iskontoModal);
-        });
+          const accountName = first.accountName ?? "-";
+          const accountTypeName = first.accountTypeName ?? "-";
 
-        el("iskonto-delete-button")?.addEventListener("click", (e) => {
-          e.preventDefault();
-          if (state.edit.kind !== "ISKONTO") return;
-          const i = state.edit.index;
-          if (!Number.isFinite(i)) return;
+          // ⚠️ Burada karar:
+          // - "Müşteri No" genelde accountId olur
+          // - first.id ise receiptId (fiş id)
+          const customerNo = first.accountId ?? first.id ?? "-";
 
-          state.items.splice(i, 1);
-          // movements tarafın varsa burada da sil
-
-          state.edit.kind = null;
-          state.edit.index = null;
-
-          rerenderReceipt();
-          Modal.close(iskontoModal);
-        });
-
-        // -----------------------------------
-        // VİRMAN - OPEN / FILL / ADD / UPDATE / DELETE
-        // -----------------------------------
-        const virToggle = wireTriToggle("virman-tipi-toggle");
-        const virAmount = el("form-virman-amount");
-        const virRate   = el("form-virman-rate");
-        const virCurr   = el("form-virman-currency");
-        const virKarsi  = el("form-virman-karsi-hesap");
-        const virAcik   = el("form-virman-aciklama");
-
-        wireTrMoneyInput(virAmount, 2);
-        wireTrMoneyInput(virRate, 4);
-
-        function openVirmanForCreate() {
-          state.edit.kind = null;
-          state.edit.index = null;
-
-          el("virman-tipi-toggle")?._setSelected?.("alacagina"); // senin html default böyle
-          el("virman-delete-button")?.classList.add("hidden");
-
-          const btn = el("virman-add-button");
-          if (btn) btn.innerHTML = `<i class="fas fa-check mr-1.5"></i>Ekle`;
-
-          Modal.open(virmanModal);
-        }
-
-        function openVirmanForEdit(index) {
-          const item = state.items[index];
-          if (!item || item.kind !== "VIRMAN") return;
-
-          state.edit.kind = "VIRMAN";
-          state.edit.index = index;
-
-          // virman item’da type tutmuyorsan bile; sen ekranda borcuna/alacagina ayrı satır gibi render ediyorsun
-          // burada basit yaklaşım: item.direction ile tut (yoksa default alacagina)
-          const toggleVal = item.toggleVal || "alacagina";
-          el("virman-tipi-toggle")?._setSelected?.(toggleVal);
-
-          if (virAmount) virAmount.value = fmt2.format(item.amount || 0);
-          if (virRate) virRate.value = fmt4.format(item.rate || 1);
-
-          if (virKarsi) {
-            // option value id ise:
-            // virKarsi.value = String(item.karsiHesapId || "");
-            // değilse text:
-            // (sen render'da "from/to" var, basit geçiyorum)
+          if (elName) {
+            elName.textContent = accountName;
+            elName.title = accountName;
           }
 
-          if (virAcik) virAcik.value = item.aciklama || "";
-
-          el("virman-delete-button")?.classList.remove("hidden");
-          const btn = el("virman-add-button");
-          if (btn) btn.innerHTML = `<i class="fas fa-check mr-1.5"></i>Güncelle`;
-
-          Modal.open(virmanModal);
-        }
-
-        function buildVirmanUiItem() {
-          const toggleVal = getTriToggleValue("virman-tipi-toggle");
-          const currencyText = virCurr?.selectedOptions?.[0]?.textContent?.trim() || "TRY";
-          const amount = parseTrNumber(virAmount?.value);
-          const rate = parseTrNumber(virRate?.value);
-
-          const karsilikTry = amount * rate;
-
-          // karşı hesap adı
-          const toName = virKarsi?.selectedOptions?.[0]?.textContent?.trim() || "KARŞI HESAP";
-
-          // virman item’ı senin renderItem beklediği alanlarla üret
-          return {
-            kind: "VIRMAN",
-            toggleVal,                 // edit için sakla
-            currency: currencyText,
-            amount,
-            rate,
-            karsilikTry,
-            from: "ANA HESAP",         // istersen buraya aktif hesabı bas
-            to: toName,
-            aciklama: virAcik?.value || ""
-          };
-        }
-
-        el("virman-add-button")?.addEventListener("click", (e) => {
-          e.preventDefault();
-
-          const uiItem = buildVirmanUiItem();
-
-          if (state.edit.kind === "VIRMAN" && Number.isFinite(state.edit.index)) {
-            state.items[state.edit.index] = uiItem;
-          } else {
-            state.items.push(uiItem);
+          if (elType) {
+            elType.textContent = `Hesap Tipi: ${accountTypeName}`;
           }
 
-          rerenderReceipt();
-          Modal.close(virmanModal);
-        });
-
-        el("virman-delete-button")?.addEventListener("click", (e) => {
-          e.preventDefault();
-          if (state.edit.kind !== "VIRMAN") return;
-          const i = state.edit.index;
-          if (!Number.isFinite(i)) return;
-
-          state.items.splice(i, 1);
-          state.edit.kind = null;
-          state.edit.index = null;
-
-          rerenderReceipt();
-          Modal.close(virmanModal);
-        });
-
-        // -----------------------------------
-        // AÇIK HESAP - OPEN / FILL / ADD / UPDATE / DELETE
-        // -----------------------------------
-        const ahToggle = wireTriToggle("acikhesap-tipi-toggle");
-        const ahAmount = el("form-acikhesap-amount");
-        const ahRate   = el("form-acikhesap-rate");
-        const ahCurr   = el("form-acikhesap-currency");
-
-        wireTrMoneyInput(ahAmount, 2);
-        wireTrMoneyInput(ahRate, 4);
-
-        function openAcikHesapForCreate() {
-          state.edit.kind = null;
-          state.edit.index = null;
-
-          el("acikhesap-tipi-toggle")?._setSelected?.("borcuna");
-          el("acik-hesap-delete-button")?.classList.add("hidden");
-
-          const btn = el("acik-hesap-add-button");
-          if (btn) btn.innerHTML = `<i class="fas fa-check mr-1.5"></i>Ekle`;
-
-          Modal.open(acikModal);
-        }
-
-        function openAcikHesapForEdit(index) {
-          const item = state.items[index];
-          if (!item || item.kind !== "ACIK_HESAP") return;
-
-          state.edit.kind = "ACIK_HESAP";
-          state.edit.index = index;
-
-          const toggleVal = (item.type === "GIRIS") ? "alacagina" : "borcuna";
-          el("acikhesap-tipi-toggle")?._setSelected?.(toggleVal);
-
-          if (ahAmount) ahAmount.value = fmt2.format(item.amount || 0);
-          if (ahRate) ahRate.value = fmt4.format(item.rate || 1);
-
-          el("acik-hesap-delete-button")?.classList.remove("hidden");
-          const btn = el("acik-hesap-add-button");
-          if (btn) btn.innerHTML = `<i class="fas fa-check mr-1.5"></i>Güncelle`;
-
-          Modal.open(acikModal);
-        }
-
-        function buildAcikHesapUiItem() {
-          const toggleVal = getTriToggleValue("acikhesap-tipi-toggle");
-          const type = mapToggleToType(toggleVal);
-
-          const amount = parseTrNumber(ahAmount?.value);
-          const rate = parseTrNumber(ahRate?.value);
-
-          return {
-            kind: "ACIK_HESAP",
-            type,
-            amount,     // sen render'da amount kullanıyorsun
-            rate
-          };
-        }
-
-        el("acik-hesap-add-button")?.addEventListener("click", (e) => {
-          e.preventDefault();
-
-          const uiItem = buildAcikHesapUiItem();
-
-          if (state.edit.kind === "ACIK_HESAP" && Number.isFinite(state.edit.index)) {
-            state.items[state.edit.index] = uiItem;
-          } else {
-            state.items.push(uiItem);
+          if (elId) {
+            elId.textContent = `Müşteri No: ${customerNo}`;
           }
-
-          rerenderReceipt();
-          Modal.close(acikModal);
-        });
-
-        el("acik-hesap-delete-button")?.addEventListener("click", (e) => {
-          e.preventDefault();
-          if (state.edit.kind !== "ACIK_HESAP") return;
-          const i = state.edit.index;
-          if (!Number.isFinite(i)) return;
-
-          state.items.splice(i, 1);
-          state.edit.kind = null;
-          state.edit.index = null;
-
-          rerenderReceipt();
-          Modal.close(acikModal);
-        });
-
-        // -----------------------------------
-        // RECEIPT ITEM CLICK -> EDIT (tıklayınca modal aç)
-        // -----------------------------------
-        if (receiptLog) {
-          receiptLog.addEventListener("click", (e) => {
-            const row = e.target.closest("[data-receipt-item='1']");
-            if (!row) return;
-
-            const index = Number(row.dataset.index);
-            const kind = row.dataset.kind;
-            if (!Number.isFinite(index)) return;
-
-            if (kind === "ISKONTO") return openIskontoForEdit(index);
-            if (kind === "VIRMAN") return openVirmanForEdit(index);
-            if (kind === "ACIK_HESAP") return openAcikHesapForEdit(index);
-            if (kind === "NAKIT") {
-              // senin nakit edit fonksiyonun varsa burada çağır
-              // return openNakitForEdit(index);
-            }
-          });
         }
 
+        // FİŞİ TAMAMEN TEMİZLE
+        function clearReceiptAll() {
+          if (!window.state) return;
 
-          // INIT
+          window.state.items = [];
+          window.state.movements = [];
+          window.state.edit = { kind: null, index: null };
+          window.state.currentCashOperation = "GIRIS";
+
+          // UI temizle
+          if (typeof rerenderReceipt === "function") rerenderReceipt();
+
+          // totals sıfırla (güvenli)
           try {
             setTotal("giren-toplam", "giren-toplam-amount", "giren-toplam-currency", "0,00");
             setTotal("cikan-toplam", "cikan-toplam-amount", "cikan-toplam-currency", "0,00");
             setTotal("fark-toplam", "fark-amount", "fark-currency", "0,00");
+          } catch {}
 
-            syncTotalsCurrencyOnly();
-            rerenderReceipt();
-          } catch (err) {
-            console.error("INIT crashed:", err);
+          closeConfirmModal();
+        }
+
+        // SIL BUTONU CLICK
+        function handleDeleteClick(e) {
+          e.preventDefault();
+
+          if (!hasReceiptData()) return; // data yoksa hiçbir şey yapma
+
+          openConfirmModal(
+            "Fiş içerisindeki tüm işlemler silinecek. Devam etmek istiyor musunuz?"
+          );
+        }
+
+        deleteBtn?.addEventListener("click", handleDeleteClick);
+        deleteBtnMobile?.addEventListener("click", handleDeleteClick);
+
+        // MODAL BUTTONS
+        confirmNo?.addEventListener("click", (e) => {
+          e.preventDefault();
+          closeConfirmModal();
+        });
+
+        confirmYes?.addEventListener("click", (e) => {
+          e.preventDefault();
+          clearReceiptAll();
+        });
+
+        // backdrop tıklayınca kapansın
+        confirmModal?.addEventListener("click", (e) => {
+          if (e.target === confirmModal) closeConfirmModal();
+        });
+
+         function renderEkstreMovements(apiResponse) {
+          const container = document.getElementById("ekstre-content");
+          if (!container) return;
+
+          // temizle
+          container.innerHTML = "";
+
+          const first = Array.isArray(apiResponse?.data) ? apiResponse.data[0] : null;
+          const list = first?.getMovementByCustomerIdResponses || [];
+
+          // liste yoksa mesaj bas
+          if (!Array.isArray(list) || list.length === 0) {
+            container.innerHTML = `<div class="text-gray-500 text-sm">Kayıt bulunamadı.</div>`;
+            return;
           }
 
-          console.log("✅ script çalıştı");
+          // Giriş / Çıkış transactionTypeId setleri
+          const girisSet = new Set([1, 3, 5, 7, 9]);
+          const cikisSet = new Set([2, 4, 6, 8, 10]);
+
+          // list wrapper
+          const wrap = document.createElement("div");
+          wrap.className = "ekstre-list-container";
+
+          // yardımcı formatlar (senin fmt2/fmt4 varsa onları kullan)
+          const fmt2 = new Intl.NumberFormat("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+          const fmt4 = new Intl.NumberFormat("tr-TR", { minimumFractionDigits: 4, maximumFractionDigits: 4 });
+
+          const formatDateTR = (iso) => {
+            if (!iso) return "";
+            const d = new Date(iso);
+            if (Number.isNaN(d.getTime())) return iso;
+            const pad = (n) => String(n).padStart(2, "0");
+            return `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+          };
+
+          // Basit bakiye hesap (EB/SB): counterCurrencyCode bazında yürütür
+          // İstersen currency bazlı farklı bakiyeler tutarız, ama şimdilik tek currency üzerinden.
+          const balances = {}; // { "HAS": 0, "EUR": 0, ... }
+
+          const getBal = (code) => balances[code] ?? 0;
+          const setBal = (code, val) => { balances[code] = val; };
+
+          list.forEach((m) => {
+            const tId = Number(m.transactionTypeId);
+            const isGiris = girisSet.has(tId);
+            const isCikis = cikisSet.has(tId);
+
+            // bilinmeyen type: geç
+            if (!isGiris && !isCikis) return;
+
+            const transactionName = m.transactionName ?? "";
+            const receiptDate = formatDateTR(first?.receiptDate); // sen örnekte receiptDate üst objede
+            // Eğer movement bazlı tarih varsa: formatDateTR(m.receiptDate)
+
+            const foreignAmount = Number(m.foreignCurrencyAmount ?? 0);
+            const foreignCode = m.foreignCurrencyCode ?? "";
+            const foreignRate = Number(m.foreignExchangeRate ?? 0);
+
+            const counterAmount = Number(m.counterCurrencyAmount ?? 0);
+            const counterCode = m.counterCurrencyCode ?? "";
+            const counterRate = Number(m.counterExchangeRate ?? 0);
+
+            // EB/SB hesabı: counter currency üstünden
+            const eb = getBal(counterCode);
+            const sb = isGiris ? (eb + counterAmount) : (eb - counterAmount);
+            setBal(counterCode, sb);
+
+            const row = document.createElement("div");
+            row.className = `ekstre-item ${isGiris ? "ekstre-item-giris" : "ekstre-item-cikis"}`;
+            row.setAttribute("data-balances", JSON.stringify({ [counterCode]: sb }));
+
+            // sign
+            const sign = isGiris ? "+" : "-";
+            const titleColor = isGiris ? "text-green-600" : "text-red-600";
+
+            row.innerHTML = `
+              <div style="display: contents;">
+                <div class="ekstre-v3-sol">
+                  <span class="baslik ${titleColor}">${transactionName}</span>
+                  <span class="tarih">${receiptDate}</span>
+                </div>
+
+                <div class="ekstre-v3-orta">
+                  <div class="ekstre-v3-detay-grup">
+                    <span class="font-semibold text-sm">${sign}${fmt2.format(foreignAmount)} ${foreignCode}</span>
+                    <span class="text-xs text-gray-600">Kur: ${fmt4.format(foreignRate)}</span>
+                  </div>
+                  <div class="ekstre-v3-detay-grup">
+                    <span class="font-semibold text-sm">${fmt2.format(counterAmount)} ${counterCode}</span>
+                    <span class="text-xs text-gray-600">Kur: ${fmt4.format(counterRate)}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="ekstre-blok-sag">
+                <div class="bakiye-grup">
+                  <span class="eski-bakiye">EB: ${fmt2.format(eb)} ${counterCode}</span>
+                  <span class="son-bakiye">SB: ${fmt2.format(sb)} ${counterCode}</span>
+                </div>
+
+                <div class="flex flex-col items-center">
+                  <span class="hareket-id">ID:${m.id}</span>
+                  <label class="mutabakat-switch">
+                    <input type="checkbox" id="mutabakat-${m.id}">
+                    <span class="mutabakat-slider"></span>
+                  </label>
+                </div>
+
+                <div class="ml-2">
+                  <button class="edit-ekstre-fis-btn bg-blue-100 text-blue-800 text-xs font-semibold px-3 py-1 rounded-md hover:bg-blue-200"
+                          data-fis-id="${m.receiptId ?? ""}">
+                    <i class="fas fa-pencil-alt"></i>
+                  </button>
+                </div>
+              </div>
+            `;
+
+            wrap.appendChild(row);
+          });
+
+          container.appendChild(wrap);
+        }
+
+          // -------------------------------------------------
+         // EKSTRE GETİR (POST: /Receipt/GetEkstreByCustomerIdAndDate)
+        // -------------------------------------------------
+        (function wireEkstreFetch() {
+          const btn = document.getElementById("ekstre-getir-button");
+          const startInp = document.getElementById("ekstre-baslangic-tarihi");
+          const endInp = document.getElementById("ekstre-bitis-tarihi");
+          const customerSel = document.getElementById("customer-select");
+
+          if (!btn || !startInp || !endInp || !customerSel) return;
+
+          // date input (yyyy-mm-dd) => "yyyy-mm-ddT00:00:00"
+          function toDateTimeString(dateStr, endOfDay) {
+            if (!dateStr) return null;
+            return endOfDay ? `${dateStr}T23:59:59` : `${dateStr}T00:00:00`;
+          }
+
+          function getSelectedCustomerId() {
+            const v = (customerSel.value || "").trim();
+            const id = Number(v);
+            return Number.isFinite(id) ? id : null;
+          }
+
+          btn.addEventListener("click", async (e) => {
+            e.preventDefault();
+
+            const customerId = getSelectedCustomerId();
+            const startDateRaw = startInp.value; // yyyy-mm-dd
+            const endDateRaw = endInp.value;     // yyyy-mm-dd
+
+            if (!customerId) {
+              alert("Lütfen müşteri seçiniz.");
+              return;
+            }
+            if (!startDateRaw || !endDateRaw) {
+              alert("Lütfen başlangıç ve bitiş tarihlerini seçiniz.");
+              return;
+            }
+            if (startDateRaw > endDateRaw) {
+              alert("Başlangıç tarihi, bitiş tarihinden büyük olamaz.");
+              return;
+            }
+
+            const payload = {
+              CustomerId: customerId,
+              StartDate: toDateTimeString(startDateRaw, false),
+              EndDate: toDateTimeString(endDateRaw, true),
+            };
+
+            try {
+              // (opsiyonel) loading overlay varsa aç
+              document.getElementById("loading-overlay")?.classList.remove("hidden");
+
+              const res = await fetch("/Receipt/GetEkstreByCustomerIdAndDate", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  "Accept": "application/json",
+                  // ASP.NET Core Anti-forgery kullanıyorsan buraya token eklemelisin (aşağıya not yazdım)
+                },
+                body: JSON.stringify(payload),
+              });
+
+              if (!res.ok) {
+                const txt = await res.text().catch(() => "");
+                throw new Error(`HTTP ${res.status} - ${txt}`);
+              }
+
+              const data = await res.json();
+              fillEkstreHeader(data);
+              renderEkstreMovements(data);
+
+
+            } catch (err) {
+              console.error(err);
+              alert("Ekstre alınırken hata oluştu.");
+            } finally {
+              document.getElementById("loading-overlay")?.classList.add("hidden");
+            }
+          });
+
+          // güvenli pre render için
+          function escapeHtml(s) {
+            return String(s)
+              .replaceAll("&", "&amp;")
+              .replaceAll("<", "&lt;")
+              .replaceAll(">", "&gt;")
+              .replaceAll('"', "&quot;")
+              .replaceAll("'", "&#039;");
+          }
+        })();
+
+
+
+
+
+
+
+          // INIT totals
+          setTotal("giren-toplam", "giren-toplam-amount", "giren-toplam-currency", "0,00");
+          setTotal("cikan-toplam", "cikan-toplam-amount", "cikan-toplam-currency", "0,00");
+          setTotal("fark-toplam", "fark-amount", "fark-currency", "0,00");
+
+          syncTotalsCurrencyOnly();
+          rerenderReceipt();
+
+          console.log("✅ script çalıştı (single js)");
         });
     </script>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+          const filterBtn = document.getElementById("fis-list-filter-button");
+          const customerSelect = document.getElementById("fis-list-customer-filter");
+          const startDateInput = document.getElementById("fis-list-start-date");
+          const endDateInput = document.getElementById("fis-list-end-date");
+          const listContent = document.getElementById("fis-list-content");
+
+          if (!filterBtn || !customerSelect || !startDateInput || !endDateInput || !listContent) return;
+
+          // ISO tarih (yyyy-MM-dd) -> TR format (dd.MM.yyyy HH:mm)
+          function formatDateTR(dateStr) {
+            if (!dateStr) return "";
+            const d = new Date(dateStr);
+            if (isNaN(d.getTime())) return dateStr;
+
+            const pad = (n) => String(n).padStart(2, "0");
+            const dd = pad(d.getDate());
+            const mm = pad(d.getMonth() + 1);
+            const yyyy = d.getFullYear();
+            const hh = pad(d.getHours());
+            const mi = pad(d.getMinutes());
+            return `${dd}.${mm}.${yyyy} ${hh}:${mi}`;
+          }
+
+          function escapeHtml(str) {
+            if (str === null || str === undefined) return "";
+            return String(str)
+              .replaceAll("&", "&amp;")
+              .replaceAll("<", "&lt;")
+              .replaceAll(">", "&gt;")
+              .replaceAll('"', "&quot;")
+              .replaceAll("'", "&#039;");
+          }
+
+          function renderFisList(receipts) {
+            if (!Array.isArray(receipts) || receipts.length === 0) {
+              listContent.innerHTML = `
+                <div class="p-4 text-sm text-gray-500">Kayıt bulunamadı.</div>
+              `;
+              return;
+            }
+
+            const itemsHtml = receipts.map((r) => {
+              const id = r.id ?? "";
+              const receiptDate = formatDateTR(r.receiptDate);
+              const accountName = escapeHtml(r.accountName ?? "");
+              const receiptNumber = escapeHtml(r.receiptNumber ?? "");
+
+              return `
+                <div class="ekstre-item fis-list-item flex items-center gap-3 p-3 border border-gray-200 rounded-lg mb-2 hover:bg-gray-50"
+                     data-fis-id="${id}">
+                  <span class="font-mono text-gray-600 w-36 flex-shrink-0">${escapeHtml(receiptDate)}</span>
+                  <span class="font-mono text-gray-500 w-20 flex-shrink-0">#${id}</span>
+                  <span class="font-semibold text-gray-800 flex-grow truncate" title="${accountName}">${accountName}</span>
+                  <span class="font-mono text-gray-700 w-40 flex-shrink-0">${receiptNumber}</span>
+                  <div class="ml-auto">
+                    <button class="edit-fis-btn bg-blue-100 text-blue-800 text-xs font-semibold px-3 py-1 rounded-md hover:bg-blue-200"
+                            data-fis-id="${id}">
+                      <i class="fas fa-pencil-alt"></i>
+                    </button>
+                  </div>
+                </div>
+              `;
+            }).join("");
+
+            listContent.innerHTML = `<div class="ekstre-list-container p-2">${itemsHtml}</div>`;
+          }
+
+          filterBtn.addEventListener("click", async () => {
+            const customerId = parseInt(customerSelect.value || "0", 10);
+            const startDate = startDateInput.value; // yyyy-MM-dd
+            const endDate = endDateInput.value;     // yyyy-MM-dd
+
+            if (!customerId) {
+              alert("Lütfen Hesap seçin.");
+              return;
+            }
+            if (!startDate || !endDate) {
+              alert("Lütfen başlangıç ve bitiş tarihini seçin.");
+              return;
+            }
+
+            // küçük bir loading
+            listContent.innerHTML = `<div class="p-4 text-sm text-gray-500">Yükleniyor...</div>`;
+
+            // ASP.NET MVC model binder için ISO string göndermek en temiz yöntem:
+            // "2026-02-04" -> "2026-02-04T00:00:00"
+            const payload = {
+              CustomerId: customerId,
+              StartDate: startDate + "T00:00:00",
+              EndDate: endDate + "T23:59:59"
+            };
+
+            try {
+              const res = await fetch("/Receipt/GetEkstreByCustomerIdAndDate", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  "Accept": "application/json"
+                },
+                body: JSON.stringify(payload)
+              });
+
+              if (!res.ok) {
+                const txt = await res.text();
+                console.error("HTTP Error:", res.status, txt);
+                listContent.innerHTML = `<div class="p-4 text-sm text-red-600">İstek başarısız: ${res.status}</div>`;
+                return;
+              }
+
+              const json = await res.json();
+
+              // Senin response: { data: [...], isSuccess: true, ... }
+              const receipts = Array.isArray(json?.data) ? json.data : [];
+              // getMovementByCustomerIdResponses'u umursamıyoruz, zaten receipt seviyesinde basıyoruz
+              renderFisList(receipts);
+
+            } catch (err) {
+              console.error(err);
+              listContent.innerHTML = `<div class="p-4 text-sm text-red-600">Bir hata oluştu.</div>`;
+            }
+          });
+
+          // (Opsiyonel) Edit butonlarına event delegation (dinamik elemanlar için)
+          listContent.addEventListener("click", (e) => {
+            const btn = e.target.closest(".edit-fis-btn");
+            if (!btn) return;
+
+            const fisId = btn.dataset.fisId;
+            console.log("Edit fis:", fisId);
+            // burada senin edit akışın neyse çağırırsın (modal kapat, fişi yükle vs.)
+          });
+        });
+
+          function openErrorModal(message) {
+          const errorModal = document.getElementById("error-modal");
+          const errorMessageEl = document.getElementById("error-modal-message"); // sende farklıysa id'yi düzelt
+          const cancelBtn = document.getElementById("error-modal-cancel");
+
+          if (errorMessageEl) errorMessageEl.textContent = message;
+
+          if (errorModal) errorModal.classList.remove("hidden");
+
+          // Vazgeç -> kapat
+          if (cancelBtn) {
+            cancelBtn.onclick = () => {
+              if (errorModal) errorModal.classList.add("hidden");
+            };
+          }
+        }
+
+                     document.addEventListener("click", (e) => {
+          const btn = e.target.closest("#btnSave");
+          if (!btn) return;
+
+          const girenEl = document.getElementById("giren-toplam-amount");
+
+          // Eğer cari modda bu span farklıysa / yoksa burada yakalarız
+          const rawText = (girenEl?.textContent || "0").trim();
+
+          const normalized = rawText
+            .replace(/\./g, "")   // binlik ayırıcı
+            .replace(",", ".");   // ondalık
+
+          const girenToplam = parseFloat(normalized) || 0;
+
+          if (girenToplam === 0) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            openErrorModal("Uyarı\nFiş boş, kaydedilecek bir işlem yok.");
+            return;
+          }
+
+          // boş değilse akış devam
+        }, true); // <- capture: bazı framework/handlerlar stopPropagation yaparsa bile yakalasın diye
+
+
+
+    </script>
+    <script>
+
+                document.addEventListener("DOMContentLoaded", () => {
+            const ntBirim = document.getElementById("nt-birim");
+            const ntKur = document.getElementById("nt-kur");
+
+            if (!ntBirim || !ntKur) return;
+
+            // 🔹 Para birimi id → code eşlemesi
+            const currencyMap = {
+                1: "HAS",
+                2: "USD",
+                3: "TRY",
+                4: "EUR",
+                5: "CHF",
+                6: "SAR",
+                7: "GHS"
+            };
+
+            // 🔹 Modal ilk açıldığında TRY seçili olsun
+            ntBirim.value = "3";
+            ntKur.value = "1,0000"; // TRY → TRY her zaman 1
+
+            // 🔹 Para birimi değişince anlık kur çek
+            ntBirim.addEventListener("change", async () => {
+                const currencyId = Number(ntBirim.value);
+                const code = currencyMap[currencyId];
+
+                if (!code) return;
+
+                // TRY seçilirse API'ye gitme
+                if (code === "TRY") {
+                    ntKur.value = "1,0000";
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`/Cure/GetLastCure/${currencyId}`, {
+                        method: "GET",
+                        headers: {
+                            "Accept": "application/json"
+                        }
+                    });
+
+                    if (!response.ok) {
+                        throw new Error("Kur bilgisi alınamadı");
+                    }
+
+                    const rate = await response.json(); // double geliyor
+
+                    // 4 haneli format
+                    ntKur.value = Number(rate).toFixed(4).replace(".", ",");
+
+                } catch (err) {
+                    console.error("Kur çekme hatası:", err);
+                    ntKur.value = "0,0000";
+                }
+            });
+        });
+
+
+
+    </script>
+
+
+
+
 }
 
 

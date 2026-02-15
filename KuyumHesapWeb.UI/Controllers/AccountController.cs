@@ -20,17 +20,22 @@ namespace KuyumHesapWeb.UI.Controllers
             this._mapper = mapper;
         }
         [HttpPost]
-        public async Task<IActionResult> Create(CreateAccountCommandRequestDto request)
+        public async Task<IActionResult> Create(CreateAccountCommandRequestDto model)
         {
-            var data = await _mediator.Send(request);
-            return View(data.data);
+            var data = await _mediator.Send(model);
+            return RedirectToAction("Index");
         }
         [HttpGet]
         public async Task<IActionResult> Create()
         {
-            var data = await _mediator.Send(new GetAllAccountTypeQueryRequest());
-            var accountData = await _mediator.Send(new GetAllAccountQueryRequest());
-            return View(new CreateAccountCommandRequestDto { AccountTypeResponses = data.data, getAllAccountQueries = accountData.data });
+            var types = await _mediator.Send(new GetAllAccountTypeQueryRequest());
+            var accounts = await _mediator.Send(new GetAllAccountQueryRequest());
+            return View(new CreateAccountCommandRequestDto
+            {
+                request = new CreateAccountCommandRequest { IsActive = true }, // ✅ KRİTİK
+                AccountTypeResponses = types.data,
+                getAllAccountQueries = accounts.data
+            });
         }
         [HttpGet]
         public async Task<IActionResult> Index()
