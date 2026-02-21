@@ -75,35 +75,24 @@ namespace KuyumHesapWeb.UI.Controllers
             if (!string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl))
                 return LocalRedirect(returnUrl);
 
-            return RedirectToAction("Dashboard", "Dashboard");
+            return Redirect("/Dashboard/IndexDashboard");
         }
-
-
-
-
-
         [HttpPost]
         public async Task<IActionResult> LogoutAsync()
         {
-            
+
             await HttpContext.SignOutAsync(
                 CookieAuthenticationDefaults.AuthenticationScheme
             );
 
-        
             if (Request.Cookies.ContainsKey("AuthToken"))
             {
                 Response.Cookies.Delete("AuthToken", new CookieOptions
                 {
-                    Path = "/" 
+                    Path = "/"
                 });
             }
-
-        
             return RedirectToAction("Login", "Auth");
         }
-
-       
-
     }
 }

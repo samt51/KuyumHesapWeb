@@ -48,7 +48,7 @@ builder.Services.AddHttpClient("ApiClient", client =>
 })
 .AddPolicyHandler(GetRetryPolicy())
 .AddPolicyHandler(GetCircuitBreakerPolicy());
-
+builder.Services.AddControllers();
 static IAsyncPolicy<HttpResponseMessage> GetRetryPolicy()
 {
     return HttpPolicyExtensions
@@ -84,6 +84,13 @@ app.UseRouting();
 
 app.UseAuthentication();   // ? önce
 app.UseAuthorization();    // ? sonra
+
+
+app.MapControllerRoute(
+    name: "areas",
+    pattern: "{area:exists}/{controller=Home}/{action=Index}/{id?}");
+
+
 
 app.MapControllerRoute(
     name: "default",

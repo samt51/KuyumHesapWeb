@@ -13,12 +13,12 @@ namespace KuyumHesapWeb.Core.Feature.DashboardFeature.Queries.GetAllDashboard
 
         public async Task<ResponseDto<GetAllDashboardQueryResponse>> Handle(GetAllDashboardQueryRequest request, CancellationToken cancellationToken)
         {
-            var data = await _apiService.GetAsync<GetAllDashboardQueryResponse>("TaskItem/GetAllMyTask");
+          
 
 
-            var balanceTotal = await _apiService.GetAsync<GetAllDashboardQueryResponse>("Report/GetAllReport");
+            //var balanceTotal = await _apiService.GetAsync<GetAllDashboardQueryResponse>("Report/GetAllReport");
 
-            return new ResponseDto<GetAllDashboardQueryResponse>().Success(data.data);
+            return new ResponseDto<GetAllDashboardQueryResponse>().Success(new GetAllDashboardQueryResponse());
         }
     }
 }

@@ -71,7 +71,7 @@ namespace KuyumHesapWeb.UI.Controllers
             };
             var data = await _mediator.Send(request);
 
-            return Redirect("SellAndCari/Index");
+            return RedirectToAction("Index", "SellAndCari");
         }
         [HttpPost]
         public async Task<IActionResult> GetEkstreByCustomerIdAndDate([FromBody] GetEkstreByCustomerQueryRequest request)

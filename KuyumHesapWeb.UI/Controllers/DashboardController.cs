@@ -14,7 +14,7 @@ namespace KuyumHesapWeb.UI.Controllers
             _mediator = mediator;
         }
 
-        public async Task<IActionResult> Dashboard()
+        public async Task<IActionResult> IndexDashboard()
         {
             var data = await _mediator.Send(new GetAllDashboardQueryRequest());
             return View(data.data);
