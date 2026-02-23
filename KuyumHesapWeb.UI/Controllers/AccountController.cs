@@ -53,7 +53,7 @@ namespace KuyumHesapWeb.UI.Controllers
         [HttpPost]
         public async Task<IActionResult> Update(GetByIdAccountAndAccountTypeResponseDto request)
         {
-            var req = _mapper.Map<UpdateAccountCommandRequest, GetByIdAccountQueryResponse>(request.GetByIdAccountQueryResponse);
+            var req = _mapper.Map<UpdateAccountCommandRequest>(request.GetByIdAccountQueryResponse);
             var accountData = await _mediator.Send(req);
             return RedirectToAction("Index");
         }

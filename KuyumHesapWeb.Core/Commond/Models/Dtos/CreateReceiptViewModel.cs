@@ -11,7 +11,7 @@ namespace KuyumHesapWeb.Core.Commond.Models.Dtos
         public bool IsCustomerReceipt { get; set; }
         public string? CurrencyCode { get; set; }
         public decimal? OpenBalanceAmount { get; set; }
-
+        public int AccountId { get; set; }
         public string? MovementsJson { get; set; } 
     }
 

@@ -1,8 +1,499 @@
 ﻿@{
-    ViewData["Title"] = "Home Page";
+    Layout = null;
 }
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ana Menü | KuyumHesap</title>
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
-</div>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- CSS Kodları Yeniden Düzenlendi -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7f8fc;
+        }
+
+        /* Sidebar ve Ana İçerik için Geçiş Efektleri */
+        #sidebar-menu, #main-content {
+            transition: all 0.3s ease-in-out;
+        }
+
+        /* Başlangıçta ana içeriğin soldan boşluğu */
+        #main-content {
+            margin-left: 4rem; /* w-16 */
+        }
+
+        /* --- SABİTLEME (Pin) Durumu --- */
+        /* Hamburger ile sabitlendiğinde, içerik SAĞA KAYAR */
+        body.sidebar-pinned #sidebar-menu {
+            width: 16rem; /* w-64 */
+        }
+
+        body.sidebar-pinned #main-content {
+            margin-left: 16rem;
+        }
+
+        body.sidebar-pinned #sidebar-menu .sidebar-text {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* --- GEÇİCİ GENİŞLEME (Overlay) Durumları --- */
+        /* Sabitlenmemişken, hover veya alt menü aktif olduğunda, içerik ÜZERİNE AÇILIR */
+        #sidebar-menu:not(.sidebar-pinned):hover,
+        #sidebar-menu.submenu-active:not(.sidebar-pinned) {
+            width: 16rem; /* w-64 */
+            z-index: 50; /* İçeriğin üzerine çıkması için */
+        }
+
+            #sidebar-menu:not(.sidebar-pinned):hover .sidebar-text,
+            #sidebar-menu.submenu-active:not(.sidebar-pinned) .sidebar-text {
+                opacity: 1;
+                visibility: visible;
+            }
+
+        .rolex-green-border {
+            border: 1px solid rgba(30, 132, 73, 0.35);
+        }
+
+        .sidebar-link-container:hover .sidebar-link {
+            background-color: rgba(30, 132, 73, 0.05);
+            color: #166534;
+        }
+
+            .sidebar-link-container:hover .sidebar-link i {
+                color: #16a34a;
+            }
+
+        .sidebar-link.pinned {
+            background-color: rgba(30, 132, 73, 0.1) !important;
+            color: #166534 !important;
+        }
+
+            .sidebar-link.pinned i {
+                color: #16a34a !important;
+            }
+
+        #submenu-flyout a {
+            padding-left: 1.25rem !important;
+            padding-right: 1rem !important;
+            padding-top: 0.6rem !important;
+            padding-bottom: 0.6rem !important;
+        }
+
+            #submenu-flyout a:hover {
+                background-color: rgba(30, 132, 73, 0.1) !important;
+            }
+
+        .sidebar-link-container.active-link .sidebar-link {
+            background-color: rgba(30, 132, 73, 0.05);
+            color: #166534;
+        }
+
+            .sidebar-link-container.active-link .sidebar-link i {
+                color: #16a34a;
+            }
+
+        .sidebar-text {
+            opacity: 0;
+            transition: opacity 0.2s ease-in-out, visibility 0.2s;
+            visibility: hidden;
+        }
+
+        #tabs-container {
+            display: flex;
+            border-bottom: 1px solid #e5e7eb;
+            background-color: #f9fafb;
+            overflow-x: auto;
+        }
+
+        .tab-button {
+            background-color: transparent;
+            border: none;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s ease-in-out;
+            color: #6b7280;
+            white-space: nowrap;
+        }
+
+            .tab-button:hover {
+                background-color: #f3f4f6;
+                color: #1f2937;
+            }
+
+            .tab-button.active {
+                border-bottom-color: #1e40af;
+                background-color: #ffffff;
+                color: #1e40af;
+                font-weight: 600;
+            }
+
+        .close-tab-btn {
+            font-family: 'Arial', sans-serif;
+            font-weight: bold;
+            font-size: 1rem;
+            line-height: 1;
+            padding: 0 2px;
+            border-radius: 50%;
+        }
+
+            .close-tab-btn:hover {
+                background-color: #e5e7eb;
+            }
+
+        #content-frames {
+            position: relative;
+            flex-grow: 1;
+        }
+
+            #content-frames iframe {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                border: none;
+                display: none;
+            }
+
+                #content-frames iframe.active {
+                    display: block;
+                }
+
+        .chevron-icon {
+            transition: transform 0.3s ease-in-out;
+        }
+
+            .chevron-icon.rotate-180 {
+                transform: rotate(180deg);
+            }
+    </style>
+</head>
+<body class="bg-gray-100">
+
+    <nav id="sidebar-menu" class="fixed top-0 left-0 h-full w-16 bg-white shadow-lg rolex-green-border z-40 flex flex-col">
+        <div class="p-3 flex items-center justify-start h-16 flex-shrink-0">
+            <button id="sidebar-toggle" class="text-gray-700 focus:outline-none pl-2 flex-shrink-0">
+                <i class="fas fa-bars text-xl"></i>
+            </button>
+            <div class="relative ml-3 flex-grow sidebar-text">
+                <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                <input type="text" id="sidebar-search" placeholder="Menüde Ara..." class="w-full bg-gray-100 border border-gray-200 rounded-md py-1.5 pl-9 pr-3 text-xs focus:outline-none focus:ring-1 focus:ring-green-700">
+            </div>
+        </div>
+        <div id="menu-links-container" class="py-2 overflow-y-auto overflow-x-hidden flex-grow">
+            <div class="sidebar-link-container">
+                <a href="javascript:void(0);" onclick="openTab('@Url.Action("Dashboard", "Home")', '[ Ana Sayfa ]')" class="sidebar-link flex items-center px-5 py-2.5 text-gray-700 transition-colors">
+                    <i class="fas fa-home w-6 text-center text-xl text-gray-500"></i>
+                    <span class="ml-3 font-semibold text-sm sidebar-text whitespace-nowrap">Ana Sayfa</span>
+                </a>
+            </div>
+            <div class="sidebar-link-container">
+                <a href="javascript:void(0);" onclick="openTab('@Url.Action("Index", "SatisVeCari")','[ Satış&Cari ]')" class="sidebar-link flex items-center px-5 py-2.5 text-gray-700 transition-colors">
+                    <i class="fas fa-cash-register w-6 text-center text-xl text-gray-500"></i>
+                    <span class="ml-3 font-semibold text-sm sidebar-text whitespace-nowrap">Satış&Cari</span>
+                </a>
+            </div>
+            <div class="sidebar-link-container">
+                <a href="javascript:void(0);" onclick="openTab('@Url.Action("Index", "Barkodlama")','[ Ürün Barkodlama ]')" class="sidebar-link flex items-center px-5 py-2.5 text-gray-700 transition-colors">
+                    <i class="fas fa-qrcode w-6 text-center text-xl text-gray-500"></i>
+                    <span class="ml-3 font-semibold text-sm sidebar-text whitespace-nowrap">Ürün Barkodlama</span>
+                </a>
+            </div>
+
+            <div class="sidebar-link-container">
+                <div class="sidebar-link flex items-center px-5 py-2.5 text-gray-700 transition-colors cursor-pointer">
+                    <i class="fas fa-plus w-6 text-center text-xl text-gray-500"></i>
+                    <span class="ml-3 font-semibold text-sm sidebar-text whitespace-nowrap">Tanımlamalar</span>
+                    <i class="fas fa-chevron-right ml-auto sidebar-text chevron-icon text-xs"></i>
+                </div>
+                <div class="submenu hidden">
+                    <a href="javascript:void(0);" onclick="openTab('@Url.Action("Index", "Hesaplar")', '[ Hesap Tanımlama ]')" class="block py-1.5 text-xs text-gray-600 hover:bg-gray-100">[ Hesap Tanımlama ]</a>
+                    <a href="javascript:void(0);" onclick="openTab('@Url.Action("Index", "HesapTipleri")', '[ Hesap Tipleri Tanımlama ]')" class="block py-1.5 text-xs text-gray-600 hover:bg-gray-100">[ Hesap Tipleri Tanımlama ]</a>
+                    <a href="javascript:void(0);" onclick="openTab('@Url.Action("Index", "Doviz")', '[ Döviz Tanımlama ]')" class="block py-1.5 text-xs text-gray-600 hover:bg-gray-100">[ Döviz Tanımlama ]</a>
+                    <a href="javascript:void(0);" onclick="openTab('@Url.Action("Index", "StokGrubu")', '[ Stok Grubu Tanımlama ]')" class="block py-1.5 text-xs text-gray-600 hover:bg-gray-100">[ Stok Grubu Tanımlama ]</a>
+                    <a href="javascript:void(0);" onclick="openTab('@Url.Action("Index", "StokTipleri")', '[ Stok Tipleri Tanımlama ]')" class="block py-1.5 text-xs text-gray-600 hover:bg-gray-100">[ Stok Tipleri Tanımlama ]</a>
+                    <a href="javascript:void(0);" onclick="openTab('@Url.Action("Index", "Stoklar")', '[ Stok Tanımlama ]')" class="block py-1.5 text-xs text-gray-600 hover:bg-gray-100">[ Stok Tanımlama ]</a>
+                    <a href="javascript:void(0);" onclick="openTab('@Url.Action("Index", "UrunTipleri")', '[ Ürün Tipi Tanımlama ]')" class="block py-1.5 text-xs text-gray-600 hover:bg-gray-100">[ Ürün Tipi Tanımlama ]</a>
+                    <a href="javascript:void(0);" onclick="openTab('@Url.Action("Index", "Kullanicilar")', '[ Kullanıcı Tanımlama ]')" class="block py-1.5 text-xs text-gray-600 hover:bg-gray-100">[ Kullanıcı Tanımlama ]</a>
+                    <a href="javascript:void(0);" onclick="openTab('@Url.Action("Index", "HareketTipleri")', '[ Hareket Tipleri Tanımlama ]')" class="block py-1.5 text-xs text-gray-600 hover:bg-gray-100">[ Hareket Tipleri Tanımlama ]</a>
+                </div>
+            </div>
+        </div>
+        <div class="mt-auto flex-shrink-0">
+            <!-- YENİ EKLENEN AYARLAR MENÜSÜ -->
+            <div class="sidebar-link-container">
+                <div class="sidebar-link flex items-center px-5 py-2.5 text-gray-700 transition-colors cursor-pointer">
+                    <i class="fas fa-cog w-6 text-center text-xl text-gray-500"></i>
+                    <span class="ml-3 font-semibold text-sm sidebar-text whitespace-nowrap">Ayarlar</span>
+                    <i class="fas fa-chevron-right ml-auto sidebar-text chevron-icon text-xs"></i>
+                </div>
+                <div class="submenu hidden">
+                    <a href="javascript:void(0);" onclick="openTab('@Url.Action("Index", "BarkodAyarlari")', '[ Barkod Ayarları ]')" class="block py-1.5 text-xs text-gray-600 hover:bg-gray-100">[ Barkod Ayarları ]</a>
+                </div>
+            </div>
+            <!-- MEVCUT KULLANICI BİLGİSİ -->
+            <div class="sidebar-link-container">
+                <a href="#" class="sidebar-link flex items-center px-5 py-2.5 text-gray-700 transition-colors">
+                    <i class="fas fa-user-circle w-6 text-center text-xl text-gray-500"></i>
+                    <span id="display-username" class="ml-3 font-semibold text-sm sidebar-text whitespace-nowrap">Kullanıcı</span>
+                </a>
+            </div>
+            <div class="sidebar-link-container">
+                <a id="logout-button" href="#" class="sidebar-link flex items-center px-5 py-2.5 text-gray-700 transition-colors hover:text-red-600">
+                    <i class="fas fa-sign-out-alt w-6 text-center text-xl text-gray-500"></i>
+                    <span class="ml-3 font-semibold text-sm sidebar-text whitespace-nowrap">Çıkış Yap</span>
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div id="submenu-flyout" class="fixed top-0 h-full z-30 bg-white shadow-lg rolex-green-border transition-opacity duration-200 ease-in-out opacity-0 pointer-events-none" style="width: 220px;"></div>
+
+    <main id="main-content"
+          class="h-screen flex flex-col"
+          data-login-url="@Url.Action("Login", "Auth")"
+          data-dashboard-url="@Url.Action("Dashboard", "Home")">
+        <div id="tabs-container" class="flex-shrink-0"></div>
+        <div id="content-frames" class="flex-grow relative"></div>
+    </main>
+
+    <!-- JavaScript Kodları Yeniden Düzenlendi ve Sadeleştirildi -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const mainElement = document.getElementById('main-content');
+            const loginUrl = mainElement.dataset.loginUrl;
+            const dashboardUrl = mainElement.dataset.dashboardUrl;
+            const token = localStorage.getItem('jwt_token');
+
+            if (!token) {
+                window.location.href = loginUrl;
+                return;
+            }
+
+            try {
+                const payload = JSON.parse(atob(token.split('.')[1]));
+                document.getElementById('display-username').textContent = payload.sub || 'Kullanıcı';
+            } catch (e) {
+                localStorage.removeItem('jwt_token');
+                window.location.href = loginUrl;
+            }
+
+            const sidebarMenu = document.getElementById('sidebar-menu');
+            const sidebarToggle = document.getElementById('sidebar-toggle');
+            const toggleIcon = sidebarToggle.querySelector('i');
+            const searchInput = document.getElementById('sidebar-search');
+            const tabsContainer = document.getElementById('tabs-container');
+            const contentFrames = document.getElementById('content-frames');
+            const logoutButton = document.getElementById('logout-button');
+            const submenuFlyout = document.getElementById('submenu-flyout');
+            const menuItemsWithSubmenu = Array.from(document.querySelectorAll('.sidebar-link-container')).filter(item => item.querySelector('.submenu'));
+
+            let openTabs = [];
+            const MAX_TABS = 10;
+            let isPinned = false; // Ana hamburger sabitlemesini tutar
+            let pinnedTrigger = null; // Tıklanan alt menü başlığını tutar
+
+            const clearSearch = () => {
+                if (searchInput.value !== '') {
+                    searchInput.value = '';
+                    searchInput.dispatchEvent(new Event('input', { bubbles: true }));
+                }
+            };
+
+            // SADECE geçici alt menü durumunu sıfırlar
+            const resetSubmenuState = () => {
+                if (pinnedTrigger) {
+                    pinnedTrigger.classList.remove('pinned');
+                    pinnedTrigger = null;
+                }
+                submenuFlyout.classList.add('opacity-0', 'pointer-events-none');
+                sidebarMenu.classList.remove('submenu-active');
+                if (!isPinned) {
+                    clearSearch();
+                }
+            };
+
+            // Alt menü başlıklarına tıklama olayı
+            menuItemsWithSubmenu.forEach(item => {
+                const trigger = item.querySelector('.sidebar-link');
+                trigger.addEventListener('click', (e) => {
+                    e.stopPropagation();
+
+                    const isAlreadyActive = trigger === pinnedTrigger;
+                    if (isAlreadyActive) {
+                        resetSubmenuState(); // Tekrar tıklayınca kapat
+                        return;
+                    }
+
+                    resetSubmenuState(); // Önce diğerini kapat
+
+                    if (!isPinned) {
+                        sidebarMenu.classList.add('submenu-active');
+                    }
+
+                    trigger.classList.add('pinned');
+                    pinnedTrigger = trigger;
+
+                    const submenuContent = item.querySelector('.submenu').innerHTML;
+                    submenuFlyout.innerHTML = `<div class="py-2 flex flex-col">${submenuContent}</div>`;
+
+                    const sidebarWidth = sidebarMenu.offsetWidth;
+                    submenuFlyout.style.left = `${sidebarWidth}px`;
+                    submenuFlyout.classList.remove('opacity-0', 'pointer-events-none');
+                });
+            });
+
+            // Alt menüsü OLMAYAN linklere tıklama olayı
+            const nonSubmenuLinks = document.querySelectorAll('.sidebar-link-container:not(:has(.submenu)) a.sidebar-link');
+            nonSubmenuLinks.forEach(link => {
+                link.addEventListener('click', resetSubmenuState);
+            });
+
+            // Açılan alt menü (flyout) içindeki linklere tıklama olayı
+            submenuFlyout.addEventListener('click', (e) => {
+                if (e.target.tagName === 'A' || e.target.closest('A')) {
+                    resetSubmenuState();
+                }
+            });
+
+            // Dışarıya tıklama olayı
+            document.addEventListener('click', (e) => {
+                if (!sidebarMenu.contains(e.target) && !submenuFlyout.contains(e.target)) {
+                    resetSubmenuState();
+                }
+            });
+
+            // Ana Hamburger Butonu Tıklama Olayı
+            sidebarToggle.addEventListener('click', () => {
+                document.body.classList.toggle('sidebar-pinned');
+                isPinned = document.body.classList.contains('sidebar-pinned');
+
+                if (isPinned) {
+                    toggleIcon.classList.add('text-green-700');
+                    resetSubmenuState(); // Sabitlerken geçici durumu temizle
+                } else {
+                    toggleIcon.classList.remove('text-green-700');
+                    clearSearch();
+                }
+            });
+
+            logoutButton.addEventListener('click', (e) => {
+                e.preventDefault();
+                localStorage.removeItem('jwt_token');
+                window.location.href = loginUrl;
+            });
+
+            // --- Sekme Yönetim Fonksiyonları (Değişiklik Gerekmiyor) ---
+            window.openTab = function (url, title) {
+                const existingTab = openTabs.find(tab => tab.url === url);
+                if (existingTab) { switchTab(existingTab.id); return; }
+                if (openTabs.length >= MAX_TABS) { alert(`Maksimum ${MAX_TABS} sekme açabilirsiniz.`); return; }
+                const tabId = 'tab-' + Date.now();
+                const frameId = 'frame-' + Date.now();
+                const tabButton = document.createElement('button');
+                tabButton.className = 'tab-button flex items-center px-3 py-1.5 text-xs font-medium';
+                tabButton.dataset.tabId = tabId;
+                const isDashboard = url === dashboardUrl;
+                tabButton.innerHTML = `<span>${title}</span>` + (isDashboard ? '' : `<span class="close-tab-btn ml-2 text-gray-500 hover:text-gray-800">&times;</span>`);
+                tabsContainer.appendChild(tabButton);
+                const iframe = document.createElement('iframe');
+                iframe.id = frameId;
+                iframe.className = 'w-full h-full';
+                iframe.src = url;
+                contentFrames.appendChild(iframe);
+                openTabs.push({ id: tabId, url, title, frameId });
+                if (!isDashboard) {
+                    tabButton.querySelector('.close-tab-btn').addEventListener('click', (e) => { e.stopPropagation(); closeTab(tabId); });
+                }
+                tabButton.addEventListener('click', () => switchTab(tabId));
+                switchTab(tabId);
+            }
+
+            function switchTab(tabId) {
+                openTabs.forEach(tab => {
+                    const button = document.querySelector(`.tab-button[data-tab-id="${tab.id}"]`);
+                    const frame = document.getElementById(tab.frameId);
+                    if (button && frame) {
+                        const isActive = tab.id === tabId;
+                        button.classList.toggle('active', isActive);
+                        frame.classList.toggle('active', isActive);
+                    }
+                });
+                updateActiveSidebarLink(tabId);
+            }
+
+            function closeTab(tabId) {
+                const tabIndex = openTabs.findIndex(tab => tab.id === tabId);
+                if (tabIndex === -1) return;
+                const tabToClose = openTabs[tabIndex];
+                const button = document.querySelector(`.tab-button[data-tab-id="${tabToClose.id}"]`);
+                const frame = document.getElementById(tabToClose.frameId);
+                if (button) button.remove();
+                if (frame) frame.remove();
+                openTabs.splice(tabIndex, 1);
+                if (button && button.classList.contains('active') && openTabs.length > 0) {
+                    const nextActiveTab = openTabs[Math.max(0, tabIndex - 1)];
+                    switchTab(nextActiveTab.id);
+                } else if (openTabs.length === 0) {
+                    openTab(dashboardUrl, 'Ana Sayfa');
+                }
+            }
+
+            searchInput.addEventListener('input', (e) => {
+                const searchTerm = e.target.value.toLowerCase().trim();
+                document.querySelectorAll('#menu-links-container .sidebar-link-container').forEach(container => {
+                    const mainLink = container.querySelector('.sidebar-link');
+                    const submenu = container.querySelector('.submenu');
+                    if (submenu) {
+                        let hasVisibleChild = false;
+                        submenu.querySelectorAll('a').forEach(subLink => {
+                            const linkText = subLink.textContent.toLowerCase();
+                            if (linkText.includes(searchTerm)) {
+                                subLink.style.display = 'block';
+                                hasVisibleChild = true;
+                            } else {
+                                subLink.style.display = 'none';
+                            }
+                        });
+                        const mainLinkText = mainLink.querySelector('.sidebar-text').textContent.toLowerCase();
+                        container.style.display = (hasVisibleChild || mainLinkText.includes(searchTerm)) ? 'block' : 'none';
+                    } else if (mainLink) {
+                        const linkText = mainLink.textContent.toLowerCase();
+                        container.style.display = linkText.includes(searchTerm) ? 'block' : 'none';
+                    }
+                });
+            });
+
+            function updateActiveSidebarLink(activeTabId) {
+                document.querySelectorAll('.sidebar-link-container.active-link').forEach(el => el.classList.remove('active-link'));
+                const activeTab = openTabs.find(tab => tab.id === activeTabId);
+                if (activeTab) {
+                    const allLinks = document.querySelectorAll('.sidebar-link-container a[onclick]');
+                    allLinks.forEach(link => {
+                        if (link.getAttribute('onclick').includes(`'${activeTab.url}'`)) {
+                            const parentContainer = link.closest('.sidebar-link-container');
+                            if (parentContainer) parentContainer.classList.add('active-link');
+                            const submenu = link.closest('.submenu');
+                            if (submenu) {
+                                submenu.previousElementSibling.closest('.sidebar-link-container').classList.add('active-link');
+                            }
+                        }
+                    });
+                }
+            }
+
+            openTab(dashboardUrl, 'Ana Sayfa');
+        });
+    </script>
+</body>
+</html>
+

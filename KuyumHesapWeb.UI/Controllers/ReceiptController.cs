@@ -67,6 +67,7 @@ namespace KuyumHesapWeb.UI.Controllers
                 IsCustomerReceipt = vm.IsCustomerReceipt,
                 CurrencyCode = vm.CurrencyCode,
                 OpenBalanceAmount = vm.OpenBalanceAmount,
+                AccountId = vm.AccountId,
                 CreateMovementReceiptRequestDtos = movements
             };
             var data = await _mediator.Send(request);

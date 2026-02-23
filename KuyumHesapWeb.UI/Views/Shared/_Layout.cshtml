@@ -248,7 +248,7 @@
         </div>
         <div id="menu-links-container" class="py-2 overflow-y-auto overflow-x-hidden flex-grow">
             <div class="sidebar-link-container">
-                <a asp-controller="Dashboard" asp-action="Dashboard" class="sidebar-link flex items-center px-5 py-2.5 text-gray-700 transition-colors">
+                <a asp-controller="Dashboard" asp-action="IndexDashboard" class="sidebar-link flex items-center px-5 py-2.5 text-gray-700 transition-colors">
                     <i class="fas fa-home w-6 text-center text-xl text-gray-500"></i>
                     <span class="ml-3 font-semibold text-sm sidebar-text whitespace-nowrap">Ana Sayfa</span>
                 </a>
@@ -477,6 +477,38 @@
                 switchTab(tabId);
             }
 
+                    function wireOpenTabForLinks(containerEl) {
+          if (!containerEl) return;
+
+          containerEl.addEventListener("click", (e) => {
+            const a = e.target.closest("a");
+            if (!a) return;
+
+            const href = a.getAttribute("href");
+            if (!href || href === "#" || href.startsWith("javascript:")) return;
+
+            // aynı sayfada normal yönlenme olmasın
+            e.preventDefault();
+            e.stopPropagation();
+
+            // Title: link text ( [ ... ] gibi geliyor, temizleyelim )
+            const rawTitle = (a.textContent || "").trim();
+            const title = rawTitle.replace(/^\[\s*/, "").replace(/\s*\]$/, "") || "Sayfa";
+
+            // Tab aç
+            window.openTab(href, title);
+
+            // Flyout'u kapat / state reset
+            resetSubmenuState();
+          }, true);
+        }
+
+        // Sidebar içindeki linkler (Ana menü + normal linkler)
+        wireOpenTabForLinks(document.getElementById("menu-links-container"));
+
+        // Flyout içindeki Tanımlamalar linkleri
+        wireOpenTabForLinks(document.getElementById("submenu-flyout"));
+
             function switchTab(tabId) {
                 openTabs.forEach(tab => {
                     const button = document.querySelector(`.tab-button[data-tab-id="${tab.id}"]`);
@@ -550,9 +582,100 @@
                 }
             }
 
-   + if (openTabs.length === 0) {
-+   openTab(dashboardUrl, 'Ana Sayfa');
-+ }
+        if (openTabs.length === 0) {
+          openTab(dashboardUrl, 'Ana Sayfa');
+        }wireOpenTabForLinkswindow.openTab
+    </script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+          const sidebarMenu = document.getElementById("sidebar-menu");
+          const submenuFlyout = document.getElementById("submenu-flyout");
+
+          if (!sidebarMenu || !submenuFlyout) return;
+
+          let activeTrigger = null; // açık olan submenu başlığı
+
+          function closeFlyout() {
+            if (activeTrigger) {
+              activeTrigger.classList.remove("pinned");
+              const chev = activeTrigger.querySelector(".chevron-icon");
+              if (chev) chev.classList.remove("rotate-180");
+              activeTrigger = null;
+            }
+            submenuFlyout.classList.add("opacity-0", "pointer-events-none");
+            submenuFlyout.innerHTML = "";
+            sidebarMenu.classList.remove("submenu-active");
+          }
+
+          function openFlyout(triggerEl, submenuHtml) {
+            // aynı başlığa tekrar tıklandıysa kapat
+            if (activeTrigger === triggerEl) {
+              closeFlyout();
+              return;
+            }
+
+            closeFlyout();
+
+            activeTrigger = triggerEl;
+            triggerEl.classList.add("pinned");
+
+            const chev = triggerEl.querySelector(".chevron-icon");
+            if (chev) chev.classList.add("rotate-180");
+
+            submenuFlyout.innerHTML = `<div class="py-2 flex flex-col">${submenuHtml}</div>`;
+
+            // sidebar genişliğine göre yan paneli hizala
+            const sidebarWidth = sidebarMenu.offsetWidth || 64;
+            submenuFlyout.style.left = `${sidebarWidth}px`;
+
+            submenuFlyout.classList.remove("opacity-0", "pointer-events-none");
+
+            // pinned değilse sidebar hover genişlemesin diye class
+            if (!document.body.classList.contains("sidebar-pinned")) {
+              sidebarMenu.classList.add("submenu-active");
+            }
+          }
+
+          // ✅ Sadece submenu olan başlıkları yakala (Tanımlamalar / Ayarlar vb.)
+          document.querySelectorAll(".sidebar-link-container").forEach(container => {
+            const submenu = container.querySelector(".submenu");
+            if (!submenu) return;
+
+            const trigger = container.querySelector(":scope > .sidebar-link"); // container içindeki üst başlık div'i
+            if (!trigger) return;
+
+            trigger.addEventListener("click", (e) => {
+              e.preventDefault();
+              e.stopPropagation();
+
+              // trigger içindeyken bir <a> tıklandıysa karışma (normal link aksın)
+              if (e.target.closest("a")) return;
+
+              openFlyout(trigger, submenu.innerHTML);
+            });
+          });
+
+          // Flyout içindeki linke tıklayınca kapat
+          submenuFlyout.addEventListener("click", (e) => {
+            const a = e.target.closest("a");
+            if (!a) return;
+            closeFlyout();
+            // burada e.preventDefault() yok => link normal gider
+          });
+
+          // Dışarı tıklayınca kapat
+          document.addEventListener("click", (e) => {
+            if (!sidebarMenu.contains(e.target) && !submenuFlyout.contains(e.target)) {
+              closeFlyout();
+            }
+          });
+
+          // ESC ile kapat
+          document.addEventListener("keydown", (e) => {
+            if (e.key === "Escape") closeFlyout();
+          });
+        });
     </script>
     @RenderSection("Scripts", required: false)
 
