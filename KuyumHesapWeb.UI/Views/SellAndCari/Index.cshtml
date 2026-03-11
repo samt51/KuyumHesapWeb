@@ -1620,7 +1620,7 @@
 
                     <div class="app-shell-customer flex-1 min-w-0 w-full sm:w-auto">
                         <select id="customer-select" asp-for="createReceiptCommandRequest.CurrentAccountId" name="customer-select" class="w-full">
-                            @foreach (var item in Model.getAllAccountQueryResponses.Where(x => !x.Tezgahtar))
+                            @foreach (var item in Model.getAllAccountQueryResponses)
                             {
                                 <option value="@item.AccountId">@item.AccountName</option>
                             }
@@ -2393,7 +2393,7 @@
                                         <div class="tri-toggle-option" data-value="borcuna" style="color: rgb(107, 114, 128);">
                                             HESABIN BORCUNA (-)
                                         </div>
-                                        <div class="tri-toggle-option active" data-value="alacagina" style="color: rgb(5, 150, 105);">
+                                    <div class="tri-toggle-option active" data-value="alacagina" style="color: rgb(5, 150, 105);">
                                             HESABIN ALACAĞINA (+)
                                         </div>
                                     </div>
@@ -3234,12 +3234,27 @@
           // -----------------------------------
           // Totals / Receipt
           // -----------------------------------
-          function writeTotals(giren, cikan) {
-            const fark = giren - cikan;
-            setTotal("giren-toplam", "giren-toplam-amount", "giren-toplam-currency", fmt2.format(giren));
-            setTotal("cikan-toplam", "cikan-toplam-amount", "cikan-toplam-currency", fmt2.format(cikan));
-            setTotal("fark-toplam", "fark-amount", "fark-currency", fmt2.format(fark));
-          }
+      
+
+          
+function writeTotals(giren, cikan) {
+  const fark = giren - cikan;
+  setTotal("giren-toplam", "giren-toplam-amount", "giren-toplam-currency", fmt2.format(giren));
+  setTotal("cikan-toplam", "cikan-toplam-amount", "cikan-toplam-currency", fmt2.format(cikan));
+  setTotal("fark-toplam", "fark-amount", "fark-currency", fmt2.format(fark));
+
+  // Fark negatifse kırmızı, değilse mavi olacak
+  const farkWrap = el("fark-toplam");
+  if (farkWrap) {
+    // önce her iki rengi kaldır
+    farkWrap.classList.remove("text-red-600", "text-blue-700");
+    if (fark < 0) {
+      farkWrap.classList.add("text-red-600");
+    } else {
+      farkWrap.classList.add("text-blue-700");
+    }
+  }
+}
 
                   function isCariMode() {
           return document.body.classList.contains("cari-active");
@@ -3365,44 +3380,60 @@
               return;
             }
 
-            if (item.kind === "ISKONTO") {
-              const isGiris = item.type === "GIRIS";
-              addRowToUI(
-                "section-iskonto",
-                "İSKONTO",
-                "neutral",
-                item,
-                index,
-                (isGreen) => rowHtml({
-                  isGreen,
-                  leftTop: `${isGiris ? "+" : "-"}${fmt2.format(item.amount)} ${item.currency}`,
-                  rightTop: `${fmt2.format(item.karsilikTry)} ${baseCode}`,
-                  leftBottom: item.karsiHesapAdi || "İSKONTO",
-                  rightBottom: `${baseCode}: ${fmt4.format(item.rate)}`
-                }),
-                isGiris
-              );
-              return;
-            }
+                    if (item.kind === "ISKONTO") {
+          const isGiris = item.type === "GIRIS";
+          // toggle'a göre açıklama ekle
+          const suffix = item.type === "CIKIS" ? " HESABIN BORCUNA" : " HESABIN ALACAĞINA";
+          addRowToUI(
+            "section-iskonto",
+            "İSKONTO",
+            "neutral",
+            item,
+            index,
+            (isGreen) => rowHtml({
+              isGreen,
+              leftTop: `${isGiris ? "+" : "-"}${fmt2.format(item.amount)} ${item.currency}${suffix}`,
+              rightTop: `${fmt2.format(item.karsilikTry)} ${baseCode}`,
+              leftBottom: item.karsiHesapAdi || "İSKONTO",
+              rightBottom: `${baseCode}: ${fmt4.format(item.rate)}`
+            }),
+            isGiris
+          );
+          return;
+        }
 
-            if (item.kind === "VIRMAN") {
-              addRowToUI(
-                "section-virmanlar",
-                "VİRMAN",
-                "green",
-                item,
-                index,
-                () => rowHtml({
-                  isGreen: true,
-                  leftTop: `${fmt2.format(item.amount)} ${item.currency}`,
-                  rightTop: `${fmt2.format(item.karsilikTry)} ${baseCode}`,
-                  leftBottom: `${item.from} → ${item.to}`,
-                  rightBottom: `${baseCode}: ${fmt4.format(item.rate)}`
-                }),
-                true
-              );
-              return;
-            }
+                 // Replace existing VIRMAN block in renderItem with this:
+              if (item.kind === "VIRMAN") {
+          // Determine type robustly (önce açık alan, sonra toggleVal)
+          const itype = item.type || (item.toggleVal ? mapToggleToType(item.toggleVal) : null);
+          const isGiris = itype === "GIRIS";
+          const isCikis = itype === "CIKIS";
+
+          // Tüm virmanları tek bölümde toplayalım
+          const sectionId = "section-virman-mahsuplar";
+          const sectionTitle = "VİRMAN (MAHSUPLAR)";
+
+          addRowToUI(
+            sectionId,
+            sectionTitle,
+            // section header rengi nötr tutmak istiyorsanız "neutral", ama satır renkleri item yönüne göre verilir
+            "neutral",
+            item,
+            index,
+            (isGreen) => rowHtml({
+              isGreen: isGiris, // GIRIS -> yeşil, CIKIS -> kırmızı
+              // Giris için + ve "ALACAĞINA", cikis için - ve "BORCUNA"
+              leftTop: `${isGiris ? "+" : "-"}${fmt2.format(item.amount)} ${item.currency}${isGiris ? " ALACAĞINA" : " BORCUNA"}`,
+              rightTop: `${fmt2.format(item.karsilikTry)} ${baseCode}`,
+              // Açıklama: eğer alacak ise karsiHesapAdi gösterilsin; borç ise karşı taraf gösterilsin
+              leftBottom: item.karsiHesapAdi || (isGiris ? `${item.from} → ${item.to}` : `${item.from} → ${item.to}`),
+              rightBottom: `${baseCode}: ${fmt4.format(item.rate)}`
+            }),
+            // satır rengi: true -> yeşil görünüm, false -> kırmızı görünüm
+            isGiris
+          );
+          return;
+        }
 
             if (item.kind === "ACIK_HESAP") {
               const isGiris = item.type === "GIRIS";
@@ -3443,15 +3474,25 @@
               else cikan += (item.karsilikTry || 0);
             }
 
-            if (item.kind === "VIRMAN") {
-              giren += (item.karsilikTry || 0);
-              cikan += (item.karsilikTry || 0);
-            }
+                  if (item.kind === "VIRMAN") {
+          // Determine type robustly (önce açık alan, sonra toggleVal)
+          const itype = item.type || (item.toggleVal ? mapToggleToType(item.toggleVal) : null);
+          if (itype === "GIRIS") {
+            giren += (item.karsilikTry || 0);
+          } else if (itype === "CIKIS") {
+            cikan += (item.karsilikTry || 0);
+          }
+        }
 
-            if (item.kind === "ACIK_HESAP") {
-              if (item.type === "GIRIS") giren += (item.amount || 0);
-              else cikan += (item.amount || 0);
-            }
+          if (item.kind === "ACIK_HESAP") {
+  // Öncelik: item.karsilikTry (varsa), yoksa amount * rate
+  const val = (item.karsilikTry != null)
+    ? Number(item.karsilikTry)
+    : ((Number(item.amount || 0) * Number(item.rate || 1)));
+
+  if (item.type === "GIRIS") giren += val;
+  else cikan += val;
+}
           });
 
                   const isCari = document.body.classList.contains("cari-active");
@@ -3470,6 +3511,9 @@
 
               // ✅ debug için global aç
         window.__rerenderReceipt = rerenderReceipt;
+                // expose helpers globally so other scripts (ör. btnSave handler) erişebilsin
+        window.getActiveItems = getActiveItems;
+        window.getActiveMovements = getActiveMovements;
         window.__debugState = () => ({
           isCari: document.body.classList.contains("cari-active"),
           satisLen: window.state?.satisItems?.length ?? 0,
@@ -3645,10 +3689,25 @@
 
         // Ekle butonu (şimdilik sadece kapatıyorum)
         // İstersen bunu state.items içine ekleyip cari ekrana yansıtacak şekilde de bağlarız.
-        document.getElementById("ceviri-add-button")?.addEventListener("click", (e) => {
+               document.getElementById("ceviri-add-button")?.addEventListener("click", (e) => {
           e.preventDefault();
 
-          // burada payload oluşturup post edebilirsin / ya da state’e ekleyebilirsin
+          // sadece CARİ modda çalışsın (senin guard'ların varsa aynısını kullan)
+          const isCari = document.body.classList.contains("cari-active");
+          if (!isCari) {
+            showConfirm("Çeviri işlemi sadece CARİ modunda açılır.");
+            return;
+          }
+
+          const movs = getActiveMovements();
+          const [outDto, inDto] = buildCeviriMovementDtos();
+
+          // push iki DTO'yu (sırayla: çıkış, giriş)
+          movs.push(outDto);
+          movs.push(inDto);
+
+          // opsiyonel: UI'da görünmesini istersen items'a ekleyebilirsin. Şimdilik sadece movements gönderiliyor.
+          rerenderReceipt();
           Modal.close(ceviriModal);
         });
 
@@ -4216,20 +4275,28 @@ centerPanelEl?.classList.toggle("hidden", isCari); // bu satır opsiyonel
             };
           }
 
-          el("iskonto-add-button")?.addEventListener("click", (e) => {
-            e.preventDefault();
-            const uiItem = buildIskontoUiItem();
-            const items = getActiveItems();
+     el("iskonto-add-button")?.addEventListener("click", (e) => {
+  e.preventDefault();
+  const uiItem = buildIskontoUiItem();
+  const items = getActiveItems();
+  const movs = getActiveMovements();
 
-        if (state.edit.kind === "ISKONTO" && Number.isFinite(state.edit.index)) {
-          items[state.edit.index] = uiItem;
-        } else {
-          items.push(uiItem);
-        }
-        clearEdit();
-        rerenderReceipt();
-        Modal.close(iskontoModal);
-          });
+  if (state.edit.kind === "ISKONTO" && Number.isFinite(state.edit.index)) {
+    const idx = state.edit.index;
+    items[idx] = uiItem;
+    // replace corresponding movement (assume same index mapping)
+    const dto = buildIskontoMovementDto(uiItem);
+    movs[idx] = dto;
+  } else {
+    items.push(uiItem);
+    const dto = buildIskontoMovementDto(uiItem);
+    movs.push(dto);
+  }
+
+  clearEdit();
+  rerenderReceipt();
+  Modal.close(iskontoModal);
+});
 
                 el("iskonto-delete-button")?.addEventListener("click", (e) => {
           e.preventDefault();
@@ -4761,46 +4828,73 @@ centerPanelEl?.classList.toggle("hidden", isCari); // bu satır opsiyonel
           }
         }
 
+        // Replace the current `openAcikHesapForCreate_Guarded` body with this implementation
+        async function openAcikHesapForCreate_Guarded() {
 
-                async function openAcikHesapForCreate_Guarded() {
+          // ✅ 1) Cari modunda açılmasın
+          const isCari = document.body.classList.contains("cari-active");
+          if (isCari) {
+            showConfirm("Açık Hesap işlemi sadece SATIŞ modunda kullanılabilir.");
+            return;
+          }
 
-                  // ✅ 1) Cari modunda açılmasın
-                  const isCari = document.body.classList.contains("cari-active");
-                  if (isCari) {
-                    showConfirm("Açık Hesap işlemi sadece SATIŞ modunda kullanılabilir.");
-                    return;
+          // ✅ 2) Fark 0 ise açılmasın
+          const farkText = (document.getElementById("fark-amount")?.textContent || "0").trim();
+          const farkCurrency = (document.getElementById("fark-currency")?.textContent || "TRY").trim();
+
+          const farkValue = parseFloat(String(farkText).replace(/\./g, "").replace(",", "."));
+          if (!farkValue || farkValue === 0) {
+            showConfirm(`Açık Hesaba atılacak fark bulunamadı (0 ${farkCurrency})`);
+            return;
+          }
+
+          // ✅ 3) currency-select -> modal birimi
+          const selectedCurrencyId = document.getElementById("currency-select")?.value;
+          const modalCurrencySelect = document.getElementById("form-acikhesap-currency");
+          if (selectedCurrencyId && modalCurrencySelect) {
+            modalCurrencySelect.value = selectedCurrencyId;
+
+            const container = modalCurrencySelect.closest(".float-label-container");
+            if (container) container.classList.add("select-has-value");
+          }
+
+          // ✅ 4) amount'a farkı bas (gösterim için)
+          const amountInput = document.getElementById("form-acikhesap-amount");
+
+if (amountInput) amountInput.value = fmt2.format(Math.abs(farkValue));
+          // ✅ 5) kuru çek
+          await setAcikHesapRateFromCurrencySelect();
+
+          // ✅ 6) Önce modalı aç (openAcikHesapForCreate sets defaults)
+          openAcikHesapForCreate();
+
+          // ✅ 7) Eğer fark negatifse (fark < 0) toggle'ı "alacagina" yap ve ALACAĞINA seçeneğini yeşil göster
+          try {
+            if (farkValue < 0) {
+              const root = el("acikhesap-tipi-toggle");
+              if (root && typeof root._setSelected === "function") {
+                // Set selected to "alacagina" after modal default was applied
+                root._setSelected("alacagina");
+              }
+
+              // Force color: alacagina -> green when active, borcuna -> red when active
+              if (root) {
+                const opts = Array.from(root.querySelectorAll(".tri-toggle-option") || []);
+                opts.forEach(opt => {
+                  const val = opt.dataset.value;
+                  const active = (root.dataset.selected === val);
+                  if (val === "alacagina") {
+                    opt.style.color = active ? "rgb(5, 150, 105)" : "rgb(107, 114, 128)";
+                  } else { // borcuna
+                    opt.style.color = active ? "rgb(220, 38, 38)" : "rgb(107, 114, 128)";
                   }
-
-                  // ✅ 2) Fark 0 ise açılmasın
-                  const farkText = (document.getElementById("fark-amount")?.textContent || "0").trim();
-                  const farkCurrency = (document.getElementById("fark-currency")?.textContent || "TRY").trim();
-
-                  const farkValue = parseFloat(farkText.replace(/\./g, "").replace(",", "."));
-                  if (!farkValue || farkValue === 0) {
-                    showConfirm(`Açık Hesaba atılacak fark bulunamadı (0 ${farkCurrency})`);
-                    return;
-                  }
-
-                  // ✅ 3) currency-select -> modal birimi
-                  const selectedCurrencyId = document.getElementById("currency-select")?.value;
-                  const modalCurrencySelect = document.getElementById("form-acikhesap-currency");
-                  if (selectedCurrencyId && modalCurrencySelect) {
-                    modalCurrencySelect.value = selectedCurrencyId;
-
-                    const container = modalCurrencySelect.closest(".float-label-container");
-                    if (container) container.classList.add("select-has-value");
-                  }
-
-                  // ✅ 4) amount'a farkı bas
-                  const amountInput = document.getElementById("form-acikhesap-amount");
-                  if (amountInput) amountInput.value = farkText;
-
-                  // ✅ 5) kuru çek
-                  await setAcikHesapRateFromCurrencySelect();
-
-                  // ✅ 6) artık modalı doğru sistemle aç
-                  openAcikHesapForCreate(); // bunun içinde Modal.open(acikModal) var
-                }
+                });
+              }
+            }
+          } catch (err) {
+            console.warn("acikhesap toggle override failed:", err);
+          }
+        }
 
                async function openIskontoForCreate_Guarded() {
           const isCari = document.body.classList.contains("cari-active");
@@ -4857,43 +4951,152 @@ centerPanelEl?.classList.toggle("hidden", isCari); // bu satır opsiyonel
 
 
 
-          function buildVirmanUiItem() {
-            const toggleVal = getTriToggleValue("virman-tipi-toggle");
-            const currencyText = virCurr?.selectedOptions?.[0]?.textContent?.trim() || "TRY";
-            const amount = parseTrNumber(virAmount?.value);
-            const rate = parseTrNumber(virRate?.value);
-            const karsilikTry = amount * rate;
-            const toName = virKarsi?.selectedOptions?.[0]?.textContent?.trim() || "KARŞI HESAP";
+              function buildVirmanUiItem() {
+          const toggleVal = getTriToggleValue("virman-tipi-toggle");
+          const type = mapToggleToType(toggleVal); // GIRIS / CIKIS
+          const currencyText = virCurr?.selectedOptions?.[0]?.textContent?.trim() || "TRY";
+          const amount = parseTrNumber(virAmount?.value);
+          const rate = parseTrNumber(virRate?.value);
+          const karsilikTry = amount * rate;
+          const toName = virKarsi?.selectedOptions?.[0]?.textContent?.trim() || "KARŞI HESAP";
 
-            return {
-              kind: "VIRMAN",
-              toggleVal,
-              currency: currencyText,
-              amount,
-              rate,
-              karsilikTry,
-              from: "ANA HESAP",
-              to: toName,
-              aciklama: virAcik?.value || ""
-            };
-          }
+          return {
+            kind: "VIRMAN",
+            toggleVal,
+            type,                 // <-- eklendi
+            currency: currencyText,
+            amount,
+            rate,
+            karsilikTry,
+            from: "ANA HESAP",
+            to: toName,
+            aciklama: virAcik?.value || ""
+          };
+        }
+                // 2) İskonto movement DTO builder
+        function buildIskontoMovementDto(uiItem) {
+          const customerSel = document.getElementById("customer-select");
+          const accountId = Number(customerSel?.value || 0) || 0;
+          const counterSel = document.getElementById("currency-select");
+          const counterCurrencyId = Number(counterSel?.value) || 3;
+          const foreignCurrencyId = Number(document.getElementById("form-iskonto-currency")?.value) || counterCurrencyId;
+          const amount = Number(uiItem.amount || 0);
+          const rate = Number(uiItem.rate || 0);
+          const karsilikTry = Number(uiItem.karsilikTry || (amount * rate));
+          const transactionTypeId = uiItem.type === "GIRIS" ? 5 : 6; // Alacak=5, Borç=6
 
-          el("virman-add-button")?.addEventListener("click", (e) => {
-            e.preventDefault();
-            const uiItem = buildVirmanUiItem();
-
-                  const items = getActiveItems();
-
-        if (state.edit.kind === "VIRMAN" && Number.isFinite(state.edit.index)) {
-          items[state.edit.index] = uiItem;
-        } else {
-          items.push(uiItem);
+          return {
+            transactionTypeId,
+            accountId,
+            stockId: null,
+            description: uiItem.karsiHesapAdi || "İskonto",
+            foreignCurrencyAmount: amount,
+            foreignCurrencyId,
+            foreignExchangeRate: rate,
+            counterCurrencyAmount: karsilikTry,
+            counterCurrencyId,
+            counterExchangeRate: 1
+          };
         }
 
-        clearEdit();
-        rerenderReceipt();
-        Modal.close(virmanModal);
-          });
+                function buildVirmanMovementDto(uiItem) {
+          const customerSel = document.getElementById("customer-select");
+          const accountId = Number(customerSel?.value || 0) || 0;
+          const counterSel = document.getElementById("currency-select");
+          const counterCurrencyId = Number(counterSel?.value) || 3;
+          const foreignCurrencyId = Number(document.getElementById("form-virman-currency")?.value) || counterCurrencyId;
+          const amount = Number(uiItem.amount || 0);
+          const rate = Number(uiItem.rate || 0);
+          const karsilikTry = Number(uiItem.karsilikTry || (amount * rate));
+          const transactionTypeId = uiItem.type === "GIRIS" ? 7 : 8; // Virman Giriş=7, Çıkış=8
+
+          return {
+            transactionTypeId,
+            accountId,
+            stockId: null,
+            description: `Virman: ${uiItem.from || "ANA HESAP"} → ${uiItem.to || ""}`,
+            foreignCurrencyAmount: amount,
+            foreignCurrencyId,
+            foreignExchangeRate: rate,
+            counterCurrencyAmount: karsilikTry,
+            counterCurrencyId,
+            counterExchangeRate: 1
+          };
+        }
+
+
+                function buildCeviriMovementDtos() {
+          const sel = document.getElementById("ceviri-tipi-toggle");
+          const mode = sel?.dataset?.selected || sel?.getAttribute("data-selected") || "borcundaki";
+          const isBorc = (mode === "borcundaki");
+
+          const srcCurrencyId = Number(document.getElementById("form-ceviri-source-currency")?.value) || 3;
+          const srcAmount = parseTrNumber(document.getElementById("form-ceviri-source-amount")?.value || "0");
+          const srcRate = parseTrNumber(document.getElementById("form-ceviri-source-rate")?.value || "0");
+
+          const trgCurrencyId = Number(document.getElementById("form-ceviri-target-currency")?.value) || 3;
+          const trgAmount = parseTrNumber(document.getElementById("form-ceviri-target-amount")?.value || "0");
+          const trgRate = parseTrNumber(document.getElementById("form-ceviri-target-rate")?.value || "0");
+
+          const customerSel = document.getElementById("customer-select");
+          const accountId = Number(customerSel?.value || 0) || 0;
+          const counterSel = document.getElementById("currency-select");
+          const counterCurrencyId = Number(counterSel?.value) || 3;
+
+          const outDto = {
+            transactionTypeId: 10, // Çevirme Çıkış
+            accountId,
+            stockId: null,
+            description: `Çeviri - Çıkış (${isBorc ? "Borçtan" : "Alacaktan"})`,
+            foreignCurrencyAmount: srcAmount,
+            foreignCurrencyId: srcCurrencyId,
+            foreignExchangeRate: srcRate,
+            counterCurrencyAmount: srcAmount * srcRate,
+            counterCurrencyId,
+            counterExchangeRate: 1
+          };
+
+          const inDto = {
+            transactionTypeId: 9, // Çevirme Giriş
+            accountId,
+            stockId: null,
+            description: `Çeviri - Giriş (${isBorc ? "Borca" : "Alacağa"})`,
+            foreignCurrencyAmount: trgAmount,
+            foreignCurrencyId: trgCurrencyId,
+            foreignExchangeRate: trgRate,
+            counterCurrencyAmount: trgAmount * trgRate,
+            counterCurrencyId,
+            counterExchangeRate: 1
+          };
+
+          return [outDto, inDto];
+        }
+
+
+
+
+
+                 el("virman-add-button")?.addEventListener("click", (e) => {
+          e.preventDefault();
+          const uiItem = buildVirmanUiItem(); // artık type içeriyor
+          const items = getActiveItems();
+          const movs = getActiveMovements();
+
+          if (state.edit.kind === "VIRMAN" && Number.isFinite(state.edit.index)) {
+            const idx = state.edit.index;
+            items[idx] = uiItem;
+            const dto = buildVirmanMovementDto(uiItem);
+            movs[idx] = dto;
+          } else {
+            items.push(uiItem);
+            const dto = buildVirmanMovementDto(uiItem);
+            movs.push(dto);
+          }
+
+          clearEdit();
+          rerenderReceipt();
+          Modal.close(virmanModal);
+        });
 
           el("virman-delete-button")?.addEventListener("click", (e) => {
             e.preventDefault();
@@ -4952,7 +5155,7 @@ centerPanelEl?.classList.toggle("hidden", isCari); // bu satır opsiyonel
             const toggleVal = (item.type === "GIRIS") ? "alacagina" : "borcuna";
             el("acikhesap-tipi-toggle")?._setSelected?.(toggleVal);
 
-            if (ahAmount) ahAmount.value = fmt2.format(item.amount || 0);
+                    if (ahAmount) ahAmount.value = fmt2.format(Math.abs(item.amount || 0));
             if (ahRate) ahRate.value = fmt4.format(item.rate || 1);
 
             el("acik-hesap-delete-button")?.classList.remove("hidden");
@@ -5034,49 +5237,104 @@ centerPanelEl?.classList.toggle("hidden", isCari); // bu satır opsiyonel
           };
         }
 
-          function buildAcikHesapUiItem() {
-            const toggleVal = getTriToggleValue("acikhesap-tipi-toggle");
-            const type = mapToggleToType(toggleVal);
+                function buildAcikHesapUiItem() {
+          const toggleVal = getTriToggleValue("acikhesap-tipi-toggle");
+          const type = mapToggleToType(toggleVal);
 
-            const amount = parseTrNumber(ahAmount?.value);
-            const rate = parseTrNumber(ahRate?.value);
+          const amount = parseTrNumber(ahAmount?.value);
+          const rate = parseTrNumber(ahRate?.value);
 
-            return {
-              kind: "ACIK_HESAP",
-              type,
-              amount,
-              rate,
-              karsiHesapAdi: "Açık Hesap",
-              aciklama: ""
-            };
-          }
+          // Açık hesap modalındaki birim metni (örn. HAS / EUR)
+          const currencyText = document.getElementById("form-acikhesap-currency")?.selectedOptions?.[0]?.textContent?.trim() || getSelectedCurrencyCode();
 
-                  el("acik-hesap-add-button")?.addEventListener("click", (e) => {
-          e.preventDefault();
+          // karsilikTry: seçili kur ile çarpılmış karşılık (diğer hareketlerle tutarlı olması için)
+          const karsilikTry = (Number.isFinite(amount) ? amount : 0) * (Number.isFinite(rate) ? rate : 1);
 
-          const uiItem = buildAcikHesapUiItem();
-        const items = getActiveItems();
-
-        if (state.edit.kind === "ACIK_HESAP" && Number.isFinite(state.edit.index)) {
-          items[state.edit.index] = uiItem;
-        } else {
-          items.push(uiItem);
+          return {
+            kind: "ACIK_HESAP",
+            type,
+            amount,
+            rate,
+            currency: currencyText,
+            karsilikTry,
+            karsiHesapAdi: "Açık Hesap",
+            aciklama: ""
+          };
         }
 
-        fillOpenBalanceAmountFromItems();
-        clearEdit();
-        rerenderReceipt();
-        Modal.close(acikModal);
+        // Replace existing acik-hesap add handler with this:
+// DEBUG sürümü - geçici olarak koyun
+        // KULLANICI TUTARINI MAX abs(diff) ile SINIRLAYAN sürüm
+        el("acik-hesap-add-button")?.addEventListener("click", (e) => {
+          e.preventDefault();
+          const items = getActiveItems();
 
-          // ✅ Açık hesap movement değil → MovementsJson'a girmeyecek
-          // ✅ Ama OpenBalanceAmount dolsun:
+          // diff hesapla (ACIK_HESAP hariç)
+          let giren = 0, cikan = 0;
+          (items || []).forEach(item => {
+            if (!item) return;
+            if (item.kind === "ACIK_HESAP") return;
+            if (item.kind === "NAKIT" || item.kind === "ISKONTO") {
+              if (item.type === "GIRIS") giren += Number(item.karsilikTry || 0);
+              else cikan += Number(item.karsilikTry || 0);
+              return;
+            }
+            if (item.kind === "VIRMAN") {
+              const itype = item.type || (item.toggleVal ? mapToggleToType(item.toggleVal) : null);
+              if (itype === "GIRIS") giren += Number(item.karsilikTry || 0);
+              else if (itype === "CIKIS") cikan += Number(item.karsilikTry || 0);
+              return;
+            }
+          });
+
+          const diff = giren - cikan;            // counter cinsinden
+        const enteredCounter = parseTrNumber(ahAmount?.value || "0");
+        // treat modal amount as counter directly (no multiplication)
+        const userCounter = enteredCounter > 0 ? enteredCounter : 0;
+
+          // limit: uygulanabilecek maksimum miktar = abs(diff)
+          const maxApply = Math.abs(diff);
+          let amountToApply = userCounter > 0 ? userCounter : maxApply;
+
+          // eğer kullanıcı girerse ancak fazla girdiyse, sınırla
+          if (userCounter > 0 && userCounter > maxApply) {
+            amountToApply = maxApply;
+            // istersen kullanıcıyı uyar: alert veya toast
+            // alert("Girdiğiniz tutar mevcut farkı aşıyor. Maksimum: " + fmt2.format(maxApply));
+          }
+
+          if (Math.abs(amountToApply) < 0.000001) { clearEdit(); Modal.close(acikModal); return; }
+
+          const toggleVal = getTriToggleValue("acikhesap-tipi-toggle");
+          const type = mapToggleToType(toggleVal);
+
+          const newItem = {
+            kind: "ACIK_HESAP",
+            type,
+            amount: amountToApply,
+            rate: 1,
+            currency: getSelectedCurrencyCode(),
+            karsilikTry: amountToApply,
+            karsiHesapAdi: "Açık Hesap",
+            aciklama: "Açık Hesap (kullanıcı)"
+          };
+
+          const existingIndex = (items || []).findIndex(x => x && x.kind === "ACIK_HESAP");
+          if (state.edit.kind === "ACIK_HESAP" && Number.isFinite(state.edit.index)) {
+            items[state.edit.index] = newItem;
+          } else if (existingIndex !== -1) {
+            items[existingIndex] = newItem;
+          } else {
+            items.push(newItem);
+          }
+
           fillOpenBalanceAmountFromItems();
-
+          clearEdit();
           rerenderReceipt();
           Modal.close(acikModal);
         });
 
-          el("acik-hesap-delete-button")?.addEventListener("click", (e) => {
+                  el("acik-hesap-delete-button")?.addEventListener("click", (e) => {
             e.preventDefault();
             if (state.edit.kind !== "ACIK_HESAP") return;
             const i = state.edit.index;
@@ -5393,15 +5651,24 @@ centerPanelEl?.classList.toggle("hidden", isCari); // bu satır opsiyonel
           if (e.target === confirmModal) closeConfirmModal();
         });
 
-         function renderEkstreMovements(apiResponse) {
+             function renderEkstreMovements(apiResponse) {
           const container = document.getElementById("ekstre-content");
           if (!container) return;
 
           // temizle
           container.innerHTML = "";
 
-          const first = Array.isArray(apiResponse?.data) ? apiResponse.data[0] : null;
-          const list = first?.getMovementByCustomerIdResponses || [];
+          const data = Array.isArray(apiResponse?.data) ? apiResponse.data : [];
+
+          // Tüm fişlerden hareketleri toplayıp her harekete parent receiptDate'i ekle
+          const list = [];
+          data.forEach(parent => {
+            const parentReceiptDate = parent?.receiptDate || null;
+            const movements = Array.isArray(parent?.getMovementByCustomerIdResponses)
+              ? parent.getMovementByCustomerIdResponses.map(m => ({ ...m, __parentReceiptDate: parentReceiptDate }))
+              : [];
+            list.push(...movements);
+          });
 
           // liste yoksa mesaj bas
           if (!Array.isArray(list) || list.length === 0) {
@@ -5417,7 +5684,6 @@ centerPanelEl?.classList.toggle("hidden", isCari); // bu satır opsiyonel
           const wrap = document.createElement("div");
           wrap.className = "ekstre-list-container";
 
-          // yardımcı formatlar (senin fmt2/fmt4 varsa onları kullan)
           const fmt2 = new Intl.NumberFormat("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
           const fmt4 = new Intl.NumberFormat("tr-TR", { minimumFractionDigits: 4, maximumFractionDigits: 4 });
 
@@ -5430,30 +5696,25 @@ centerPanelEl?.classList.toggle("hidden", isCari); // bu satır opsiyonel
           };
 
           // Basit bakiye hesap (EB/SB): counterCurrencyCode bazında yürütür
-          // İstersen currency bazlı farklı bakiyeler tutarız, ama şimdilik tek currency üzerinden.
           const balances = {}; // { "HAS": 0, "EUR": 0, ... }
-
           const getBal = (code) => balances[code] ?? 0;
           const setBal = (code, val) => { balances[code] = val; };
 
           list.forEach((m) => {
-            const tId = Number(m.transactionTypeId);
+            const tId = Number(m.transactionTypeId ?? 0);
             const isGiris = girisSet.has(tId);
             const isCikis = cikisSet.has(tId);
-
-            // bilinmeyen type: geç
             if (!isGiris && !isCikis) return;
 
             const transactionName = m.transactionName ?? "";
-            const receiptDate = formatDateTR(first?.receiptDate); // sen örnekte receiptDate üst objede
-            // Eğer movement bazlı tarih varsa: formatDateTR(m.receiptDate)
+            const receiptDate = formatDateTR(m.receiptDate || m.__parentReceiptDate);
 
             const foreignAmount = Number(m.foreignCurrencyAmount ?? 0);
-            const foreignCode = m.foreignCurrencyCode ?? "";
+            const foreignCode = (m.foreignCurrencyCode || "").toString();
             const foreignRate = Number(m.foreignExchangeRate ?? 0);
 
             const counterAmount = Number(m.counterCurrencyAmount ?? 0);
-            const counterCode = m.counterCurrencyCode ?? "";
+            const counterCode = (m.counterCurrencyCode || "").toString();
             const counterRate = Number(m.counterExchangeRate ?? 0);
 
             // EB/SB hesabı: counter currency üstünden
@@ -5465,9 +5726,26 @@ centerPanelEl?.classList.toggle("hidden", isCari); // bu satır opsiyonel
             row.className = `ekstre-item ${isGiris ? "ekstre-item-giris" : "ekstre-item-cikis"}`;
             row.setAttribute("data-balances", JSON.stringify({ [counterCode]: sb }));
 
-            // sign
             const sign = isGiris ? "+" : "-";
             const titleColor = isGiris ? "text-green-600" : "text-red-600";
+
+            debugger;
+            // Sol blok: giriş -> hem foreign hem counter; çıkış -> sadece foreign (istediğiniz görünüme göre)
+            const leftForeignHtml = `<div class="ekstre-v3-detay-grup">
+                    <span class="font-semibold text-sm">${sign}${fmt2.format(foreignAmount)} ${foreignCode}</span>
+                    <span class="text-xs text-gray-600">Kur: ${fmt4.format(foreignRate)}</span>
+                  </div>`;
+
+            // counter gösterimi: sadece GIRIS ise veya CIKIS için counter farklı ve isteniyorsa göster (burada GIRIS öncelik)
+            const leftCounterHtml = isGiris && (counterCode && counterCode !== foreignCode)
+              ? `<div class="ekstre-v3-detay-grup">
+                    <span class="font-semibold text-sm">${fmt2.format(counterAmount)} ${counterCode}</span>
+                    <span class="text-xs text-gray-600">Kur: ${fmt4.format(counterRate)}</span>
+                 </div>`
+              : (isGiris && (counterCode === foreignCode) ? `<div class="ekstre-v3-detay-grup">
+                    <span class="font-semibold text-sm">${fmt2.format(counterAmount)} ${counterCode}</span>
+                    <span class="text-xs text-gray-600">Kur: ${fmt4.format(counterRate)}</span>
+                 </div>` : '');
 
             row.innerHTML = `
               <div style="display: contents;">
@@ -5477,14 +5755,8 @@ centerPanelEl?.classList.toggle("hidden", isCari); // bu satır opsiyonel
                 </div>
 
                 <div class="ekstre-v3-orta">
-                  <div class="ekstre-v3-detay-grup">
-                    <span class="font-semibold text-sm">${sign}${fmt2.format(foreignAmount)} ${foreignCode}</span>
-                    <span class="text-xs text-gray-600">Kur: ${fmt4.format(foreignRate)}</span>
-                  </div>
-                  <div class="ekstre-v3-detay-grup">
-                    <span class="font-semibold text-sm">${fmt2.format(counterAmount)} ${counterCode}</span>
-                    <span class="text-xs text-gray-600">Kur: ${fmt4.format(counterRate)}</span>
-                  </div>
+                  ${leftForeignHtml}
+                  ${leftCounterHtml}
                 </div>
               </div>
 
@@ -5495,9 +5767,9 @@ centerPanelEl?.classList.toggle("hidden", isCari); // bu satır opsiyonel
                 </div>
 
                 <div class="flex flex-col items-center">
-                  <span class="hareket-id">ID:${m.id}</span>
+                  <span class="hareket-id">ID:${m.id ?? ""}</span>
                   <label class="mutabakat-switch">
-                    <input type="checkbox" id="mutabakat-${m.id}">
+                    <input type="checkbox" id="mutabakat-${m.id ?? ""}">
                     <span class="mutabakat-slider"></span>
                   </label>
                 </div>
@@ -5516,7 +5788,6 @@ centerPanelEl?.classList.toggle("hidden", isCari); // bu satır opsiyonel
 
           container.appendChild(wrap);
         }
-
 
         wireVirmanKarsilikLive();
 
@@ -5822,6 +6093,25 @@ centerPanelEl?.classList.toggle("hidden", isCari); // bu satır opsiyonel
           const result = (tutar * kur) / eqRate;
           eqAmountInput.value = fmt2.format(result);
         }
+                // Show "Bu özellik henüz hazırlanıyor." when product buttons clicked in SATIŞ mode
+        (function wireProductButtonsPlaceholder() {
+          const btnUrunAlis = document.getElementById("btn-urun-alis");
+          const btnUrunSatis = document.getElementById("btn-urun-satis");
+
+          const handler = (e) => {
+            // Only intercept in SATIŞ mode
+            if (document.body.classList.contains("satis-active")) {
+              e.preventDefault();
+              // Title "Bilgi" already used by showConfirm modal structure; showConfirm shows message body.
+              showConfirm("Bu özellik henüz hazırlanıyor.");
+              return;
+            }
+            // If not sales mode, allow default behavior (no-op here).
+          };
+
+          if (btnUrunAlis) btnUrunAlis.addEventListener("click", handler);
+          if (btnUrunSatis) btnUrunSatis.addEventListener("click", handler);
+        })();
 
                 (function wireCariEquivalentHandlers() {
           const toggle = document.getElementById("nt-karsilik-toggle");
