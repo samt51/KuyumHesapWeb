@@ -19,6 +19,10 @@
         /// Hareket tipi adı
         /// </summary>
         public string TransactionName { get; set; } = null!;
+        /// <summary>
+        /// Nakit Giriş ve Çıkış için Kasa mı ? Banka Mı? Poslar Mı ? 
+        /// </summary>
+        public string ToggleName { get; set; }
 
         /// <summary>
         /// İşlemin ait olduğu hesap kimliği (Foreign Key -> Accounts)
