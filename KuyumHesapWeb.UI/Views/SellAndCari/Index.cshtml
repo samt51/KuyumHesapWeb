@@ -1623,11 +1623,14 @@
                                         }
                 </select>
 
+                @* Customer select — add data attributes *@
                 <div class="app-shell-customer flex-1 min-w-0 w-full sm:w-auto">
                     <select id="customer-select" asp-for="createReceiptCommandRequest.CurrentAccountId" class="w-full">
                         @foreach (var item in Model.getAllAccountQueryResponses)
                         {
                             <option value="@item.AccountId"
+                                    data-account-type="@item.AccountTypeName"
+                                    data-account-name="@item.AccountName"
                                     selected="@(Model.createReceiptCommandRequest != null && item.AccountId == Model.createReceiptCommandRequest.CurrentAccountId ? "selected" : null)">
                                 @item.AccountName
                             </option>
@@ -2224,22 +2227,21 @@
                     <div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
 
                         <!-- Hesap Filtresi -->
-                        <div class="md:col-span-5">
-                            <label for="fis-list-customer-filter" class="block text-xs font-semibold text-gray-600 mb-1">
-                                Hesap Filtresi
-                            </label>
-                            <select id="fis-list-customer-filter"
-                                    class="w-full h-[38px] px-3 bg-white border border-gray-300 rounded-md shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-
-
-                                @foreach (var item in Model.getAllAccountQueryResponses.Where(x => !x.Tezgahtar))
-                                {
-                                    <option value="@item.AccountId">@item.AccountName</option>
-                                }
-
-
-                            </select>
-                        </div>
+                    @* Fiş listesi filter select — keep same attributes to help other flows *@
+                    <div class="md:col-span-5">
+                        <label for="fis-list-customer-filter" class="block text-xs font-semibold text-gray-600 mb-1">
+                            Hesap Filtresi
+                        </label>
+                        <select id="fis-list-customer-filter"
+                                class="w-full h-[38px] px-3 bg-white border border-gray-300 rounded-md shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            @foreach (var item in Model.getAllAccountQueryResponses.Where(x => !x.Tezgahtar))
+                            {
+                                <option value="@item.AccountId" data-account-type="@item.AccountTypeName" data-account-name="@item.AccountName">
+                                    @item.AccountName
+                                </option>
+                            }
+                        </select>
+                    </div>
 
                         <!-- Başlangıç -->
                         <div class="md:col-span-3">
@@ -3293,7 +3295,7 @@
           } catch (e) { console.warn("resetIskontoModal failed", e); }
         }
 
-                        function resetVirmanModal() {
+            function resetVirmanModal() {
           try {
             const amt = el("form-virman-amount");
             const rate = el("form-virman-rate");
@@ -3302,16 +3304,28 @@
             const toggle = el("virman-karsilik-toggle");
             const del = el("virman-delete-button");
             const btn = el("virman-add-button");
+            const acik = el("form-virman-aciklama");
+
             if (curr) { curr.selectedIndex = 0; curr.closest(".float-label-container")?.classList.add("select-has-value"); }
             if (amt) amt.value = "0,00";
             if (rate) rate.value = "1,0000";
             if (toggle) toggle.checked = false;
             if (details) details.classList.add("hidden");
-            if (del) del.classList.add("hidden");
+            // CLEAR explanation
+            if (acik) acik.value = "";
+
+            // hide delete + remove any lingering onclick handlers
+            if (del) {
+              del.classList.add("hidden");
+              try { del.onclick = null; } catch {}
+            }
+
             if (btn) {
               btn.innerHTML = `<i class="fas fa-check mr-1.5"></i>Ekle`;
-              btn.removeAttribute("data-external-edit"); // <- remove external-edit mark
+              try { btn.removeAttribute("data-external-edit"); } catch {}
+              try { btn.onclick = null; } catch {}
             }
+
             state.edit = state.edit || { kind: null, index: null };
             state.edit.kind = null;
             state.edit.index = null;
@@ -4952,25 +4966,43 @@ centerPanelEl?.classList.toggle("hidden", isCari); // bu satır opsiyonel
           wireTrMoneyInput(virAmount, 2);
           wireTrMoneyInput(virRate, 4);
 
-          function openVirmanForCreate() {
-            state.edit.kind = null;
-            state.edit.index = null;
+        function openVirmanForCreate() {
+          state.edit.kind = null;
+          state.edit.index = null;
 
-            el("virman-tipi-toggle")?._setSelected?.("alacagina");
-            el("virman-delete-button")?.classList.add("hidden");
+          el("virman-tipi-toggle")?._setSelected?.("alacagina");
+          el("virman-delete-button")?.classList.add("hidden");
 
-            const btn = el("virman-add-button");
-            if (btn) btn.innerHTML = `<i class="fas fa-check mr-1.5"></i>Ekle`;
+          const btn = el("virman-add-button");
+          const del = el("virman-delete-button");
+          const acik = el("form-virman-aciklama");
 
-                    const toggle = document.getElementById("virman-karsilik-toggle");
-        const details = document.getElementById("virman-karsilik-details");
-        if (toggle) toggle.checked = false;
-        if (details) details.classList.add("hidden");
+          if (btn) {
+            // ensure any previous external handlers are cleared so "Ekle" acts as create
+            btn.innerHTML = `<i class="fas fa-check mr-1.5"></i>Ekle`;
+            try { btn.removeAttribute("data-external-edit"); } catch {}
+            try { btn.onclick = null; } catch {}
+          }
+
+          if (del) {
+            try { del.onclick = null; } catch {}
+          }
+
+          // CLEAR explanation when opening for a new virman
+          if (acik) acik.value = "";
+
+          const toggle = document.getElementById("virman-karsilik-toggle");
+          const details = document.getElementById("virman-karsilik-details");
+          if (toggle) toggle.checked = false;
+          if (details) details.classList.add("hidden");
 
           applyVirmanModalModeUI();
 
-            Modal.open(virmanModal);
-          }
+          Modal.open(virmanModal);
+        }
+
+
+
                   document.addEventListener("change", (e) => {
           if (e.target?.id === "virman-karsilik-toggle") console.log("✅ virman toggle changed:", e.target.checked);
         });
@@ -5746,6 +5778,34 @@ if (amountInput) amountInput.value = fmt2.format(Math.abs(farkValue));
           openVirmanForCreate(); // senin Modal.open(virmanModal) yapan fonksiyon
         }
 
+
+                // Set default dates when Ekstre modal opens: end = today, start = yesterday
+        function setEkstreDefaultDates() {
+          try {
+            const start = document.getElementById("ekstre-baslangic-tarihi");
+            const end = document.getElementById("ekstre-bitis-tarihi");
+            const now = new Date();
+            const pad = (n) => String(n).padStart(2, "0");
+
+            const yyyy = now.getFullYear();
+            const mm = pad(now.getMonth() + 1);
+            const dd = pad(now.getDate());
+            const todayIso = `${yyyy}-${mm}-${dd}`;
+
+            const prev = new Date(now);
+            prev.setDate(now.getDate() - 1);
+            const pyyyy = prev.getFullYear();
+            const pmm = pad(prev.getMonth() + 1);
+            const pdd = pad(prev.getDate());
+            const yesterdayIso = `${pyyyy}-${pmm}-${pdd}`;
+
+            if (end) end.value = todayIso;
+            if (start) start.value = yesterdayIso;
+          } catch (err) {
+            console.warn("setEkstreDefaultDates failed:", err);
+          }
+        }
+
           // -----------------------------------
           // Top bar buttons + modal open
           // -----------------------------------
@@ -5760,7 +5820,12 @@ if (amountInput) amountInput.value = fmt2.format(Math.abs(farkValue));
             if (t.closest("#btn-acik-hesap")) { e.preventDefault(); void openAcikHesapForCreate_Guarded(); }
 
 
-            if (t.closest("#ekstre-button")) { e.preventDefault(); Modal.open(ekstreModal); return; }
+                  if (t.closest("#ekstre-button")) {
+          e.preventDefault();
+          setEkstreDefaultDates();
+          Modal.open(ekstreModal);
+          return;
+        }
             if (t.closest("#sales-list-button")) { e.preventDefault(); Modal.open(fisListModal); return; }
             if (t.closest("#btn-ceviri")) { e.preventDefault(); return openCeviriForCreate_Guarded(); }
 
@@ -5810,50 +5875,82 @@ if (amountInput) amountInput.value = fmt2.format(Math.abs(farkValue));
           return items.length > 0 || movs.length > 0;
         }
 
-         function fillEkstreHeader(apiResponse) {
-          // apiResponse: { data: [ { ... } ], statusCode, isSuccess, errors }
+             function fillEkstreHeader(apiResponse) {
+          try {
+            const elName = document.getElementById("ekstre-hesap-adi");
+            const elType = document.getElementById("ekstre-hesap-tipi");
+            const elId   = document.getElementById("ekstre-hesap-id");
 
-          const elName = document.getElementById("ekstre-hesap-adi");
-          const elType = document.getElementById("ekstre-hesap-tipi");
-          const elId   = document.getElementById("ekstre-hesap-id");
+            // Normalize: unwrap common wrappers
+            let payload = apiResponse ?? null;
+            if (!payload) {
+              if (elName) elName.textContent = "-";
+              if (elType) elType.textContent = "Hesap Tipi: -";
+              if (elId) elId.textContent = "Müşteri No: -";
+              return;
+            }
 
-          if (!apiResponse || apiResponse.isSuccess !== true) {
-            if (elName) elName.textContent = "-";
-            if (elType) elType.textContent = "Hesap Tipi: -";
-            if (elId)   elId.textContent = "Müşteri No: -";
-            return;
-          }
+            // unwrap .data if present (one or two levels)
+            if (payload.data !== undefined) payload = payload.data;
+            if (payload && payload.data !== undefined) payload = payload.data;
 
-          const first = Array.isArray(apiResponse.data) ? apiResponse.data[0] : null;
-          if (!first) {
-            if (elName) elName.textContent = "-";
-            if (elType) elType.textContent = "Hesap Tipi: -";
-            if (elId)   elId.textContent = "Müşteri No: -";
-            return;
-          }
+            // payload may be array (take first) or object
+            const src = Array.isArray(payload) ? (payload[0] ?? {}) : (payload ?? {});
 
-          const accountName = first.accountName ?? "-";
-          const accountTypeName = first.accountTypeName ?? "-";
+            // Try many locations for account info (PascalCase, camelCase, nested)
+            const accountCandidates = [
+              src,
+              src.account,
+              src.accountInfo,
+              src.customer,
+              src.receiptHeader,
+              src.header
+            ];
 
-          // ⚠️ Burada karar:
-          // - "Müşteri No" genelde accountId olur
-          // - first.id ise receiptId (fiş id)
-          const customerNo = first.accountId ?? first.id ?? "-";
+            let accountName = null;
+            let accountTypeName = null;
+            let accountIdVal = null;
+            for (const c of accountCandidates) {
+              if (!c) continue;
+              accountName = accountName ?? (c.AccountName ?? c.accountName ?? c.hesapAdi ?? null);
+              accountTypeName = accountTypeName ?? (c.AccountTypeName ?? c.accountTypeName ?? c.hesapTipi ?? null);
+              accountIdVal = accountIdVal ?? (c.AccountId ?? c.accountId ?? c.id ?? c.HesapId ?? null);
+              if (accountName && accountTypeName && accountIdVal) break;
+            }
 
-          if (elName) {
-            elName.textContent = accountName;
-            elName.title = accountName;
-          }
+            // If still missing, fallback to selected customer on page
+            const custSel = document.getElementById("customer-select");
+            if (!accountName) {
+              accountName = (custSel?.selectedOptions?.[0]?.textContent || "").trim() || "-";
+            }
+            if (!accountIdVal) {
+              const val = custSel?.value;
+              accountIdVal = (val !== undefined && val !== null && String(val).trim() !== "") ? val : "-";
+            }
+            if (!accountTypeName) {
+              // try to read optional data-* on select option
+              const opt = custSel?.selectedOptions?.[0];
+              accountTypeName = opt?.dataset?.accountTypeName || opt?.getAttribute("data-account-type") || "-";
+              if (!accountTypeName || accountTypeName === "undefined") accountTypeName = "-";
+            }
 
-          if (elType) {
-            elType.textContent = `Hesap Tipi: ${accountTypeName}`;
-          }
+            const accountId = (accountIdVal === null || typeof accountIdVal === "undefined") ? "-" : String(accountIdVal);
 
-          if (elId) {
-            elId.textContent = `Müşteri No: ${customerNo}`;
+            // Apply to DOM
+            if (elName) { elName.textContent = accountName; elName.title = accountName; }
+            if (elType) elType.textContent = `Hesap Tipi: ${accountTypeName}`;
+            if (elId)   elId.textContent = `Müşteri No: ${accountId}`;
+
+            console.log("fillEkstreHeader sourced from:", {
+              foundAccountName: !!accountName,
+              foundAccountTypeName: !!accountTypeName && accountTypeName !== "-",
+              foundAccountId: accountId !== "-"
+            });
+
+          } catch (err) {
+            console.warn("fillEkstreHeader error:", err);
           }
         }
-
         // FİŞİ TAMAMEN TEMİZLE
               function clearReceiptAll() {
           if (!window.state) return;
@@ -5936,159 +6033,293 @@ if (amountInput) amountInput.value = fmt2.format(Math.abs(farkValue));
           if (e.target === confirmModal) closeConfirmModal();
         });
 
-             function renderEkstreMovements(apiResponse) {
-          const container = document.getElementById("ekstre-content");
-          if (!container) return;
+                // Add inside DOMContentLoaded, BEFORE `renderEkstreMovements` definition
+        async function renderBakiyeOzeti(devreden, currencyIdMap, bakiyeWrap, hasPozEl) {
+          if (!bakiyeWrap) return;
+          const fmt2 = new Intl.NumberFormat("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-          // temizle
-          container.innerHTML = "";
+          // Local helper (fix for ReferenceError)
+          function escapeHtml(s) {
+            if (s === null || s === undefined) return "";
+            return String(s)
+              .replaceAll("&", "&amp;")
+              .replaceAll("<", "&lt;")
+              .replaceAll(">", "&gt;")
+              .replaceAll('"', "&quot;")
+              .replaceAll("'", "&#039;");
+          }
 
-          const data = Array.isArray(apiResponse?.data) ? apiResponse.data : [];
-
-          // Tüm fişlerden hareketleri toplayıp her harekete parent receiptDate'i ekle
-          const list = [];
-          data.forEach(parent => {
-            const parentReceiptDate = parent?.receiptDate || null;
-            const movements = Array.isArray(parent?.getMovementByCustomerIdResponses)
-              ? parent.getMovementByCustomerIdResponses.map(m => ({ ...m, __parentReceiptDate: parentReceiptDate }))
-              : [];
-            list.push(...movements);
-          });
-
-          // liste yoksa mesaj bas
-          if (!Array.isArray(list) || list.length === 0) {
-            container.innerHTML = `<div class="text-gray-500 text-sm">Kayıt bulunamadı.</div>`;
+          if (!Array.isArray(devreden) || devreden.length === 0) {
+            bakiyeWrap.innerHTML = `<div class="text-center text-gray-500 py-2 text-sm">Bakiye bulunmuyor.</div>`;
+            if (hasPozEl) hasPozEl.innerHTML = "";
             return;
           }
 
-          // Giriş / Çıkış transactionTypeId setleri
-          const girisSet = new Set([1, 3, 5, 7, 9]);
-          const cikisSet = new Set([2, 4, 6, 8, 10]);
+          const HAS_CURRENCY_ID = 1;
+          const hasRateTRY = Number(await fetchRateByCurrencyId(HAS_CURRENCY_ID)) || 1;
+          let toplamHas = 0;
+          const ratesCache = {};
+          const rows = [];
 
-          // list wrapper
-          const wrap = document.createElement("div");
-          wrap.className = "ekstre-list-container";
+          for (const b of devreden) {
+            const code = (b.dovizKodu || b.currencyCode || b.CurrencyCode || b.currency || "TRY").toString().trim();
+            const val = Number(b.bakiye ?? b.balance ?? b.Amount ?? 0) || 0;
+            if (Math.abs(val) < 0.001) continue;
 
+            const durumClass = val >= 0 ? 'alacak' : 'borc';
+            const durumText = val >= 0 ? 'Alacak' : 'Borç';
+
+            let curId = currencyIdMap?.[code] ?? (code === "TRY" ? 3 : null);
+            let curRateTRY = 0;
+
+            if (code === "HAS") {
+              toplamHas += val;
+            } else if (curId == null) {
+              curRateTRY = 0;
+            } else if (Number(curId) === 3) {
+              curRateTRY = 1;
+            } else {
+              if (ratesCache[curId] == null) {
+                try { ratesCache[curId] = Number(await fetchRateByCurrencyId(curId)) || 0; }
+                catch { ratesCache[curId] = 0; }
+              }
+              curRateTRY = ratesCache[curId] || 0;
+            }
+
+            if (curRateTRY && hasRateTRY) toplamHas += (val * curRateTRY) / hasRateTRY;
+
+            rows.push(`
+              <div class="bakiye-item">
+                <span class="birim">${escapeHtml(code)}</span>
+                <span class="tutar ${durumClass}">${fmt2.format(Math.abs(val))} ${durumText}</span>
+              </div>
+            `);
+          }
+
+          bakiyeWrap.innerHTML = rows.length ? rows.join("") : `<div class="text-center text-gray-500 py-2 text-sm">Bakiye bulunmuyor.</div>`;
+          if (hasPozEl) {
+            hasPozEl.innerHTML = `Pozisyon: <span class="${toplamHas >= 0 ? 'text-green-700' : 'text-red-700'} font-mono">${fmt2.format(toplamHas)} HAS</span>`;
+          }
+        }
+
+                      async   function renderEkstreMovements(apiResponse) {
+          const container = document.getElementById("ekstre-content");
+          const bakiyeWrap = document.getElementById("ekstre-bakiye-ozeti");
+          const hasPozEl = document.getElementById("ekstre-has-pozisyon");
+          if (!container) return;
+
+          const currencyIdMap = {
+            @for (int i = 0; i < Model.getAllCurrencyQueryResponses.Count; i++)
+            {
+                          var c = Model.getAllCurrencyQueryResponses[i];
+                          <text>"@c.CurrencyCode": @c.Id@((i < Model.getAllCurrencyQueryResponses.Count - 1) ? "," : "")</text>
+            }
+          };
+          // Normalize payload (support wrapper and direct shapes)
+          const raw = apiResponse ?? null;
+          let payload = null;
+          if (!raw) payload = null;
+          else if (Array.isArray(raw)) payload = { hareketler: raw };
+          else payload = raw.data ?? raw;
+
+          if (!payload) {
+            container.innerHTML = `<div class="text-gray-500 text-sm">Kayıt bulunamadı.</div>`;
+            if (bakiyeWrap) bakiyeWrap.innerHTML = "";
+            if (hasPozEl) hasPozEl.innerHTML = "";
+            return;
+          }
+
+          const devreden = payload.DevredenBakiyeler ?? payload.devredenBakiyeler ?? payload.balances ?? payload.DevredenBalances ?? [];
+          let hareketler = payload.Hareketler ?? payload.hareketler ?? payload.movements ?? payload.getMovementByCustomerIdResponses ?? [];
+
+          if (!Array.isArray(hareketler)) hareketler = [];
+
+          // formatters
           const fmt2 = new Intl.NumberFormat("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
           const fmt4 = new Intl.NumberFormat("tr-TR", { minimumFractionDigits: 4, maximumFractionDigits: 4 });
 
-          const formatDateTR = (iso) => {
-            if (!iso) return "";
-            const d = new Date(iso);
-            if (Number.isNaN(d.getTime())) return iso;
-            const pad = (n) => String(n).padStart(2, "0");
-            return `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
-          };
+          // Bakiye özeti
+               // Replace the existing bakiyeWrap rendering block with:
+        if (bakiyeWrap) {
+          await renderBakiyeOzeti(devreden, currencyIdMap, bakiyeWrap, hasPozEl);
+        }
 
-          // Basit bakiye hesap (EB/SB): counterCurrencyCode bazında yürütür
-          const balances = {}; // { "HAS": 0, "EUR": 0, ... }
-          const getBal = (code) => balances[code] ?? 0;
-          const setBal = (code, val) => { balances[code] = val; };
+          if (!hareketler.length) {
+            container.innerHTML = '<div class="text-center text-gray-400 py-8">Hareket bulunamadı.</div>';
+            if (hasPozEl) hasPozEl.innerHTML = "";
+            return;
+          }
 
-          list.forEach((m) => {
-            const tId = Number(m.transactionTypeId ?? 0);
-            const isGiris = girisSet.has(tId);
-            const isCikis = cikisSet.has(tId);
-            if (!isGiris && !isCikis) return;
+          // Build rows with two detail groups in ekstre-v3-orta
+          const rows = hareketler.map(h => {
+            const date = h.tarih ?? h.date ?? h.receiptDate ?? h.transactionDate ?? h.createdAt ?? "";
+            const description = h.aciklama ?? h.description ?? h.note ?? "";
 
-            const transactionName = m.transactionName ?? "";
-            const receiptDate = formatDateTR(m.receiptDate || m.__parentReceiptDate);
+            // Determine direction (giriş/çıkış)
+            const girisFlag =
+              (typeof h.girisMi !== "undefined") ? Boolean(h.girisMi)
+              : (typeof h.isGiris !== "undefined") ? Boolean(h.isGiris)
+              : (typeof h.transactionTypeId !== "undefined" ? [1,3,5,7,9].includes(Number(h.transactionTypeId)) : null);
+            const isGiris = girisFlag === null ? (Number(h.miktar ?? h.quantity ?? h.foreignCurrencyAmount ?? h.amount ?? 0) >= 0) : Boolean(girisFlag);
 
-            const foreignAmount = Number(m.foreignCurrencyAmount ?? 0);
-            const foreignCode = (m.foreignCurrencyCode || "").toString();
-            const foreignRate = Number(m.foreignExchangeRate ?? 0);
+            // PRIMARY (quantity) fields
+            const quantity = Number(h.quantity ?? h.miktar ?? h.foreignCurrencyAmount ?? h.amount ?? 0) || 0;
+            const quantityUnit = (h.quantityUnit ?? h.birim ?? h.foreignCurrencyCode ?? h.currency ?? "TRY").toString();
+            const quantityRate = Number(h.rate ?? h.kur ?? h.foreignRate ?? h.exchangeRate ?? 0) || 0;
+            const unit = (h.unit ?? h.Unit ?? h.birim ?? h.UnitName ?? h.unitName ?? h.foreignCurrencyCode ?? h.currency ?? getSelectedCurrencyCode() ?? "TRY").toString().trim();
 
-            const counterAmount = Number(m.counterCurrencyAmount ?? 0);
-            const counterCode = (m.counterCurrencyCode || "").toString();
-            const counterRate = Number(m.counterExchangeRate ?? 0);
+            // COUNTER fields (second group)
+            const counterQuantity = Number(h.counterQuantity ?? h.karsilikMiktar ?? h.counterCurrencyAmount ?? h.karsilikTry ?? 0) || 0;
+            const counterUnit = (h.counterUnit ?? h.karsilikBirim ?? h.counterCurrencyCode ?? getSelectedCurrencyCode() ?? "TRY").toString();
+            const counterRate = Number(h.counterRate ?? h.karsilikKuru ?? h.counterExchangeRate ?? h.counterRate ?? 0) || 0;
 
-            // EB/SB hesabı: counter currency üstünden
-            const eb = getBal(counterCode);
-            const sb = isGiris ? (eb + counterAmount) : (eb - counterAmount);
-            setBal(counterCode, sb);
+            // Prefer server model property names (OldBalance / FinalBalance), fall back to legacy fields
+            const oldBalanceVal = Number(h.OldBalance ?? h.oldBalance ?? h.eskiBakiye ?? h.eb ?? 0) || 0;
+            const finalBalanceVal = Number(h.FinalBalance ?? h.finalBalance ?? h.sonBakiye ?? h.newBalance ?? h.sb ?? 0) || 0;
 
-            const row = document.createElement("div");
-            row.className = `ekstre-item ${isGiris ? "ekstre-item-giris" : "ekstre-item-cikis"}`;
-            row.setAttribute("data-balances", JSON.stringify({ [counterCode]: sb }));
+            const title = (h.islem ?? h.transactionName ?? h.transactionNameLocal ?? h.name ?? "").toString() || (isGiris ? "Giriş" : "Çıkış");
+            const sideClass = isGiris ? "ekstre-item-giris" : "ekstre-item-cikis";
+            const movId = h.hareketID ?? h.movementId ?? h.id ?? 0;
+            const fisId = h.fisID ?? h.receiptId ?? h.parentReceiptId ?? 0;
 
-            const sign = isGiris ? "+" : "-";
-            const titleColor = isGiris ? "text-green-600" : "text-red-600";
+            // Robust extraction of transaction type / code / name and related data-* attributes
+            const rawTId = h.transactionTypeId ?? h.TransactionTypeId ?? h.transactionType ?? h.txTypeId ?? h.islemTipiId ?? h.typeId ?? null;
+            const tId = Number(rawTId) || 0;
+            const txCode = String(h.transactionCode ?? h.code ?? h.kod ?? h.islemKodu ?? "").trim();
+            const txName = String(h.transactionName ?? h.name ?? h.islem ?? "").trim();
 
-            debugger;
-            // Sol blok: giriş -> hem foreign hem counter; çıkış -> sadece foreign (istediğiniz görünüme göre)
-            const leftForeignHtml = `<div class="ekstre-v3-detay-grup">
-                    <span class="font-semibold text-sm">${sign}${fmt2.format(foreignAmount)} ${foreignCode}</span>
-                    <span class="text-xs text-gray-600">Kur: ${fmt4.format(foreignRate)}</span>
-                  </div>`;
+            const foreignAmount = Number(h.foreignCurrencyAmount ?? h.miktar ?? h.quantity ?? h.amount ?? 0) || 0;
+            const foreignCurrencyId = h.foreignCurrencyId ?? h.foreignCurrency ?? h.currencyId ?? h.dovizId ?? "";
+            const foreignCurrencyCode = (h.foreignCurrencyCode ?? h.currency ?? h.birim ?? "").toString().trim();
+            const foreignRate = (h.foreignExchangeRate ?? h.kur ?? h.rate ?? h.exchangeRate ?? "") || "";
+            const counterAmount = Number(h.counterCurrencyAmount ?? h.karsilikTry ?? h.karsilikMiktar ?? 0) || 0;
+            const counterCurrencyCode = (h.counterCurrencyCode ?? getSelectedCurrencyCode() ?? "TRY").toString();
 
-            // counter gösterimi: sadece GIRIS ise veya CIKIS için counter farklı ve isteniyorsa göster (burada GIRIS öncelik)
-            const leftCounterHtml = isGiris && (counterCode && counterCode !== foreignCode)
-              ? `<div class="ekstre-v3-detay-grup">
-                    <span class="font-semibold text-sm">${fmt2.format(counterAmount)} ${counterCode}</span>
-                    <span class="text-xs text-gray-600">Kur: ${fmt4.format(counterRate)}</span>
-                 </div>`
-              : (isGiris && (counterCode === foreignCode) ? `<div class="ekstre-v3-detay-grup">
-                    <span class="font-semibold text-sm">${fmt2.format(counterAmount)} ${counterCode}</span>
-                    <span class="text-xs text-gray-600">Kur: ${fmt4.format(counterRate)}</span>
-                 </div>` : '');
+            const accountId = h.hesapId ?? h.accountId ?? h.CustomerId ?? h.accountId ?? "";
+            const accountName = h.hesapAdi ?? h.accountName ?? h.account ?? "";
 
-            row.innerHTML = `
-              <div style="display: contents;">
-                <div class="ekstre-v3-sol">
-                  <span class="baslik ${titleColor}">${transactionName}</span>
-                  <span class="tarih">${receiptDate}</span>
+            const toggleName = h.tab ?? h.section ?? h.toggleName ?? "";
+
+            return `
+              <div class="ekstre-item ${sideClass} rounded-lg mb-3 p-4 flex items-start">
+                <div style="display: contents;">
+                  <div class="ekstre-v3-sol">
+                    <span class="baslik ${isGiris ? 'text-green-600' : 'text-red-600'}">${escapeHtml(title)}</span>
+                    <span class="tarih">${escapeHtml(formatDateTR(date))}</span>
+                  </div>
+
+                  <div class="ekstre-v3-orta">
+                    <div class="ekstre-v3-detay-grup">
+                      <span class="font-semibold text-sm">${isGiris ? '+' : '-'}${fmt2.format(Math.abs(quantity))} ${escapeHtml(unit)}</span>
+                      <span class="text-xs text-gray-600">Kur: ${fmt4.format(quantityRate)}</span>
+                    </div>
+
+                    <div class="ekstre-v3-detay-grup">
+                      <span class="font-semibold text-sm">${fmt2.format(Math.abs(counterQuantity))} ${escapeHtml(counterUnit)}</span>
+                      <span class="text-xs text-gray-600">Kur: ${fmt4.format(counterRate)}</span>
+                    </div>
+                  </div>
                 </div>
 
-                <div class="ekstre-v3-orta">
-                  ${leftForeignHtml}
-                  ${leftCounterHtml}
+                <div class="ekstre-blok-sag ml-auto flex items-center gap-3">
+                  <div class="bakiye-grup text-right">
+                    <span class="eski-bakiye text-xs text-gray-500">EB: ${fmt2.format(oldBalanceVal)} ${escapeHtml(counterUnit)}</span>
+                    <span class="son-bakiye text-sm font-bold">SB: ${fmt2.format(finalBalanceVal)} ${escapeHtml(counterUnit)}</span>
+                  </div>
+
+                  <div class="flex flex-col items-center">
+                    <span class="hareket-id text-xs text-gray-400">ID:${escapeHtml(movId)}</span>
+                    <label class="mutabakat-switch">
+                      <input type="checkbox" id="mutabakat-${escapeHtml(movId)}">
+                      <span class="mutabakat-slider"></span>
+                    </label>
+                  </div>
+
+                  <div class="ml-2">
+                    <button class="edit-ekstre-fis-btn bg-blue-100 text-blue-800 text-xs font-semibold px-3 py-1 rounded-md hover:bg-blue-200"
+                            data-fis-id="${escapeHtml(fisId)}"
+                            data-mov-id="${escapeHtml(movId)}"
+                            data-transaction-type-id="${escapeHtml(tId)}"
+                            data-transaction-code="${escapeHtml(txCode)}"
+                            data-transaction-name="${escapeHtml(txName)}"
+                            data-foreign-amount="${escapeHtml(foreignAmount)}"
+                            data-foreign-currency-id="${escapeHtml(foreignCurrencyId)}"
+                            data-foreign-currency-code="${escapeHtml(foreignCurrencyCode)}"
+                            data-foreign-rate="${escapeHtml(foreignRate)}"
+                            data-counter-amount="${escapeHtml(counterAmount)}"
+                            data-counter-currency-code="${escapeHtml(counterCurrencyCode)}"
+                            data-account-id="${escapeHtml(accountId)}"
+                            data-account-name="${escapeHtml(accountName)}"
+                            data-toggle-name="${escapeHtml(toggleName)}">
+                      <i class="fas fa-pencil-alt"></i>
+                    </button>
+                  </div>
                 </div>
               </div>
-
-              <div class="ekstre-blok-sag">
-                <div class="bakiye-grup">
-                  <span class="eski-bakiye">EB: ${fmt2.format(eb)} ${counterCode}</span>
-                  <span class="son-bakiye">SB: ${fmt2.format(sb)} ${counterCode}</span>
-                </div>
-
-                <div class="flex flex-col items-center">
-                  <span class="hareket-id">ID:${m.id ?? ""}</span>
-                  <label class="mutabakat-switch">
-                    <input type="checkbox" id="mutabakat-${m.id ?? ""}">
-                    <span class="mutabakat-slider"></span>
-                  </label>
-                </div>
-
-                      <div class="ml-2">
-
-                   <button
-          class="edit-ekstre-fis-btn bg-blue-100 text-blue-800 text-xs font-semibold px-3 py-1 rounded-md hover:bg-blue-200"
-          data-fis-id="${m.receiptId ?? ''}"
-          data-mov-id="${m.id ?? ''}"
-          data-transaction-type-id="${m.transactionTypeId ?? ''}"
-          data-transaction-code="${m.transactionCode ?? ''}"
-          data-transaction-name="${m.transactionName ?? ''}"
-          data-foreign-amount="${m.foreignCurrencyAmount ?? 0}"
-          data-foreign-currency-id="${m.foreignCurrencyId ?? ''}"
-          data-foreign-currency-code="${m.foreignCurrencyCode ?? ''}"
-          data-foreign-rate="${m.foreignExchangeRate ?? 0}"
-          data-counter-amount="${m.counterCurrencyAmount ?? 0}"
-          data-counter-currency-code="${m.counterCurrencyCode ?? ''}"
-          data-counter-rate="${m.counterCurrencyRate ?? 0}"
-          data-description="${(m.description ?? '').replace(/"/g, '&quot;')}"
-          data-account-id="${m.accountId ?? ''}"
-          data-toggle-name="${(m.toggleName || '').toString().toUpperCase()}"
-        >
-          <i class="fas fa-pencil-alt"></i>
-        </button>
-            </div>
-          </div>
             `;
+          }).join("");
 
-            wrap.appendChild(row);
-          });
+          container.innerHTML = `<div class="ekstre-list-container">${rows}</div>`;
 
-          container.appendChild(wrap);
+          // pozisyon hesaplama (örnek)
+          // pozisyon hesaplama — gerçek kurlarla HAS'e çevir (async)
+          if (hasPozEl) {
+            try {
+              const HAS_CURRENCY_ID = 1; // senin HAS id'n (projede HAS=1 olarak kullanılıyor)
+              const hasRateTRY = Number(await fetchRateByCurrencyId(HAS_CURRENCY_ID)) || 1; // TRY cinsinden HAS kuru
+              let toplamHas = 0;
+              const ratesCache = {}; // currencyId -> rate (TRY per unit)
+
+              for (const b of (devreden || [])) {
+                const code = (b.dovizKodu || b.currencyCode || b.CurrencyCode || b.currency || "").toString().trim() || "TRY";
+                const val = Number(b.bakiye ?? b.balance ?? 0) || 0;
+
+                // map code -> currencyId (fallback TRY id = 3)
+                const curId = currencyIdMap[code] ?? (code === "TRY" ? 3 : null);
+
+                // determine currency->TRY rate (1 for TRY)
+                let curRateTRY = 1;
+                if (curId == null) {
+                  // bilinmeyen kod -> atla
+                  curRateTRY = 0;
+                } else if (curId === 3) {
+                  curRateTRY = 1;
+                } else {
+                  if (ratesCache[curId] == null) {
+                    try {
+                      const r = await fetchRateByCurrencyId(curId);
+                      ratesCache[curId] = Number(r) || 0;
+                    } catch (e) {
+                      ratesCache[curId] = 0;
+                    }
+                  }
+                  curRateTRY = ratesCache[curId] || 0;
+                }
+
+                // döviz tutarını önce TRY'ye çevir, sonra TRY/HAS kuru ile HAS'e çevir
+                if (hasRateTRY && hasRateTRY > 0 && curRateTRY) {
+                  toplamHas += (val * curRateTRY) / hasRateTRY;
+                }
+              }
+
+              hasPozEl.innerHTML = `Pozisyon: <span class="${toplamHas >= 0 ? 'text-green-700' : 'text-red-700'} font-mono">${fmt2.format(toplamHas)} HAS</span>`;
+            } catch (err) {
+              console.error("Pozisyon hesaplama hatası:", err);
+              hasPozEl.innerHTML = "";
+            }
+          }
+
+          function escapeHtml(s) {
+            if (s === null || s === undefined) return "";
+            return String(s).replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
+          }
+          function formatDateTR(iso) {
+            if (!iso) return "";
+            const d = new Date(iso);
+            if (Number.isNaN(d.getTime())) return String(iso);
+            const pad = (n) => String(n).padStart(2, "0");
+            return `${pad(d.getDate())}.${pad(d.getMonth()+1)}.${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+          }
         }
 
         wireVirmanKarsilikLive();
@@ -6153,7 +6384,7 @@ if (amountInput) amountInput.value = fmt2.format(Math.abs(farkValue));
                 headers: {
                   "Content-Type": "application/json",
                   "Accept": "application/json",
-                  // ASP.NET Core Anti-forgery kullanıyorsan buraya token eklemelisin (aşağıya not yazdım)
+                  // ASP.NET Core Anti-forgery kullanıyorsan buraya token eklemelisin
                 },
                 body: JSON.stringify(payload),
               });
@@ -6164,9 +6395,15 @@ if (amountInput) amountInput.value = fmt2.format(Math.abs(farkValue));
               }
 
               const data = await res.json();
+              // daha görünür loglar (tarayıcı konsolundaki filtrelerden etkilenmez)
+              console.log("DEBUG ekstre raw response:", data);
+              console.log("DEBUG ekstre wrapper.data:", data?.data);
+              console.log("DEBUG ekstre wrapper.data.DevredenBakiyeler:", data?.data?.DevredenBakiyeler);
+              console.log("DEBUG ekstre wrapper.data.Hareketler length:", data?.data?.Hareketler?.length);
+
+              // fill header and render movements (tolerant fonksiyonlar mevcut)
               fillEkstreHeader(data);
               renderEkstreMovements(data);
-
 
             } catch (err) {
               console.error(err);
@@ -6186,6 +6423,7 @@ if (amountInput) amountInput.value = fmt2.format(Math.abs(farkValue));
               .replaceAll("'", "&#039;");
           }
         })();
+
 
 
    
@@ -6798,69 +7036,98 @@ if (amountInput) amountInput.value = fmt2.format(Math.abs(farkValue));
           return;
         }
 
-              if (isVirman) {
-                const modal = el("virman-panel");
-                const submitBtn = el("virman-add-button");
+                   if (isVirman) {
+          const modal = el("virman-panel");
+          const submitBtn = el("virman-add-button");
 
-                        try {
-          window.state = window.state || {};
-          window.state.edit = window.state.edit || {};
-          window.state.edit.kind = "VIRMAN";
-          window.state.edit.index = null; // explicit null marks "server-side / ekstreden" edit
-          if (submitBtn) submitBtn.dataset.externalEdit = "1";
-        } catch (err) {
-          console.warn("mark external virman edit failed:", err);
+          try {
+            window.state = window.state || {};
+            window.state.edit = window.state.edit || {};
+            window.state.edit.kind = "VIRMAN";
+            window.state.edit.index = null; // ekstreden edit işareti
+            if (submitBtn) submitBtn.dataset.externalEdit = "1";
+          } catch (err) {
+            console.warn("mark external virman edit failed:", err);
+          }
+
+          prepareModal("virman-delete-button", submitBtn, `<i class="fas fa-save mr-1.5"></i>Güncelle`);
+
+          el("form-virman-amount").value = toTr2(foreignAmount);
+          el("form-virman-rate").value = toTr4(foreignRate);
+          el("form-virman-aciklama").value = description || "";
+          const curr = el("form-virman-currency");
+          if (curr) { curr.value = String(foreignCurrencyId || curr.value); curr.closest(".float-label-container")?.classList.add("select-has-value"); }
+
+          // --- Yeni: virman tipi toggle'ını transactionTypeId'ye göre ayarla ---
+          try {
+            if (tId === 7) {
+              // Virman Giriş -> Hesabın Alacağına
+              el("virman-tipi-toggle")?._setSelected?.("alacagina");
+            } else if (tId === 8) {
+              // Virman Çıkış -> Hesabın Borcuna
+              el("virman-tipi-toggle")?._setSelected?.("borcuna");
+            } else {
+              // Fallback: varsa butondan veya dataset'ten gelen toggleName kullan
+              const toggleName = (btn.dataset.toggleName || btn.getAttribute("data-toggle-name") || "").toString().toLowerCase();
+              if (toggleName.includes("alac")) el("virman-tipi-toggle")?._setSelected?.("alacagina");
+              else if (toggleName.includes("borc")) el("virman-tipi-toggle")?._setSelected?.("borcuna");
+              // yoksa bırakıldığı gibi kalsın (modal açılırken default uygulanır)
+            }
+          } catch (err) {
+            console.warn("Ekstre -> virman toggle set error:", err);
+          }
+          // --- /Yeni ---
+
+          // Ensure modal UI mode + currency/rate setup
+          applyVirmanModalModeUI();
+          if (typeof setVirmanKarsilikEnabled === "function") {
+            // başlangıçta karşılık checkbox'ı kapalı bırakıyoruz; eğer gelen veri karşılık içeriyorsa
+            // ileride burada açma mantığı eklenebilir
+            setVirmanKarsilikEnabled(false);
+          }
+
+          submitBtn.onclick = async (ev) => {
+            ev.preventDefault();
+            submitBtn.disabled = true;
+            try {
+              const payload = {
+                Id: movId,
+                ForeignCurrencyAmount: parseDecimalTr(el("form-virman-amount").value),
+                ForeignExchangeRate: parseDecimalTr(el("form-virman-rate").value),
+                ForeignCurrencyId: Number(el("form-virman-currency")?.value || foreignCurrencyId),
+                Description: el("form-virman-aciklama")?.value || ""
+              };
+              const res = await fetch("/Receipt/UpdateMovement", { method:"POST", headers:{ "Content-Type":"application/json" }, body: JSON.stringify(payload) });
+              if (!res.ok) throw new Error("Güncelleme başarısız");
+              el("ekstre-getir-button")?.click();
+              if (typeof Modal !== "undefined" && Modal.close) Modal.close(modal); else modal.classList.add("hidden");
+              alert("Güncellendi.");
+            } catch (err) {
+              console.error(err);
+              alert("Güncelleme sırasında hata oluştu.");
+            } finally { submitBtn.disabled = false; }
+          };
+
+          const delBtn = el("virman-delete-button");
+          delBtn.onclick = async (ev) => {
+            ev.preventDefault();
+            if (!confirm("Hareketi silmek istediğinize emin misiniz?")) return;
+            delBtn.disabled = true;
+            try {
+              const res = await fetch("/Receipt/DeleteMovement", { method:"POST", headers:{ "Content-Type":"application/json" }, body: JSON.stringify({ Id: movId }) });
+              if (!res.ok) throw new Error("Silme başarısız");
+              el("ekstre-getir-button")?.click();
+              if (typeof Modal !== "undefined" && Modal.close) Modal.close(modal); else modal.classList.add("hidden");
+              alert("Silindi.");
+            } catch (err) {
+              console.error(err);
+              alert("Silme sırasında hata oluştu.");
+            } finally { delBtn.disabled = false; }
+          };
+
+          openModal(modal);
+          return;
         }
-                prepareModal("virman-delete-button", submitBtn, `<i class="fas fa-save mr-1.5"></i>Güncelle`);
-
-                el("form-virman-amount").value = toTr2(foreignAmount);
-                el("form-virman-rate").value = toTr4(foreignRate);
-                el("form-virman-aciklama").value = description || "";
-                const curr = el("form-virman-currency");
-                if (curr) { curr.value = String(foreignCurrencyId || curr.value); curr.closest(".float-label-container")?.classList.add("select-has-value"); }
-
-                submitBtn.onclick = async (ev) => {
-                  ev.preventDefault();
-                  submitBtn.disabled = true;
-                  try {
-                    const payload = {
-                      Id: movId,
-                      ForeignCurrencyAmount: parseDecimalTr(el("form-virman-amount").value),
-                      ForeignExchangeRate: parseDecimalTr(el("form-virman-rate").value),
-                      ForeignCurrencyId: Number(el("form-virman-currency")?.value || foreignCurrencyId),
-                      Description: el("form-virman-aciklama")?.value || ""
-                    };
-                    const res = await fetch("/Receipt/UpdateMovement", { method:"POST", headers:{ "Content-Type":"application/json" }, body: JSON.stringify(payload) });
-                    if (!res.ok) throw new Error("Güncelleme başarısız");
-                    el("ekstre-getir-button")?.click();
-                    if (typeof Modal !== "undefined" && Modal.close) Modal.close(modal); else modal.classList.add("hidden");
-                    alert("Güncellendi.");
-                  } catch (err) {
-                    console.error(err);
-                    alert("Güncelleme sırasında hata oluştu.");
-                  } finally { submitBtn.disabled = false; }
-                };
-
-                const delBtn = el("virman-delete-button");
-                delBtn.onclick = async (ev) => {
-                  ev.preventDefault();
-                  if (!confirm("Hareketi silmek istediğinize emin misiniz?")) return;
-                  delBtn.disabled = true;
-                  try {
-                    const res = await fetch("/Receipt/DeleteMovement", { method:"POST", headers:{ "Content-Type":"application/json" }, body: JSON.stringify({ Id: movId }) });
-                    if (!res.ok) throw new Error("Silme başarısız");
-                    el("ekstre-getir-button")?.click();
-                    if (typeof Modal !== "undefined" && Modal.close) Modal.close(modal); else modal.classList.add("hidden");
-                    alert("Silindi.");
-                  } catch (err) {
-                    console.error(err);
-                    alert("Silme sırasında hata oluştu.");
-                  } finally { delBtn.disabled = false; }
-                };
-
-                openModal(modal);
-                return;
-              }
 
               if (isAcik) {
                 const modal = el("acik-hesap-modal");
