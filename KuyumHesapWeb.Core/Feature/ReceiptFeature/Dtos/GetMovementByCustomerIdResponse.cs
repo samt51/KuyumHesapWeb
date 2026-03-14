@@ -28,6 +28,16 @@
         /// İşlemin ait olduğu hesap kimliği (Foreign Key -> Accounts)
         /// </summary>
         public int AccountId { get; set; }
+        /// <summary>
+        /// Hesap adı (firma, kişi veya kurum adı)
+        /// </summary>
+        public string AccountName { get; set; } = null!;
+
+        /// <summary>
+        /// Hesap tipi kimliği (Foreign Key -> AccountTypes)
+        /// </summary>
+        public int AccountTypeId { get; set; }
+        public string AccountTypeName { get; set; }
 
         /// <summary>
         /// İşleme konu olan stok kimliği (Foreign Key -> Stocks)

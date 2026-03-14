@@ -3,6 +3,7 @@ using KuyumHesapWeb.Core.Commond.Models.Dtos;
 using KuyumHesapWeb.Core.Feature.ReceiptFeature.Commands.Create;
 using KuyumHesapWeb.Core.Feature.ReceiptFeature.Dtos;
 using KuyumHesapWeb.Core.Feature.ReceiptFeature.Queries.GetEkstreByCustomer;
+using KuyumHesapWeb.Core.Feature.ReceiptFeature.Queries.GetReceiptByCustomerIdAndDates;
 using KuyumHesapWeb.UI.Controllers.BaseCont;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
@@ -76,6 +77,12 @@ namespace KuyumHesapWeb.UI.Controllers
         }
         [HttpPost]
         public async Task<IActionResult> GetEkstreByCustomerIdAndDate([FromBody] GetEkstreByCustomerQueryRequest request)
+        {
+            var data = await _mediator.Send(request);
+            return Ok(data);
+        }
+        [HttpPost]
+        public async Task<IActionResult> GetReceiptByCustomerIdAndDate([FromBody] GetReceiptByCustomerIdAndDatesRequest request)
         {
             var data = await _mediator.Send(request);
             return Ok(data);

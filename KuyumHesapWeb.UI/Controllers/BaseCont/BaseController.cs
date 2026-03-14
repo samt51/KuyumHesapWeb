@@ -1,7 +1,6 @@
 ﻿using KuyumHesapWeb.Core.Commond.Abstract.Mapper;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc;
 
 namespace KuyumHesapWeb.UI.Controllers.BaseCont
 {

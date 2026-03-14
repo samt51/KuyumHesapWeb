@@ -77,20 +77,20 @@
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <!-- Kasa Durumu Kartı -->
             <div id="kasa-karti" class="dashboard-card bg-white p-5 rounded-xl shadow-md border border-[#4C9779]">
-                    <div class="flex items-start justify-between">
-                        <span class="text-sm font-semibold text-gray-500">Kasa Son Durum</span>
-                        <a href="#" id="kasa-detay-link" class="text-xs font-medium text-blue-600 hover:underline">Detay</a>
+                <div class="flex items-start justify-between">
+                    <span class="text-sm font-semibold text-gray-500">Kasa Son Durum</span>
+                    <a href="#" id="kasa-detay-link" class="text-xs font-medium text-blue-600 hover:underline">Detay</a>
+                </div>
+                <div class="flex items-center gap-4 mt-2">
+                    <div class="flex-shrink-0">
+                        <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center"><i class="fas fa-layer-group text-2xl text-yellow-500"></i></div>
                     </div>
-                    <div class="flex items-center gap-4 mt-2">
-                        <div class="flex-shrink-0">
-                            <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center"><i class="fas fa-layer-group text-2xl text-yellow-500"></i></div>
-                        </div>
-                        <div>
-                            <p id="kasa-bakiye-has" class="text-3xl font-bold text-gray-800"></p>
-                            <p class="text-sm text-gray-400 font-medium">HAS</p>
-                        </div>
+                    <div>
+                        <p id="kasa-bakiye-has" class="text-3xl font-bold text-gray-800">@String.Format("{0:N2}", Model.CashReport.TotalBalanceHas)</p>
+                        <p class="text-sm text-gray-400 font-medium">HAS</p>
                     </div>
                 </div>
+            </div>
             <!-- BANKALAR Durumu Kartı -->
             <div id="bankalar-karti" class="dashboard-card bg-white p-5 rounded-xl shadow-md border border-[#4C9779]">
                 <div class="flex items-start justify-between">
@@ -100,7 +100,7 @@
                 <div class="flex items-center gap-4 mt-2">
                     <div class="flex-shrink-0"><div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center"><i class="fas fa-university text-2xl text-blue-500"></i></div></div>
                     <div>
-                        <p id="bankalar-bakiye" class="text-3xl font-bold text-gray-800"></p>
+                        <p id="bankalar-bakiye" class="text-3xl font-bold text-gray-800">0</p>
                         <p class="text-sm text-gray-400 font-medium">HAS</p>
                     </div>
                 </div>
@@ -114,7 +114,7 @@
                 <div class="flex items-center gap-4 mt-2">
                     <div class="flex-shrink-0"><div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center"><i class="fas fa-credit-card text-2xl text-green-500"></i></div></div>
                     <div>
-                        <p id="poslar-bakiye" class="text-3xl font-bold text-gray-800"></p>
+                        <p id="poslar-bakiye" class="text-3xl font-bold text-gray-800">0</p>
                         <p class="text-sm text-gray-400 font-medium">HAS</p>
                     </div>
                 </div>
@@ -236,7 +236,7 @@
             </div>
         </div>
     </div>
- 
+
 
 </body>
 </html>
@@ -356,5 +356,5 @@
 
 
 
- 
+
 
