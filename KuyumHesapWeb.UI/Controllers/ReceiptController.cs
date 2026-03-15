@@ -1,5 +1,6 @@
 ﻿using KuyumHesapWeb.Core.Commond.Abstract.Mapper;
 using KuyumHesapWeb.Core.Commond.Models.Dtos;
+using KuyumHesapWeb.Core.Feature.MovementTypeFeature.Queries.GetMovementByReceiptId;
 using KuyumHesapWeb.Core.Feature.ReceiptFeature.Commands.Create;
 using KuyumHesapWeb.Core.Feature.ReceiptFeature.Dtos;
 using KuyumHesapWeb.Core.Feature.ReceiptFeature.Queries.GetEkstreByCustomer;
@@ -85,6 +86,14 @@ namespace KuyumHesapWeb.UI.Controllers
         public async Task<IActionResult> GetReceiptByCustomerIdAndDate([FromBody] GetReceiptByCustomerIdAndDatesRequest request)
         {
             var data = await _mediator.Send(request);
+            return Ok(data);
+        }
+
+        [HttpGet("GetMovementByReceiptId/{receiptId}")]
+        [HttpGet("Receipt/GetMovementByReceiptId/{receiptId}")]
+        public async Task<IActionResult> GetMovementByReceiptId(int receiptId)
+        {
+            var data = await _mediator.Send(new GetMovementByReceiptIdRequest(receiptId));
             return Ok(data);
         }
     }

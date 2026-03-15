@@ -6312,8 +6312,13 @@
 
                // Replace the row template inside renderEkstreMovements (the return `...` in the map)
         // Replace the row template in renderEkstreMovements map return: put edit button + switch inline
-            return `
-          <div class="ekstre-item ${sideClass} rounded-lg mb-3 p-4 flex items-start">
+              // Replace the row template return inside renderEkstreMovements (update existing template)
+        // NOTE: this is the string returned inside hareketler.map(...). Use it to replace the earlier template.
+        return `
+          <div class="ekstre-item ${sideClass} rounded-lg mb-3 p-4 flex items-start"
+               data-final-balance="${finalBalanceVal}"
+               data-final-unit="${escapeHtml(counterUnit)}"
+          >
             <div class="ekstre-v3-sol">
               <span class="baslik ${isGiris ? 'text-green-600' : 'text-red-600'}">${escapeHtml(title)}</span>
               <span class="tarih">${escapeHtml(formatDateTR(date))}</span>
@@ -6372,7 +6377,79 @@
         `;
           }).join("");
 
-          container.innerHTML = `<div class="ekstre-list-container">${rows}</div>`;
+             container.innerHTML = `<div class="ekstre-list-container">${rows}</div>`;
+
+          // Bu bloğu tam olarak buraya yapıştır — ekstre satırlarına tıklayınca bakiye özeti güncellensin
+          const ekstreListWrap = container.querySelector('.ekstre-list-container');
+          if (ekstreListWrap && !ekstreListWrap.dataset.wiredSummary) {
+            ekstreListWrap.dataset.wiredSummary = "1";
+            ekstreListWrap.addEventListener('click', (e) => {
+              // edit butonu veya başka butonlar tıklanırsa işlemi yoksay
+              if (e.target.closest('.edit-ekstre-fis-btn') || e.target.closest('button')) return;
+
+              const row = e.target.closest('.ekstre-item');
+              if (!row) return;
+
+              const fbRaw = row.getAttribute('data-final-balance') ?? row.dataset.finalBalance;
+              const fuRaw = row.getAttribute('data-final-unit') ?? row.dataset.finalUnit ?? (typeof getSelectedCurrencyCode === 'function' ? getSelectedCurrencyCode() : 'TRY');
+
+              const finalBalance = Number(String(fbRaw || 0).replace(',', '.')) || 0;
+              const finalUnit = String(fuRaw || 'TRY').trim() || 'TRY';
+
+              // Bakiye özetini güncelle (mevcut doldurEkstreBakiyeOzeti fonksiyonunu kullan)
+              try {
+                doldurEkstreBakiyeOzeti([{ CurrencyCode: finalUnit, Balance: finalBalance }], []);
+
+                        // Paste this block INSIDE the existing ekstreListWrap.addEventListener('click', ...) handler,
+        // right after calling doldurEkstreBakiyeOzeti(...) and before/after row selection code.
+
+        (async function recomputePozisyonForDevreden() {
+          try {
+            if (!hasPozEl) return;
+            // build effectiveDevreden from the selected final values we just read
+            const devs = [{ CurrencyCode: finalUnit, Balance: finalBalance }];
+
+            const HAS_CURRENCY_ID = 1;
+            const hasRateTRY = Number(await fetchRateByCurrencyId(HAS_CURRENCY_ID)) || 1;
+            let toplamHas = 0;
+            const ratesCache = {};
+
+            for (const b of devs) {
+              const code = String(b.CurrencyCode ?? b.currencyCode ?? "TRY").trim();
+              const val = Number(b.Balance ?? b.balance ?? 0) || 0;
+              const curId = (currencyIdMap && currencyIdMap[code]) ?? (code === "TRY" ? 3 : null);
+              let curRateTRY = 1;
+              if (curId == null) curRateTRY = 0;
+              else if (curId === 3) curRateTRY = 1;
+              else {
+                if (ratesCache[curId] == null) {
+                  try { ratesCache[curId] = Number(await fetchRateByCurrencyId(curId)) || 0; } catch (e) { ratesCache[curId] = 0; }
+                }
+                curRateTRY = ratesCache[curId] || 0;
+              }
+              if (hasRateTRY && hasRateTRY > 0 && curRateTRY) toplamHas += (val * curRateTRY) / hasRateTRY;
+            }
+
+            hasPozEl.innerHTML = `Pozisyon: <span class="${toplamHas >= 0 ? 'text-green-700' : 'text-red-700'} font-mono">${fmt2.format(toplamHas)} HAS</span>`;
+          } catch (err) {
+            console.error("Pozisyon yeniden hesaplama hatası:", err);
+            if (hasPozEl) hasPozEl.innerHTML = "";
+          }
+        })();
+              } catch (err) {
+                const ozetDiv = document.getElementById('ekstre-bakiye-ozeti');
+                if (ozetDiv) {
+                  const fmt = new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                  ozetDiv.innerHTML = `<div class="bakiye-item"><div class="birim font-semibold text-sm">${finalUnit}</div><div class="tutar font-mono font-bold ${finalBalance >= 0 ? 'alacak' : 'borc'}">${fmt.format(Math.abs(finalBalance))} ${finalUnit}</div></div>`;
+                }
+              }
+
+              // satır seçimi görseli
+              const prev = ekstreListWrap.querySelector('.selected-ekstre-row');
+              if (prev && prev !== row) prev.classList.remove('selected-ekstre-row');
+              row.classList.add('selected-ekstre-row');
+            });
+          }
 
           // pozisyon hesaplama (aynı mantık)
            // Replace the existing "pozisyon hesaplama" block with this (inside renderEkstreMovements)
@@ -7432,14 +7509,180 @@
           });
 
           // (Opsiyonel) Edit butonlarına event delegation (dinamik elemanlar için)
-          listContent.addEventListener("click", (e) => {
-            const btn = e.target.closest(".edit-fis-btn");
-            if (!btn) return;
+                  // Replace the existing fis-list edit handler with this implementation
+          // Replace the existing fis-list edit handler's fetch block with this handler.
+        // This sends a GET request to the controller action that is attributed with [HttpGet("{receiptId}")]
+        // i.e. GET /Receipt/{receiptId} and maps the returned GetMovementByReceiptIdResponse[] into the receipt UI/state.
 
-            const fisId = btn.dataset.fisId;
-            console.log("Edit fis:", fisId);
-            // burada senin edit akışın neyse çağırırsın (modal kapat, fişi yükle vs.)
-          });
+            // Replace existing listContent edit handler with this robust version
+
+        listContent.addEventListener("click", async (e) => {
+                    // add this at the top of the handler (right after you've parsed response/json)
+        const getCurrCodeSafe = () => {
+          try { return (typeof getSelectedCurrencyCode === "function") ? getSelectedCurrencyCode() : "TRY"; }
+          catch { return "TRY"; }
+        };
+
+          const btn = e.target.closest(".edit-fis-btn");
+          if (!btn) return;
+          e.preventDefault();
+
+          const receiptId = Number(btn.dataset.fisId || 0);
+          if (!receiptId) return alert("Fiş id bulunamadı.");
+
+          try {
+            listContent.innerHTML = `<div class="p-4 text-sm text-gray-500">Yükleniyor...</div>`;
+
+            const res = await fetch(`/Receipt/GetMovementByReceiptId/${receiptId}`, {
+              method: "GET",
+              headers: { "Accept": "application/json" }
+            });
+
+            if (!res.ok) {
+              const txt = await res.text().catch(() => "");
+              throw new Error(`Sunucu hatası ${res.status}: ${txt}`);
+            }
+
+            const json = await res.json();
+            console.debug("GetMovementByReceiptId response:", json);
+
+            // find first array in response: tolerant unwrap (data, Data, movements, etc.)
+            let movs = [];
+            if (Array.isArray(json)) movs = json;
+            else if (Array.isArray(json?.data)) movs = json.data;
+            else if (Array.isArray(json?.Data)) movs = json.Data;
+            else if (Array.isArray(json?.Movements)) movs = json.Movements;
+            else if (Array.isArray(json?.movements)) movs = json.movements;
+            else {
+              // try to search nested objects for first array
+              const found = Object.values(json || {}).find(v => Array.isArray(v));
+              if (Array.isArray(found)) movs = found;
+            }
+
+            if (!movs || movs.length === 0) {
+              console.warn("GetMovementByReceiptId: hareket yok veya beklenmeyen format", json);
+              alert("Fişe ait hareket bulunamadı veya sunucu farklı bir format döndü. Konsolu kontrol et.");
+              return;
+            }
+
+            // Determine target (cari vs satis)
+            const isCari = document.body.classList.contains("cari-active");
+            const targetMovs = isCari ? (window.state.cariMovements = window.state.cariMovements || []) : (window.state.satisMovements = window.state.satisMovements || []);
+            const targetItems = isCari ? (window.state.cariItems = window.state.cariItems || []) : (window.state.satisItems = window.state.satisItems || []);
+
+            // clear existing
+            targetMovs.length = 0;
+            targetItems.length = 0;
+
+            const safeNum = v => { const n = Number(v); return Number.isFinite(n) ? n : 0; };
+            const safeStr = (v, f = "") => (v === null || typeof v === "undefined") ? f : String(v);
+
+            for (const m of movs) {
+              try {
+                const tId = Number(m.TransactionTypeId ?? m.transactionTypeId ?? m.transactionTypeId ?? 0);
+                const foreignAmount = safeNum(m.ForeignCurrencyAmount ?? m.foreignCurrencyAmount ?? m.Quantity ?? m.quantity);
+                const foreignCurrencyCode = safeStr(m.ForeignCurrencyCode ?? m.foreignCurrencyCode ?? m.Unit ?? m.unit ?? m.BalanceCurrency ?? m.balanceCurrency ?? getCurrCodeSafe());
+                const foreignCurrencyId = Number(m.ForeignCurrencyId ?? m.foreignCurrencyId ?? 0) || null;
+                const foreignRate = safeNum(m.ForeignExchangeRate ?? m.foreignExchangeRate ?? m.ExchangeRate ?? m.exchangeRate);
+                const counterAmount = safeNum(m.CounterCurrencyAmount ?? m.counterCurrencyAmount ?? m.BaseCurrencyAmount ?? m.baseCurrencyAmount);
+                const counterCurrencyId = Number(m.CounterCurrencyId ?? m.counterCurrencyId ?? 0) || null;
+                const counterCurrencyCode = safeStr(m.CounterCurrencyCode ?? m.counterCurrencyCode ?? getCurrCodeSafe());
+                const description = safeStr(m.Description ?? m.description ?? "");
+                const accountId = Number(m.AccountId ?? m.accountId ?? m.receiptAccountId ?? 0) || 0;
+                const accountName = safeStr(m.AccountName ?? m.accountName ?? "");
+
+                // determine kind/type robustly
+                let kind = "NAKIT";
+                let type = (tId === 1 ? "GIRIS" : (tId === 2 ? "CIKIS" : null));
+                if ([5,6].includes(tId)) { kind = "ISKONTO"; type = tId === 5 ? "GIRIS" : "CIKIS"; }
+                else if ([7,8].includes(tId)) { kind = "VIRMAN"; type = tId === 7 ? "GIRIS" : "CIKIS"; }
+                else if (tId === 0 || /ACIK|AÇIK/i.test(m.TransactionName ?? m.transactionName ?? "")) { kind = "ACIK_HESAP"; type = type || "CIKIS"; }
+
+                // push UI item
+                if (kind === "NAKIT") {
+                  targetItems.push({
+                    kind: "NAKIT",
+                    type: type || "GIRIS",
+                    currency: foreignCurrencyCode,
+                    tutar: foreignAmount,
+                    kur: foreignRate,
+                    karsilikTry: counterAmount,
+                    hesapAdi: accountName,
+                    tab: (m.ToggleName ?? "").toLowerCase().includes("banka") ? "bankalar" : (m.ToggleName ?? "").toLowerCase().includes("pos") ? "poslar" : "kasalar"
+                  });
+                } else if (kind === "ISKONTO") {
+                  targetItems.push({
+                    kind: "ISKONTO",
+                    type: type || "CIKIS",
+                    currency: foreignCurrencyCode,
+                    amount: foreignAmount,
+                    rate: foreignRate,
+                    karsilikTry: counterAmount,
+                    karsiHesapAdi: description || "İSKONTO"
+                  });
+                } else if (kind === "VIRMAN") {
+                  targetItems.push({
+                    kind: "VIRMAN",
+                    type: type || "CIKIS",
+                    currency: foreignCurrencyCode,
+                    amount: foreignAmount,
+                    rate: foreignRate,
+                    karsilikTry: counterAmount,
+                    from: "ANA HESAP",
+                    to: m.CounterAccountName ?? m.ToAccountName ?? ""
+                  });
+                } else if (kind === "ACIK_HESAP") {
+                  targetItems.push({
+                    kind: "ACIK_HESAP",
+                    type: type || "CIKIS",
+                    amount: foreignAmount,
+                    rate: foreignRate,
+                    currency: counterCurrencyCode,
+                    karsilikTry: counterAmount,
+                    karsiHesapAdi: "Açık Hesap"
+                  });
+                } else {
+                  targetItems.push({
+                    kind: "NAKIT",
+                    type: type || "GIRIS",
+                    currency: foreignCurrencyCode,
+                    tutar: foreignAmount,
+                    kur: foreignRate,
+                    karsilikTry: counterAmount,
+                    hesapAdi: accountName
+                  });
+                }
+
+                // push movement DTO (submit)
+                targetMovs.push({
+                  transactionTypeId: tId,
+                  accountId: accountId,
+                  stockId: null,
+                  description: description,
+                  foreignCurrencyAmount: foreignAmount,
+                  foreignCurrencyId: foreignCurrencyId,
+                  foreignExchangeRate: foreignRate,
+                  counterCurrencyAmount: counterAmount,
+                  counterCurrencyId: counterCurrencyId,
+                  counterExchangeRate: 1,
+                  cashAccountId: Number(m.CashAccountId ?? m.cashAccountId ?? 0) || null,
+                  counterAccountId: Number(m.CounterAccountId ?? m.counterAccountId ?? 0) || null
+                });
+              } catch (innerErr) {
+                console.warn("Tek hareket map hatası, atlandı:", innerErr, m);
+              }
+            }
+
+            if (typeof Modal !== "undefined" && Modal.close) Modal.close(fisListModal);
+            if (typeof rerenderReceipt === "function") rerenderReceipt();
+            const receiptLogEl = document.getElementById("receipt-log");
+            if (receiptLogEl) receiptLogEl.scrollTop = receiptLogEl.scrollHeight;
+          } catch (err) {
+            console.error("Fiş yükleme hatası (detailed):", err);
+            // daha açıklayıcı mesaj göster
+            alert("Fiş yüklenirken hata oluştu. Konsolu (F12) kontrol edin:\n" + (err && err.message ? err.message : String(err)));
+          }
+        });
         });
 
           function openErrorModal(message) {
