@@ -1297,27 +1297,47 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (input && typeof enforceNumericInput === 'function') enforceNumericInput(input);
             });
 
-
             let activeField = 'sourceAmount'; // Hangi alanın manuel girildiğini takip et
 
-            // Kur inputunu güncelleyen fonksiyon (isIncome önemsiz, hep aynı kur gelir)
-            const updateRate = (currencySelect, rateInput) => {
+            // Yeni: async updateRate - önce canlı Cure/GetLastCure çağır, sonra fallback
+            const updateRate = async (currencySelect, rateInput) => {
+                if (!currencySelect || !rateInput) return;
                 const currencyId = currencySelect.value;
-                if (!currencyId) { rateInput.value = formatCurrency(0, 4); return; } // Kur sıfır
-                const currencyCode = allCurrencies.find(c => c.id == currencyId)?.dovizKodu;
+                let rate = null;
 
-                // Ülke para birimi ise kur 1, değilse API'den al
-                if (currencyCode === nationalCurrency.dovizKodu) {
-                    rateInput.value = formatCurrency(1, 4);
-                } else {
-                    const rateData = allExchangeRates.find(r => r.dovizKodu === currencyCode);
-                    // Varsayılan olarak alış kurunu alalım, kullanıcı değiştirebilir
-                    const rate = rateData ? rateData.alisKuru : 0.0; // Bulamazsa 0
-                    rateInput.value = formatCurrency(rate, 4);
+                // Try live cure from server
+                try {
+                    if (currencyId) {
+                        const live = await fetchLatestCure(currencyId); // global helper mevcut
+                        if (live !== null && !isNaN(live) && live > 0) {
+                            rate = live;
+                        }
+                    }
+                } catch (err) {
+                    console.warn('fetchLatestCure failed', err);
+                    rate = null;
                 }
+
+                // Fallback: exchange rates veya currency meta
+                if (rate === null) {
+                    const currencyObj = allCurrencies.find(c => String(c.id) === String(currencyId));
+                    if (currencyObj) {
+                        if (currencyObj.dovizKodu === nationalCurrency.dovizKodu) {
+                            rate = 1.0;
+                        } else {
+                            const rateData = allExchangeRates.find(r => r.dovizKodu === currencyObj.dovizKodu);
+                            rate = rateData ? (rateData.alisKuru ?? rateData.satisKuru ?? currencyObj.alisKuru ?? currencyObj.satisKuru ?? 0) : (currencyObj.alisKuru ?? currencyObj.satisKuru ?? 0);
+                        }
+                    } else {
+                        rate = 0;
+                    }
+                }
+
+                rateInput.value = formatCurrency(rate, 4);
+                calculate();
             };
 
-            // Tutar hesaplama fonksiyonu
+            // Tutar hesaplama fonksiyonu (aynı)
             const calculate = () => {
                 const sourceAmount = parseFormattedNumber(sourceAmountInput.value);
                 const sourceRate = parseFormattedNumber(sourceRateInput.value);
@@ -1336,8 +1356,8 @@ document.addEventListener('DOMContentLoaded', () => {
             };
 
             // Event Listeners
-            sourceCurrencySelect.addEventListener('change', () => { updateRate(sourceCurrencySelect, sourceRateInput); calculate(); });
-            targetCurrencySelect.addEventListener('change', () => { updateRate(targetCurrencySelect, targetRateInput); calculate(); });
+            sourceCurrencySelect.addEventListener('change', () => updateRate(sourceCurrencySelect, sourceRateInput));
+            targetCurrencySelect.addEventListener('change', () => updateRate(targetCurrencySelect, targetRateInput));
 
             [sourceAmountInput, sourceRateInput, targetAmountInput, targetRateInput].forEach(input => {
                 input.addEventListener('focus', (e) => {
@@ -1360,9 +1380,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             });
 
-            // İlk kur değerlerini ata (eğer birim seçili ise)
-            updateRate(sourceCurrencySelect, sourceRateInput);
-            updateRate(targetCurrencySelect, targetRateInput);
+            // İlk kur değerlerini ata (eğer birim seçili ise) - async initialize
+            (async () => {
+                if (sourceCurrencySelect && sourceCurrencySelect.value) {
+                    await updateRate(sourceCurrencySelect, sourceRateInput);
+                }
+                if (targetCurrencySelect && targetCurrencySelect.value) {
+                    await updateRate(targetCurrencySelect, targetRateInput);
+                }
+            })();
         };
 
         // Her iki form bölümü için hesaplayıcıları kur
@@ -1400,75 +1426,75 @@ document.addEventListener('DOMContentLoaded', () => {
         const defaultActiveType = isCari ? 'cikis' : 'alacagina';
 
         const formHTML = `
-                    <h3 class="font-bold text-lg mb-4">${title}</h3>
-                    <div class="space-y-4">
-                        <div>
-                            <div id="virman-tipi-toggle" class="tri-toggle-container" data-selected="${defaultActiveType}">
-                                <div class="tri-toggle-slider" style="width: calc((100% - 6px) / 2);"></div>
-                                <div class="tri-toggle-options">
-                                    <div class="tri-toggle-option active" data-value="${option1.value}">${option1.label}</div>
-                                    <div class="tri-toggle-option" data-value="${option2.value}">${option2.label}</div>
-                                </div>
+                <h3 class="font-bold text-lg mb-4">${title}</h3>
+                <div class="space-y-4">
+                    <div>
+                        <div id="virman-tipi-toggle" class="tri-toggle-container" data-selected="${defaultActiveType}">
+                            <div class="tri-toggle-slider" style="width: calc((100% - 6px) / 2);"></div>
+                            <div class="tri-toggle-options">
+                                <div class="tri-toggle-option active" data-value="${option1.value}">${option1.label}</div>
+                                <div class="tri-toggle-option" data-value="${option2.value}">${option2.label}</div>
                             </div>
                         </div>
+                    </div>
+                    <div class="grid grid-cols-6 gap-x-2 gap-y-1 items-end">
+                        <div class="float-label-container col-span-1">
+                            <select id="form-virman-currency" class="float-label-input float-label-select" required ${isSatisModu ? 'disabled' : ''}>
+                                <option value=""></option>
+                                ${currencyOptionsHTML}
+                            </select>
+                            <label for="form-virman-currency" class="float-label">Birim</label>
+                        </div>
+                        <div class="float-label-container col-span-3">
+                            <input type="text" id="form-virman-amount" class="float-label-input text-right font-mono" placeholder=" " value="0,00">
+                            <label for="form-virman-amount" class="float-label">Miktar</label>
+                        </div>
+                        <div class="float-label-container col-span-2">
+                            <input type="text" id="form-virman-rate" class="float-label-input text-right font-mono" placeholder=" " value="1,0000">
+                            <label for="form-virman-rate" class="float-label">Kur</label>
+                        </div>
+                    </div>
+                    <div class="float-label-container">
+                        <select id="form-virman-karsi-hesap" class="float-label-input float-label-select" required>
+                            <option value=""></option>
+                            ${karsiHesapOptionsHTML}
+                        </select>
+                        <label for="form-virman-karsi-hesap" class="float-label">Karşı Hesap</label>
+                    </div>
+                    <div class="p-2 border border-gray-200 rounded-md bg-gray-50">
+                        <div class="flex justify-between items-center">
+                            <label for="virman-karsilik-toggle" class="text-sm font-medium text-gray-700 select-none">Farklı Birim Karşılığı</label>
+                            <div class="karsilik-toggle-container">
+                                <input type="checkbox" id="virman-karsilik-toggle" class="karsilik-toggle">
+                                <label for="virman-karsilik-toggle" class="karsilik-toggle-label"></label>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="virman-karsilik-details" class="hidden space-y-3 pt-3 border-t border-gray-200 mt-3">
                         <div class="grid grid-cols-6 gap-x-2 gap-y-1 items-end">
                             <div class="float-label-container col-span-1">
-                                <select id="form-virman-currency" class="float-label-input float-label-select" required ${isSatisModu ? 'disabled' : ''}>
+                                <select id="form-virman-karsilik-currency" class="float-label-input float-label-select" required>
                                     <option value=""></option>
                                     ${currencyOptionsHTML}
                                 </select>
-                                <label for="form-virman-currency" class="float-label">Birim</label>
+                                <label for="form-virman-karsilik-currency" class="float-label">Karşılık Birim</label>
                             </div>
                             <div class="float-label-container col-span-3">
-                                <input type="text" id="form-virman-amount" class="float-label-input text-right font-mono" placeholder=" " value="0,00">
-                                <label for="form-virman-amount" class="float-label">Miktar</label>
+                                <input type="text" id="form-virman-karsilik-amount" class="float-label-input text-right font-mono" placeholder=" " value="0,00">
+                                <label for="form-virman-karsilik-amount" class="float-label">Karşılık Miktar</label>
                             </div>
                             <div class="float-label-container col-span-2">
-                                <input type="text" id="form-virman-rate" class="float-label-input text-right font-mono" placeholder=" " value="1,0000">
-                                <label for="form-virman-rate" class="float-label">Kur</label>
+                                <input type="text" id="form-virman-karsilik-rate" class="float-label-input text-right font-mono" placeholder=" " value="1,0000">
+                                <label for="form-virman-karsilik-rate" class="float-label">Karşılık Kur</label>
                             </div>
-                        </div>
-                        <div class="float-label-container">
-                            <select id="form-virman-karsi-hesap" class="float-label-input float-label-select" required>
-                                <option value=""></option>
-                                ${karsiHesapOptionsHTML}
-                            </select>
-                            <label for="form-virman-karsi-hesap" class="float-label">Karşı Hesap</label>
-                        </div>
-                        <div class="p-2 border border-gray-200 rounded-md bg-gray-50">
-                            <div class="flex justify-between items-center">
-                                <label for="virman-karsilik-toggle" class="text-sm font-medium text-gray-700 select-none">Farklı Birim Karşılığı</label>
-                                <div class="karsilik-toggle-container">
-                                    <input type="checkbox" id="virman-karsilik-toggle" class="karsilik-toggle">
-                                    <label for="virman-karsilik-toggle" class="karsilik-toggle-label"></label>
-                                </div>
-                            </div>
-                        </div>
-                        <div id="virman-karsilik-details" class="hidden space-y-3 pt-3 border-t border-gray-200 mt-3">
-                            <div class="grid grid-cols-6 gap-x-2 gap-y-1 items-end">
-                                <div class="float-label-container col-span-1">
-                                    <select id="form-virman-karsilik-currency" class="float-label-input float-label-select" required>
-                                        <option value=""></option>
-                                        ${currencyOptionsHTML}
-                                    </select>
-                                    <label for="form-virman-karsilik-currency" class="float-label">Karşılık Birim</label>
-                                </div>
-                                <div class="float-label-container col-span-3">
-                                    <input type="text" id="form-virman-karsilik-amount" class="float-label-input text-right font-mono" placeholder=" " value="0,00">
-                                    <label for="form-virman-karsilik-amount" class="float-label">Karşılık Miktar</label>
-                                </div>
-                                <div class="float-label-container col-span-2">
-                                    <input type="text" id="form-virman-karsilik-rate" class="float-label-input text-right font-mono" placeholder=" " value="1,0000">
-                                    <label for="form-virman-karsilik-rate" class="float-label">Karşılık Kur</label>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="float-label-container mt-6">
-                            <textarea id="form-virman-aciklama" class="float-label-input pt-4" placeholder=" " rows="5"></textarea>
-                            <label for="form-virman-aciklama" class="float-label">Açıklama</label>
                         </div>
                     </div>
-                `;
+                    <div class="float-label-container mt-6">
+                        <textarea id="form-virman-aciklama" class="float-label-input pt-4" placeholder=" " rows="5"></textarea>
+                        <label for="form-virman-aciklama" class="float-label">Açıklama</label>
+                    </div>
+                </div>
+            `;
         dynamicContentArea.innerHTML = formHTML;
         dynamicContentArea.dataset.activeTab = defaultActiveType;
 
@@ -1542,28 +1568,54 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         };
 
-        const updateRate = (currencySelect, rateInput, isIncomeSensitive = true) => {
-            const currencyId = currencySelect.value;
-            let rate = 0.0;
-            if (currencyId) {
-                const currency = allCurrencies.find(c => c.id == currencyId);
-                if (currency) {
-                    if (currency.dovizKodu === nationalCurrency.dovizKodu) { rate = 1.0; }
-                    else {
-                        const rateData = allExchangeRates.find(r => r.dovizKodu === currency.dovizKodu);
-                        if (isIncomeSensitive) {
-                            const activeTab = dynamicContentArea.dataset.activeTab;
-                            const isPositiveAction = activeTab === 'giris' || activeTab === 'alacagina';
-                            rate = rateData ? (isPositiveAction ? rateData.alisKuru : rateData.satisKuru) : 0.0;
-                        } else { rate = rateData ? rateData.alisKuru : 0.0; }
+        // UPDATED: async updateRate uses fetchLatestCure first, then falls back to allExchangeRates / nationalCurrency
+        const updateRate = async (currencySelectEl, rateInputEl, isIncomeSensitive = true) => {
+            if (!currencySelectEl || !rateInputEl) return;
+            const currencyId = currencySelectEl.value;
+            let rate = null;
+
+            // Try live cure from server
+            try {
+                if (currencyId) {
+                    const live = await fetchLatestCure(currencyId);
+                    if (live !== null && !isNaN(live) && live > 0) {
+                        rate = live;
                     }
                 }
+            } catch (e) {
+                console.warn('fetchLatestCure failed', e);
+                rate = null;
             }
-            rateInput.value = formatCurrency(rate, 4);
+
+            // Fallback: exchange rates or national currency
+            if (rate === null) {
+                const currencyObj = allCurrencies.find(c => c.id == currencyId);
+                if (currencyObj) {
+                    if (currencyObj.dovizKodu === nationalCurrency.dovizKodu) {
+                        rate = 1.0;
+                    } else {
+                        const rateData = allExchangeRates.find(r => r.dovizKodu === currencyObj.dovizKodu);
+                        if (rateData) rate = isIncomeSensitive ? (rateData.alisKuru ?? rateData.satisKuru ?? 0) : (rateData.satisKuru ?? rateData.alisKuru ?? 0);
+                        else rate = currencyObj.alisKuru ?? currencyObj.satisKuru ?? 0;
+                    }
+                } else {
+                    rate = 0;
+                }
+            }
+
+            rateInputEl.value = formatCurrency(rate, 4);
             calculateTotals();
         };
 
-        currencySelect.addEventListener('change', () => updateRate(currencySelect, rateInput, true));
+        // Event wiring uses async updateRate
+        currencySelect.addEventListener('change', async () => {
+            await updateRate(currencySelect, rateInput, true);
+        });
+
+        karsilikCurrencySelect.addEventListener('change', async () => {
+            await updateRate(karsilikCurrencySelect, karsilikRateInput, true);
+        });
+
         amountInput.addEventListener('input', calculateTotals);
         rateInput.addEventListener('input', calculateTotals);
         amountInput.addEventListener('focus', () => activeCalculatorField = 'amount');
@@ -1576,30 +1628,34 @@ document.addEventListener('DOMContentLoaded', () => {
             karsilikDetailsDiv.classList.toggle('hidden', !isChecked);
             if (isChecked) {
                 karsilikCurrencySelect.value = nationalCurrency.id; karsilikAmountInput.value = formatCurrency(0);
-                updateRate(karsilikCurrencySelect, karsilikRateInput, true); activeCalculatorField = 'amount';
+                // fetch live rate for default karşılık birimi
+                updateRate(karsilikCurrencySelect, karsilikRateInput, true);
+                activeCalculatorField = 'amount';
             } else { syncEquivalentFields(); }
             isFormDirty = true;
         });
-        karsilikCurrencySelect.addEventListener('change', () => updateRate(karsilikCurrencySelect, karsilikRateInput, true));
-        karsilikAmountInput.addEventListener('input', calculateTotals);
-        karsilikRateInput.addEventListener('input', calculateTotals);
-        karsilikAmountInput.addEventListener('focus', () => activeCalculatorField = 'equivalent');
-        karsilikRateInput.addEventListener('focus', () => activeCalculatorField = 'rateHesap');
-        karsilikAmountInput.addEventListener('blur', (e) => e.target.value = formatCurrency(parseFormattedNumber(e.target.value), 2));
-        karsilikRateInput.addEventListener('blur', (e) => e.target.value = formatCurrency(parseFormattedNumber(e.target.value), 4));
 
+        // Initialize rates when form opens
+        (async () => {
+            // if a currency is already set (edit mode) try fetch & set
+            if (currencySelect && currencySelect.value) {
+                await updateRate(currencySelect, rateInput, true);
+            }
+            if (karsilikCurrencySelect && karsilikCurrencySelect.value && !karsilikDetailsDiv.classList.contains('hidden')) {
+                await updateRate(karsilikCurrencySelect, karsilikRateInput, true);
+            }
+        })();
 
         toggleOptions.forEach(option => {
             const isActive = option.dataset.value === defaultActiveType;
 
             if (isActive) {
                 option.classList.add('active');
-                // ✅ DÜZELTİLDİ: CARİ modda 'cikis' = YEŞİL, SATIŞ modda 'alacagina' = YEŞİL
                 const isPositive = (defaultActiveType === 'alacagina' || defaultActiveType === 'cikis');
                 option.style.color = isPositive ? '#059669' : '#DC2626';
             } else {
                 option.classList.remove('active');
-                option.style.color = '#6B7280'; // Pasif seçenek gri
+                option.style.color = '#6B7280';
             }
 
             option.addEventListener('click', () => {
@@ -1607,31 +1663,24 @@ document.addEventListener('DOMContentLoaded', () => {
                 toggleContainer.dataset.selected = selectedValue;
                 dynamicContentArea.dataset.activeTab = selectedValue;
 
-                // ✅ Tüm seçenekleri sıfırla
-                toggleOptions.forEach(opt => {
-                    opt.classList.remove('active');
-                    opt.style.color = '#6B7280'; // Pasif = gri
-                });
-
-                // ✅ Seçili seçeneği aktif yap ve doğru rengi ver
+                toggleOptions.forEach(opt => opt.classList.remove('active'));
                 option.classList.add('active');
                 const isPositive = (selectedValue === 'alacagina' || selectedValue === 'cikis');
-                option.style.color = isPositive ? '#059669' : '#DC2626'; // YEŞİL veya KIRMIZI
+                option.style.color = isPositive ? '#059669' : '#DC2626';
 
-                // ✅ Panel rengini değiştir
                 middlePanel.classList.remove('hat-green', 'hat-red');
                 middlePanel.classList.add(isPositive ? 'hat-green' : 'hat-red');
 
-                // ✅ Kur yönünü güncelle
+                // update main currency based rate if needed
                 updateRate(currencySelect, rateInput, true);
                 if (karsilikToggle.checked) {
                     updateRate(karsilikCurrencySelect, karsilikRateInput, true);
                 }
 
-
                 isFormDirty = true;
             });
         });
+
         const isDefaultPositive = (defaultActiveType === 'cikis' || defaultActiveType === 'alacagina');
         middlePanel.classList.remove('hat-green', 'hat-red');
         middlePanel.classList.add(isDefaultPositive ? 'hat-green' : 'hat-red');
@@ -2393,25 +2442,30 @@ document.addEventListener('DOMContentLoaded', () => {
             const karsilikToggle = document.getElementById('virman-karsilik-toggle');
             const karsilikAktif = karsilikToggle && karsilikToggle.checked;
 
+            // declare here so available outside inner block
+            let karsilikCurrencySelect = null;
+            let karsilikAmountInput = null;
+            let karsilikRateInput = null;
+
             let karsilikDegeri = amount;
             let karsilikBirimi = currencyCode;
             let karsilikKuru = rate;
 
             if (karsilikAktif) {
-                const karsilikCurrencySelect = document.getElementById('form-virman-karsilik-currency');
-                const karsilikCurrencyId = karsilikCurrencySelect.value;
-                const karsilikCurrencyCode = karsilikCurrencySelect.options[karsilikCurrencySelect.selectedIndex]?.text;
+                karsilikCurrencySelect = document.getElementById('form-virman-karsilik-currency');
+                const karsilikCurrencyId = karsilikCurrencySelect ? karsilikCurrencySelect.value : '';
+                const karsilikCurrencyCode = karsilikCurrencySelect ? (karsilikCurrencySelect.options[karsilikCurrencySelect.selectedIndex]?.text) : '';
                 if (!karsilikCurrencyId) return showToast('Lütfen "Karşılık" için bir para birimi seçin.', 'warning');
 
-                const karsilikAmountInput = document.getElementById('form-virman-karsilik-amount');
+                karsilikAmountInput = document.getElementById('form-virman-karsilik-amount');
                 const karsilikAmount = parseFormattedNumber(karsilikAmountInput.value);
                 if (karsilikAmount <= 0) return showToast('"Karşılık Tutarı" sıfırdan büyük olmalıdır.', 'warning');
 
-                const karsilikRateInput = document.getElementById('form-virman-karsilik-rate');
+                karsilikRateInput = document.getElementById('form-virman-karsilik-rate');
                 const karsilikRate = parseFormattedNumber(karsilikRateInput.value);
 
                 karsilikDegeri = karsilikAmount;
-                karsilikBirimi = karsilikCurrencyCode;
+                karsilikBirimi = karsilikCurrencyCode || karsilikBirimi;
                 karsilikKuru = karsilikRate;
 
                 newItem.details.karsilikDegeri = karsilikDegeri;
@@ -2422,7 +2476,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (isCari) {
                 newItem.equivalentTotal = karsilikDegeri;
                 newItem.equivalentCurrency = karsilikBirimi;
-                newItem.equivalentCurrencyId = karsilikAktif ? karsilikCurrencySelect.value : currencyId;
+                newItem.equivalentCurrencyId = (karsilikAktif && karsilikCurrencySelect) ? karsilikCurrencySelect.value : currencyId;
                 newItem.hesapKuru = karsilikKuru;
             } else {
                 newItem.equivalentTotal = amount * rate;
@@ -2600,25 +2654,30 @@ document.addEventListener('DOMContentLoaded', () => {
             const karsilikToggle = document.getElementById('virman-karsilik-toggle');
             const karsilikAktif = karsilikToggle && karsilikToggle.checked;
 
+            // declare here for outer scope
+            let karsilikCurrencySelect = null;
+            let karsilikAmountInput = null;
+            let karsilikRateInput = null;
+
             let karsilikDegeri = amount;
             let karsilikBirimi = currencyCode;
             let karsilikKuru = rate;
 
             if (karsilikAktif) {
-                const karsilikCurrencySelect = document.getElementById('form-virman-karsilik-currency');
-                const karsilikCurrencyId = karsilikCurrencySelect.value;
-                const karsilikCurrencyCode = karsilikCurrencySelect.options[karsilikCurrencySelect.selectedIndex]?.text;
+                karsilikCurrencySelect = document.getElementById('form-virman-karsilik-currency');
+                const karsilikCurrencyId = karsilikCurrencySelect ? karsilikCurrencySelect.value : '';
+                const karsilikCurrencyCode = karsilikCurrencySelect ? (karsilikCurrencySelect.options[karsilikCurrencySelect.selectedIndex]?.text) : '';
                 if (!karsilikCurrencyId) return showToast('Lütfen "Karşılık" için bir para birimi seçin.', 'warning');
 
-                const karsilikAmountInput = document.getElementById('form-virman-karsilik-amount');
+                karsilikAmountInput = document.getElementById('form-virman-karsilik-amount');
                 const karsilikAmount = parseFormattedNumber(karsilikAmountInput.value);
                 if (karsilikAmount <= 0) return showToast('"Karşılık Tutarı" sıfırdan büyük olmalıdır.', 'warning');
 
-                const karsilikRateInput = document.getElementById('form-virman-karsilik-rate');
+                karsilikRateInput = document.getElementById('form-virman-karsilik-rate');
                 const karsilikRate = parseFormattedNumber(karsilikRateInput.value);
 
                 karsilikDegeri = karsilikAmount;
-                karsilikBirimi = karsilikCurrencyCode;
+                karsilikBirimi = karsilikCurrencyCode || karsilikBirimi;
                 karsilikKuru = karsilikRate;
 
                 updatedItemData.details.karsilikDegeri = karsilikDegeri;
@@ -2629,7 +2688,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (isCari) {
                 updatedItemData.equivalentTotal = karsilikDegeri;
                 updatedItemData.equivalentCurrency = karsilikBirimi;
-                updatedItemData.equivalentCurrencyId = karsilikAktif ? karsilikCurrencySelect.value : currencyId;
+                updatedItemData.equivalentCurrencyId = (karsilikAktif && karsilikCurrencySelect) ? karsilikCurrencySelect.value : currencyId;
                 updatedItemData.hesapKuru = karsilikKuru;
             } else {
                 updatedItemData.equivalentTotal = amount * rate;
@@ -2637,8 +2696,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 updatedItemData.equivalentCurrencyId = state.activeCurrencyId;
                 updatedItemData.hesapKuru = rate;
             }
-
-            if (!updatedItemData) return;
 
             const originalItem = state.receiptItems[state.selectedItemIndex];
             state.receiptItems[state.selectedItemIndex] = { ...originalItem, ...updatedItemData };
@@ -3917,13 +3974,15 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
     const applyFisListFiltersAndRender = () => {
-        const selectedCustomerId = fisListCustomerFilterSlimSelect.getSelected();
+        // Robustly read selection from fis-list customer filter
+        const rawSelected = getSlimSelectedValue(fisListCustomerFilterSlimSelect, 'fis-list-customer-filter');
+        const selectedCustomerId = Array.isArray(rawSelected) ? (rawSelected.length ? rawSelected[0] : '') : (rawSelected || '');
         const startDate = fisListStartDate.value;
         const endDate = fisListEndDate.value;
 
         let filteredList = state.fisList;
 
-        if (selectedCustomerId && String(selectedCustomerId) !== 'all') {
+        if (selectedCustomerId && String(selectedCustomerId).toLowerCase() !== 'all' && String(selectedCustomerId) !== '') {
             filteredList = filteredList.filter(fis => fis.cariHesapID == selectedCustomerId);
         }
 
@@ -3972,32 +4031,128 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         fisListContent.innerHTML = contentHTML;
     };
+    // Robust SlimSelect helper (ekle/replace yakınındaki benzer yardımcıyla çakışmasın diye)
+    const getSlimSelectedValue = (slimInstance, selectorId) => {
+        try {
+            // If instance is missing -> fallback to native select
+            if (!slimInstance) {
+                const native = document.getElementById(selectorId);
+                if (!native) return '';
+                if (native.multiple) return Array.from(native.selectedOptions).map(o => o.value);
+                return native.value;
+            }
+
+            // Common SlimSelect APIs (try in order)
+            if (typeof slimInstance.getSelected === 'function') return slimInstance.getSelected();
+            if (typeof slimInstance.selected === 'function') return slimInstance.selected();
+            if (typeof slimInstance.get === 'function') {
+                const v = slimInstance.get();
+                if (v !== undefined && v !== null) return v;
+            }
+            // Some older/newer variants expose properties
+            if (slimInstance.selected !== undefined) return slimInstance.selected;
+            if (slimInstance.getSelectedOptions) return slimInstance.getSelectedOptions();
+
+            // As a last resort, read native DOM
+            const native = document.getElementById(selectorId);
+            if (native) return native.value;
+        } catch (err) {
+            console.warn('getSlimSelectedValue error', err);
+        }
+        return '';
+    };
+
+    const setSlimSelectedValue = (slimInstance, selectorId, value) => {
+        try {
+            if (slimInstance) {
+                if (typeof slimInstance.setSelected === 'function') { slimInstance.setSelected(value); return; }
+                if (typeof slimInstance.set === 'function') { slimInstance.set(value); return; }
+                if (typeof slimInstance.setData === 'function') {
+                    // attempt to keep existing data and force selection
+                    try { slimInstance.setSelected && slimInstance.setSelected(value); return; } catch { /* ignore */ }
+                }
+            }
+            const native = document.getElementById(selectorId);
+            if (native) {
+                native.value = value;
+                native.dispatchEvent(new Event('change'));
+            }
+        } catch (err) {
+            console.warn('setSlimSelectedValue error', err);
+        }
+    };
+
+    // Updated fetchAndShowFisList using helpers
     const fetchAndShowFisList = async () => {
         const isCari = state.operationType === 'cari';
         fisListModalTitle.textContent = isCari ? 'Cari Fiş Listesi' : 'Satış Fiş Listesi';
 
-        const today = getLocalDateString(new Date());
-        fisListStartDate.value = today;
-        fisListEndDate.value = today;
-        fisListCustomerFilterSlimSelect.setSelected('all');
+        // Tarihleri ayarla: başlangıç = ayın 1'i, bitiş = bugün
+        const today = new Date();
+        const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+        fisListStartDate.value = getLocalDateString(firstDayOfMonth);
+        fisListEndDate.value = getLocalDateString(today);
+
+        // Modal'ın hesap filtresini ana ekrandaki seçime göre ayarla
+        let mainSelected = '';
+        try {
+            if (typeof customerSlimSelect !== 'undefined' && customerSlimSelect) {
+                mainSelected = getSlimSelectedValue(customerSlimSelect, 'customer-select');
+            } else if (customerSelect) {
+                mainSelected = customerSelect.value;
+            }
+        } catch (err) {
+            mainSelected = (customerSelect ? customerSelect.value : '');
+        }
+        if (Array.isArray(mainSelected)) mainSelected = mainSelected.length ? mainSelected[0] : '';
+
+        const modalDefault = (mainSelected && String(mainSelected).trim() !== '') ? String(mainSelected) : 'all';
+        try { setSlimSelectedValue(fisListCustomerFilterSlimSelect, 'fis-list-customer-filter', modalDefault); } catch (e) { console.warn(e); }
 
         fisListContent.innerHTML = '<div class="text-center p-8"><i class="fas fa-spinner fa-spin text-3xl text-gray-400"></i></div>';
         fisListModal.classList.remove('hidden');
 
         try {
-            const response = await fetch(`${API_BASE_URL}/Fisler?isCari=${isCari}`, { headers: getAuthHeaders() });
-            if (!response.ok) {
-                const errorText = await response.text();
-                throw new Error(`Fiş listesi alınamadı. Sunucu Yanıtı: ${response.status} - ${errorText || 'Boş yanıt'}`);
+            let accountId = 0;
+            if (modalDefault && String(modalDefault).toLowerCase() !== 'all') {
+                const parsed = parseInt(modalDefault, 10);
+                if (!isNaN(parsed)) accountId = parsed;
             }
 
-            state.fisList = await response.json();
-            applyFisListFiltersAndRender();
+            const payload = {
+                IsCari: isCari,
+                AccountId: accountId,
+                StartDate: `${fisListStartDate.value}T00:00:00`,
+                EndDate: `${fisListEndDate.value}T23:59:59`
+            };
 
+            const response = await fetch(`${API_BASE_URL}/Receipt/GetAll`, {
+                method: 'POST',
+                headers: getAuthHeaders(),
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                const txt = await response.text().catch(() => '');
+                throw new Error(`Fiş listesi alınamadı (${response.status}) - ${txt}`);
+            }
+
+            const result = await response.json();
+            const list = (result && result.data) ? result.data : [];
+
+            state.fisList = list.map(r => ({
+                fisID: r.id,
+                fisNo: r.receiptNumber,
+                tarih: r.receiptDate,
+                cariHesapID: r.accountId,
+                raw: r
+            }));
+
+            applyFisListFiltersAndRender();
         } catch (error) {
             fisListContent.innerHTML = `<p class="text-center text-red-500 p-8">${error.message}</p>`;
+            console.error('fetchAndShowFisList error:', error);
         }
-
     };
     // Yeni: Save to Receipt/Create endpoint with CreateReceiptCommandRequest model
     const saveReceiptToServer = async (requestModel) => {
@@ -4616,7 +4771,39 @@ document.addEventListener('DOMContentLoaded', () => {
             populateSelect(salespersonSelect, `${Front_BASE_URL}/Account/GetAll`, 'accountName', 'accountId', 'Tezgahtar...', item => item.tezgahtar == 1),
             //fetch(`${API_BASE_URL}/Kurlar/son`, { headers: getAuthHeaders() }).then(res => res.ok ? res.json() : Promise.reject('Kurlar alınamadı')).then(data => allExchangeRates = data).catch(err => showToast(err.toString(), 'danger')),
             //populateSelect(document.createElement('select'), `${API_BASE_URL}/hesaplar`, 'hesapAdi', 'hesapID').then(data => allAccounts = data),
-            //populateSelect(document.createElement('select'), `${API_BASE_URL}/stoklar`, 'stokAdi', 'stokID').then(data => allStoklar = data)
+            // replace populateSelect(...) call with explicit fetch + response.data handling
+            (async () => {
+                try {
+                    const base = String(Front_BASE_URL || API_BASE_URL).replace(/\/$/, '');
+                    const url = `${base}/Stock/GetAll`;
+                    const res = await fetch(url, { headers: getAuthHeaders() });
+                    if (!res.ok) {
+                        const txt = await res.text().catch(() => '');
+                        throw new Error(`Stok listesi alınamadı (${res.status}) - ${txt}`);
+                    }
+                    const json = await res.json();
+                    const items = Array.isArray(json) ? json : (json && Array.isArray(json.data) ? json.data : []);
+
+                    // Normalize API response into the frontend shape expected by product form logic
+                    allStoklar = items.map(s => ({
+                        stokID: s.id ?? s.stockId ?? s.stokID ?? 0,
+                        stokAdi: s.stockName ?? s.stockName ?? s.stokAdi ?? '',
+                        milyem: parseFloat(s.millRate ?? s.MillRate ?? s.milyem ?? 0) || 0,
+                        birim: s.unitName ?? s.UnitName ?? s.birim ?? '',
+                        iscilikBirimiKodu: s.laborUnit ?? s.laborUnit ?? s.laborUnitName ?? s.laborUnit ?? '',
+                        stokGrupAdi: s.stockGroupName ?? s.stockGroupName ?? s.stokGrupAdi ?? '',
+                        stokTipAdi: s.stockTypeName ?? s.stockTypeName ?? s.stokTipAdi ?? '',
+                        stokTipID: s.stockTypeId ?? s.stockTypeId ?? null,
+                        stokGrupID: s.stockGroupId ?? s.stockGroupId ?? null,
+                        raw: s
+                    }));
+                    return allStoklar;
+                } catch (err) {
+                    console.error('fetch Stock/GetAll error:', err);
+                    allStoklar = [];
+                    return [];
+                }
+            })()
         ]);
         nationalCurrency = allCurrencies.find(c => c.ulkeParabirimi === true);
         if (!nationalCurrency) {
@@ -4856,7 +5043,63 @@ document.addEventListener('DOMContentLoaded', () => {
             actionOverlay.classList.add('hidden');
             actionOverlay.classList.remove('opacity-0', 'pointer-events-none');
         }
+        // new: server-side filter fetch for fis list (call Receipt/GetAll POST)
+        const fetchFisListByFilters = async (e) => {
+            if (e && typeof e.preventDefault === 'function') e.preventDefault();
 
+            fisListContent.innerHTML = '<div class="text-center p-8"><i class="fas fa-spinner fa-spin text-3xl text-gray-400"></i></div>';
+
+            try {
+                const isCari = state.operationType === 'cari';
+
+                // read selection robustly (SlimSelect or native)
+                let rawSelected = getSlimSelectedValue(fisListCustomerFilterSlimSelect, 'fis-list-customer-filter');
+                if (Array.isArray(rawSelected)) rawSelected = rawSelected.length ? rawSelected[0] : '';
+                const selected = String(rawSelected ?? '').trim();
+
+                let accountId = 0;
+                if (selected && selected.toLowerCase() !== 'all' && selected !== '') {
+                    const p = parseInt(selected, 10);
+                    if (!isNaN(p)) accountId = p;
+                }
+
+                const payload = {
+                    IsCari: isCari,
+                    AccountId: accountId,
+                    StartDate: `${fisListStartDate.value}T00:00:00`,
+                    EndDate: `${fisListEndDate.value}T23:59:59`
+                };
+
+                const response = await fetch(`${API_BASE_URL}/Receipt/GetAll`, {
+                    method: 'POST',
+                    headers: getAuthHeaders(),
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    const txt = await response.text().catch(() => '');
+                    throw new Error(`Fiş listesi alınamadı (${response.status}) - ${txt}`);
+                }
+
+                const result = await response.json();
+                const list = (result && result.data) ? result.data : [];
+
+                // normalize to frontend model and render
+                state.fisList = list.map(r => ({
+                    fisID: r.id,
+                    fisNo: r.receiptNumber,
+                    tarih: r.receiptDate,
+                    cariHesapID: r.accountId,
+                    raw: r
+                }));
+
+                // render server-fetched list
+                renderFisList(state.fisList);
+            } catch (error) {
+                fisListContent.innerHTML = `<p class="text-center text-red-500 p-8">${error.message}</p>`;
+                console.error('fetchFisListByFilters error:', error);
+            }
+        };
         // Son bir kez görünümü düzenle
         updateActionButtonsVisibility();
         const filterCustomerOptions = [{ text: 'Tüm Hesaplar', value: 'all' }, ...originalCustomerOptions.filter(opt => opt.value)];
@@ -4866,7 +5109,7 @@ document.addEventListener('DOMContentLoaded', () => {
             data: filterCustomerOptions
         });
 
-
+        try { ensureGetSelected(fisListCustomerFilterSlimSelect, '#fis-list-customer-filter'); } catch (e) { console.warn('ensureGetSelected failed for fisListCustomerFilterSlimSelect', e); }
         // Mevcut kod (initialize fonksiyonu içinde):
         customerSelect.addEventListener('change', () => {
             // Önce buton görünümünü güncelle
@@ -4920,7 +5163,7 @@ document.addEventListener('DOMContentLoaded', () => {
         ekstreGetirButton.addEventListener('click', fetchAndRenderEkstre);
 
         salesListButton.addEventListener('click', fetchAndShowFisList);
-        fisListFilterButton.addEventListener('click', applyFisListFiltersAndRender);
+        fisListFilterButton.addEventListener('click', fetchFisListByFilters);
         fisListModalCloseButton.addEventListener('click', () => {
             fisListModal.classList.add('hidden');
 

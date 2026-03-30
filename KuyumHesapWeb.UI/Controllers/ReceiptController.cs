@@ -3,6 +3,7 @@ using KuyumHesapWeb.Core.Commond.Models.Dtos;
 using KuyumHesapWeb.Core.Feature.MovementTypeFeature.Queries.GetMovementByReceiptId;
 using KuyumHesapWeb.Core.Feature.ReceiptFeature.Commands.Create;
 using KuyumHesapWeb.Core.Feature.ReceiptFeature.Dtos;
+using KuyumHesapWeb.Core.Feature.ReceiptFeature.Queries.GetAll;
 using KuyumHesapWeb.Core.Feature.ReceiptFeature.Queries.GetById;
 using KuyumHesapWeb.Core.Feature.ReceiptFeature.Queries.GetEkstreByCustomer;
 using KuyumHesapWeb.Core.Feature.ReceiptFeature.Queries.GetReceiptByCustomerIdAndDates;
@@ -20,6 +21,13 @@ namespace KuyumHesapWeb.UI.Controllers
         {
             _mediator = mediator;
             _mapper = mapper;
+        }
+        [HttpPost]
+        public async Task<IActionResult> GetAll([FromBody]GetAllReceiptQueryRequest request)
+        {
+            var data = await _mediator.Send(request);
+
+            return Ok(data);
         }
         public IActionResult Index()
         {

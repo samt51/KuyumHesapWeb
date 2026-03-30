@@ -63,6 +63,12 @@ namespace KuyumHesapWeb.UI.Controllers
             await _mediator.Send(request);
             return RedirectToAction("Index");
         }
+        [HttpGet]
+        public async Task<IActionResult> GetAll()
+        {
+            var data = await _mediator.Send(new GetAllStockQueryRequest());
+            return Ok(data);
+        }
 
     }
 }
