@@ -3,6 +3,7 @@ using KuyumHesapWeb.Core.Commond.Models.Dtos;
 using KuyumHesapWeb.Core.Feature.MovementTypeFeature.Queries.GetMovementByReceiptId;
 using KuyumHesapWeb.Core.Feature.ReceiptFeature.Commands.Create;
 using KuyumHesapWeb.Core.Feature.ReceiptFeature.Dtos;
+using KuyumHesapWeb.Core.Feature.ReceiptFeature.Queries.GetById;
 using KuyumHesapWeb.Core.Feature.ReceiptFeature.Queries.GetEkstreByCustomer;
 using KuyumHesapWeb.Core.Feature.ReceiptFeature.Queries.GetReceiptByCustomerIdAndDates;
 using KuyumHesapWeb.UI.Controllers.BaseCont;
@@ -29,58 +30,22 @@ namespace KuyumHesapWeb.UI.Controllers
             return View();
         }
         [HttpPost]
-        public async Task<IActionResult> Create(CreateReceiptViewModel vm)
+        public async Task<IActionResult> Create([FromBody] CreateReceiptCommandRequest request)
         {
-            if (string.IsNullOrWhiteSpace(vm.MovementsJson))
-            {
-                ModelState.AddModelError("", "Fiş hareketleri boş.");
-                return Redirect("SellAndCari/Index");
-            }
-
-            List<CreateMovementReceiptRequestDto>? movements;
-            try
-            {
-                movements = System.Text.Json.JsonSerializer.Deserialize<List<CreateMovementReceiptRequestDto>>(
-                    vm.MovementsJson,
-                    new System.Text.Json.JsonSerializerOptions
-                    {
-                        PropertyNameCaseInsensitive = true
-                    });
-            }
-            catch
-            {
-                ModelState.AddModelError("", "Fiş hareketleri okunamadı (JSON parse hatası).");
-                return View(vm);
-            }
-
-            if (movements == null || movements.Count == 0)
-            {
-                ModelState.AddModelError("", "Fiş hareketleri boş.");
-                return View(vm);
-            }
-
-            var request = new CreateReceiptCommandRequest
-            {
-                ReceiptNumber = vm.ReceiptNumber,
-                ReceiptDate = vm.ReceiptDate,
-                CurrentAccountId = vm.CurrentAccountId,
-                EmployeeId = vm.EmployeeId,
-                Description = vm.Description,
-                IsCustomerReceipt = vm.IsCustomerReceipt,
-                CurrencyCode = vm.CurrencyCode,
-                OpenBalanceAmount = vm.OpenBalanceAmount,
-                AccountId = vm.AccountId,
-                CreateMovementReceiptRequestDtos = movements
-            };
             var data = await _mediator.Send(request);
-
             return RedirectToAction("Index", "SellAndCari");
+        }
+        [HttpGet]
+        public async Task<IActionResult> GetById(int id)
+        {
+            var data = await _mediator.Send(new GetByIdReceiptQueryRequest(id));
+            return Ok(data);
         }
         [HttpPost]
         public async Task<IActionResult> GetEkstreByCustomerIdAndDate([FromBody] GetEkstreByCustomerQueryRequest request)
         {
             var data = await _mediator.Send(request);
-            return Ok(data);
+            return Ok(data.data);
         }
         [HttpPost]
         public async Task<IActionResult> GetReceiptByCustomerIdAndDate([FromBody] GetReceiptByCustomerIdAndDatesRequest request)

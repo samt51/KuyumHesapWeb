@@ -1,0 +1,52 @@
+﻿@* Ekstre modal *@
+
+<div id="ekstre-modal" class="hidden fixed inset-0 modal-bg flex items-start justify-center z-50 pt-10">
+    <div class="bg-gray-50 rounded-lg shadow-xl w-full max-w-7xl max-h-[90vh] flex flex-col">
+
+        <div class="flex justify-between items-center p-4 ekstre-modal-header rounded-t-lg">
+            <h3 class="text-lg font-bold text-gray-700 flex items-center">
+                <i class="fas fa-file-invoice-dollar text-gray-500 mr-3"></i>
+                Hesap Ekstresi
+            </h3>
+            <button id="ekstre-modal-close-button" class="text-gray-500 hover:text-red-600 text-2xl transition-colors">&times;</button>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 p-4 border-b">
+            <!-- Müşteri Bilgi Kartı -->
+            <div class="ekstre-info-card lg:col-span-1">
+                <h4 class="card-title-absolute"><i class="fas fa-user-circle"></i>Müşteri Bilgileri</h4>
+                <span id="ekstre-hesap-adi" class="font-bold text-gray-800 text-base truncate block" title="Hesap Adı"></span>
+                <span id="ekstre-hesap-tipi" class="block text-sm text-gray-500 mt-1"></span>
+                <span id="ekstre-hesap-telefon" class="block text-sm text-gray-600 mt-1"></span>
+                <span id="ekstre-hesap-id" class="text-xs font-mono text-gray-400 block mt-2"></span>
+            </div>
+
+            <!-- Bakiye Özeti Kartı -->
+            <div class="ekstre-info-card lg:col-span-1">
+                <h4 class="card-title-absolute"><i class="fas fa-balance-scale"></i>Bakiye Özeti</h4>
+                <div id="ekstre-bakiye-ozeti" class="custom-scrollbar pr-2 ekstre-bakiye-ozeti-v2">
+                    <!-- Bakiye içeriği JS ile dolacak -->
+                </div>
+            </div>
+
+            <!-- Tarih Filtreleme & Pozisyon Kartı -->
+            <div class="ekstre-info-card lg:col-span-1">
+                <h4 class="card-title-absolute"><i class="fas fa-calendar-alt"></i>Tarih Aralığı</h4>
+                <div class="flex items-stretch">
+                    <input type="date" id="ekstre-baslangic-tarihi" class="block w-full px-3 py-2 bg-white border border-gray-300 rounded-l-md shadow-sm text-sm h-[38px] border-r-0">
+                    <input type="date" id="ekstre-bitis-tarihi" class="block w-full px-3 py-2 bg-white border border-gray-300 shadow-sm text-sm h-[38px] rounded-none">
+                    <button id="ekstre-getir-button" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-r-md text-sm h-[38px] border border-blue-600 flex items-center justify-center">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+                <div class="mt-3 text-center w-full border-t pt-3">
+                    <span id="ekstre-has-pozisyon" class="text-base font-semibold"></span>
+                </div>
+            </div>
+        </div>
+
+        <div id="ekstre-content" class="p-4 overflow-y-auto bg-white rounded-b-lg">
+            <!-- Ekstre içeriği JS ile dolacak -->
+        </div>
+    </div>
+</div>

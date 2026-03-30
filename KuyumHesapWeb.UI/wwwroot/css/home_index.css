@@ -1,0 +1,125 @@
+﻿/* home_index.css - Home\Index.cshtml */
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: #f7f8fc;
+}
+
+.rolex-green-border {
+    border: 1px solid rgba(30, 132, 73, 0.35);
+}
+
+.sidebar-link-container:hover .sidebar-link {
+    background-color: rgba(30, 132, 73, 0.05);
+    color: #166534;
+}
+
+    .sidebar-link-container:hover .sidebar-link i {
+        color: #16a34a;
+    }
+
+.sidebar-link.pinned {
+    background-color: rgba(30, 132, 73, 0.1) !important;
+    color: #166534 !important;
+}
+
+    .sidebar-link.pinned i {
+        color: #16a34a !important;
+    }
+
+#submenu-flyout a {
+    padding-left: 1.25rem !important; /* 20px */
+    padding-right: 1rem !important;
+    padding-top: 0.6rem !important;
+    padding-bottom: 0.6rem !important;
+}
+
+    #submenu-flyout a:hover {
+        background-color: rgba(30, 132, 73, 0.1) !important;
+    }
+
+.sidebar-link-container.active-link .sidebar-link {
+    background-color: rgba(30, 132, 73, 0.05);
+    color: #166534;
+}
+
+    .sidebar-link-container.active-link .sidebar-link i {
+        color: #16a34a;
+    }
+
+.sidebar-text {
+    opacity: 0;
+    transition: opacity 0.2s ease-in-out, visibility 0.2s;
+    visibility: hidden;
+}
+
+#sidebar-menu.expanded .sidebar-text {
+    opacity: 1;
+    visibility: visible;
+}
+
+#tabs-container {
+    display: flex;
+    border-bottom: 1px solid #e5e7eb;
+    background-color: #f9fafb;
+}
+
+.tab-button {
+    background-color: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s ease-in-out;
+    color: #6b7280;
+}
+
+    .tab-button:hover {
+        background-color: #f3f4f6;
+        color: #1f2937;
+    }
+
+    .tab-button.active {
+        border-bottom-color: #1e40af;
+        background-color: #ffffff;
+        color: #1e40af;
+        font-weight: 600;
+    }
+
+.close-tab-btn {
+    font-family: 'Arial', sans-serif;
+    font-weight: bold;
+    font-size: 1rem;
+    line-height: 1;
+    padding: 0 2px;
+    border-radius: 50%;
+}
+
+    .close-tab-btn:hover {
+        background-color: #e5e7eb;
+    }
+
+#content-frames {
+    position: relative;
+    flex-grow: 1;
+}
+
+    #content-frames iframe {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        border: none;
+        display: none;
+    }
+
+        #content-frames iframe.active {
+            display: block;
+        }
+
+.chevron-icon {
+    transition: transform 0.3s ease-in-out;
+}
+
+    .chevron-icon.rotate-180 {
+        transform: rotate(180deg);
+    }

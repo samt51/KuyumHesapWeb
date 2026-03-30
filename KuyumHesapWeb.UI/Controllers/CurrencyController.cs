@@ -22,7 +22,7 @@ namespace KuyumHesapWeb.UI.Controllers
         public async Task<IActionResult> Index()
         {
             var data = await _mediator.Send(new GetAllCurrencyQueryRequest());
-            return View(data.data);
+            return View(data);
         }
         public IActionResult Create()
         {
@@ -46,6 +46,12 @@ namespace KuyumHesapWeb.UI.Controllers
         {
             var data = await _mediator.Send(request);
             return RedirectToAction("Index");
+        }
+        [HttpGet]
+        public async Task<IActionResult> GetAll()
+        {
+            var data = await _mediator.Send(new GetAllCurrencyQueryRequest());
+            return Ok(data);
         }
     }
 }

@@ -16,13 +16,11 @@ namespace KuyumHesapWeb.UI.Controllers
             _mapper = mapper;
         }
 
-        [HttpGet]
-        public async Task<IActionResult> GetCashReportAsync(int? accountId)
+     
+        public async Task<IActionResult> GetCashReportAsync()
         {
-            var result = await _mediator.Send(new GetCashReportQueryRequest(accountId));
-
-            return Ok(result.data); ;
-
+            var result = await _mediator.Send(new GetCashReportQueryRequest());
+            return Ok(result); ;
         }
     }
 }

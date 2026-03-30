@@ -1,0 +1,89 @@
+﻿/* home_dashboard.css - Home\Dashboard.cshtml */
+
+:root {
+    --scrolling-ticker-bg: #343a40;
+    --scrolling-ticker-text: #ffffff;
+    --ticker-item-border: #107c41;
+    /* Marquee süresini buradan ayarlayın -> daha büyük = daha yavaş */
+    --marquee-duration: 140s;
+    /* Ticker'ın soldan başladığı boşluk (sidebar genişliği). */
+    --ticker-left-offset: 64px; /* dar sidebar (w-16) */
+}
+
+/* pinned sidebar (geniş) için override: body.sidebar-pinned eklendiğinde */
+body.sidebar-pinned {
+    --ticker-left-offset: 16rem; /* w-64 */
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: #f8f9fa;
+    padding-bottom: 60px; /* Ticker height */
+}
+
+/* Sidebar'ın her durumda ticker'ın üstünde kalmasını garantiye alıyoruz.
+   Layout dosyasında farklı z-index'ler olabiliyor; burada !important ile öncelik veriyoruz. */
+#sidebar-menu {
+    position: fixed;
+    z-index: 90 !important;
+}
+
+/* Flyout da sidebar'ın üstünde olsun */
+#submenu-flyout {
+    z-index: 92 !important;
+}
+
+/* Ticker bar tüm genişliği kaplayacak; içerik soldan ofsetlenecek (sidebar'ın altından akacak) */
+.scrolling-ticker-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    z-index: 8; /* Sidebar'ın üstünde olmaması için düşük değer */
+    transition: left 0.28s ease, width 0.28s ease;
+    box-sizing: border-box;
+    background: var(--scrolling-ticker-bg);
+}
+
+/* İçerik container'ı, içerik görsel olarak sidebar'ın sağından başlasın diye padding eklenir.
+   Böylece .scrolling-ticker-bar sabit genişlikte kalır, sidebar genişlese bile daralmaz. */
+.scrolling-ticker-container {
+    box-sizing: border-box;
+    overflow: hidden;
+    white-space: nowrap;
+    width: 100%;
+    padding-left: var(--ticker-left-offset);
+}
+
+/* İçerik çiftlenmiş olmasına göre sürekli kayan yapı */
+.scrolling-ticker-content {
+    display: inline-block;
+    will-change: transform;
+    animation: marquee var(--marquee-duration) linear infinite;
+    z-index: 1; /* stacking context içinde düşük tutuluyor */
+    position: relative; /* transform + z-index kontrollü olsun */
+}
+
+/* Hover ile duraklatma (kullanıcı okuması kolaylaşır) */
+.scrolling-ticker-container:hover .scrolling-ticker-content {
+    animation-play-state: paused;
+}
+
+@keyframes marquee {
+    0% {
+        transform: translateX(0%);
+    }
+
+    100% {
+        transform: translateX(-50%);
+    }
+}
+
+/* Renkler */
+.percentage-change.positive {
+    color: #22c55e;
+}
+
+.percentage-change.negative {
+    color: #ef4444;
+}

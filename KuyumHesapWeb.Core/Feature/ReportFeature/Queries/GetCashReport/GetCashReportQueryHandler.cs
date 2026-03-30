@@ -11,9 +11,9 @@ namespace KuyumHesapWeb.Core.Feature.ReportFeature.Queries.GetCashReport
         {
         }
 
-        public Task<ResponseDto<GetCashReportQueryResponse>> Handle(GetCashReportQueryRequest request, CancellationToken cancellationToken)
+        public async Task<ResponseDto<GetCashReportQueryResponse>> Handle(GetCashReportQueryRequest request, CancellationToken cancellationToken)
         {
-            var data = _apiService.GetAsync<GetCashReportQueryResponse>($"Report/GetCashReport?accountId={request.AccountId}");
+            var data =await _apiService.GetAsync<GetCashReportQueryResponse>($"Report/GetCashReport");
 
             return data;
         }

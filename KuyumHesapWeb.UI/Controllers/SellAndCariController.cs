@@ -36,7 +36,6 @@ namespace KuyumHesapWeb.UI.Controllers
 
             var defaultRequest = new CreateReceiptCommandRequest
             {
-                CurrentAccountId = preferredAccount?.AccountId ?? 0,
                 ReceiptDate = DateTime.Now,
                 CurrencyCode = preferredCurrency?.CurrencyCode ?? "TRY"
             };

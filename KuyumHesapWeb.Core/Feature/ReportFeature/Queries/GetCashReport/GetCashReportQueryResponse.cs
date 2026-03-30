@@ -1,10 +1,11 @@
-﻿using KuyumHesapWeb.Core.Feature.ReportFeature.Dtos;
+﻿using KuyumHesapWeb.Core.Feature.ReceiptFeature.Queries.GetEkstreByCustomer;
 
 namespace KuyumHesapWeb.Core.Feature.ReportFeature.Queries.GetCashReport
 {
     public class GetCashReportQueryResponse
     {
-        public decimal TotalBalanceHas { get; set; }
-        public List<CashRegisterStatusResponseDto> Details { get; set; } = new();
+        public decimal? TotalHas { get; set; }
+        public List<EkstreBakiyeViewModel> DevredenBakiyeler { get; set; } = new();
+        public List<EkstreSatirViewModel> Hareketler { get; set; } = new();
     }
 }

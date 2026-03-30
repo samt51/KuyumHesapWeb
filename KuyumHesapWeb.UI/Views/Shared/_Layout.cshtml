@@ -1,6 +1,8 @@
 ﻿@{
     Layout = null;
 }
+
+
 <!DOCTYPE html>
 <html lang="tr">
 <head>
@@ -13,291 +15,110 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/slim-select@1.27.0/dist/slimselect.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="~/css/home_index.css" />
+    @inject Microsoft.Extensions.Configuration.IConfiguration Configuration
 
-    <!-- CSS Kodları Yeniden Düzenlendi -->
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f7f8fc;
-        }
-
-        /* Sidebar ve Ana İçerik için Geçiş Efektleri */
-        #sidebar-menu, #main-content {
-            transition: all 0.3s ease-in-out;
-        }
-
-        /* Başlangıçta ana içeriğin soldan boşluğu */
-        #main-content {
-            margin-left: 4rem; /* w-16 */
-        }
-
-        /* --- SABİTLEME (Pin) Durumu --- */
-        /* Hamburger ile sabitlendiğinde, içerik SAĞA KAYAR */
-        body.sidebar-pinned #sidebar-menu {
-            width: 16rem; /* w-64 */
-        }
-
-        body.sidebar-pinned #main-content {
-            margin-left: 16rem;
-        }
-
-        body.sidebar-pinned #sidebar-menu .sidebar-text {
-            opacity: 1;
-            visibility: visible;
-        }
-
-        body:not(.sidebar-pinned) #sidebar-menu:hover,
-        body:not(.sidebar-pinned) #sidebar-menu.submenu-active {
-            width: 16rem;
-            z-index: 50;
-        }
-
-            body:not(.sidebar-pinned) #sidebar-menu:hover .sidebar-text,
-            body:not(.sidebar-pinned) #sidebar-menu.submenu-active .sidebar-text {
-                opacity: 1;
-                visibility: visible;
-            }
-
-      
-
-        .rolex-green-border {
-            border: 1px solid rgba(30, 132, 73, 0.35);
-        }
-
-        .sidebar-link-container:hover .sidebar-link {
-            background-color: rgba(30, 132, 73, 0.05);
-            color: #166534;
-        }
-
-            .sidebar-link-container:hover .sidebar-link i {
-                color: #16a34a;
-            }
-
-        .sidebar-link.pinned {
-            background-color: rgba(30, 132, 73, 0.1) !important;
-            color: #166534 !important;
-        }
-
-            .sidebar-link.pinned i {
-                color: #16a34a !important;
-            }
-
-        #submenu-flyout a {
-            padding-left: 1.25rem !important;
-            padding-right: 1rem !important;
-            padding-top: 0.6rem !important;
-            padding-bottom: 0.6rem !important;
-        }
-
-            #submenu-flyout a:hover {
-                background-color: rgba(30, 132, 73, 0.1) !important;
-            }
-
-        .sidebar-link-container.active-link .sidebar-link {
-            background-color: rgba(30, 132, 73, 0.05);
-            color: #166534;
-        }
-
-            .sidebar-link-container.active-link .sidebar-link i {
-                color: #16a34a;
-            }
-
-        .sidebar-text {
-            opacity: 0;
-            transition: opacity 0.2s ease-in-out, visibility 0.2s;
-            visibility: hidden;
-        }
-
-        #tabs-container {
-            display: flex;
-            border-bottom: 1px solid #e5e7eb;
-            background-color: #f9fafb;
-            overflow-x: auto;
-        }
-
-        .tab-button {
-            background-color: transparent;
-            border: none;
-            border-bottom: 2px solid transparent;
-            transition: all 0.2s ease-in-out;
-            color: #6b7280;
-            white-space: nowrap;
-        }
-
-            .tab-button:hover {
-                background-color: #f3f4f6;
-                color: #1f2937;
-            }
-
-            .tab-button.active {
-                border-bottom-color: #1e40af;
-                background-color: #ffffff;
-                color: #1e40af;
-                font-weight: 600;
-            }
-
-        .close-tab-btn {
-            font-family: 'Arial', sans-serif;
-            font-weight: bold;
-            font-size: 1rem;
-            line-height: 1;
-            padding: 0 2px;
-            border-radius: 50%;
-        }
-
-            .close-tab-btn:hover {
-                background-color: #e5e7eb;
-            }
-
-        #content-frames {
-            position: relative;
-            flex: 1 1 auto;
-            min-height: 0;
-            overflow: hidden; /* iframe içi yönetsin */
-        }
-
-            #content-frames iframe {
-                position: absolute;
-                inset: 0;
-                width: 100%;
-                height: 100%;
-                border: 0;
-            }
-
-                #content-frames iframe.active {
-                    display: block;
-                }
-
-        .chevron-icon {
-            transition: transform 0.3s ease-in-out;
-        }
-
-            .chevron-icon.rotate-180 {
-                transform: rotate(180deg);
-            }
-
-        body {
-            overflow: hidden; /* sayfanın değil, iframe alanının yönetmesini istiyoruz */
-        }
-
-        #content-frames {
-            height: 100%;
-        }
-
-            #content-frames iframe {
-                height: 100%;
-            }
-
-        html, body {
-            height: 100%;
-            overflow-x: hidden; /* yatay taşmayı kes */
-        }
-
-        /* default sidebar 4rem */
-        #main-content {
-            margin-left: 4rem;
-            width: calc(100% - 4rem); /* <-- kritik */
-            min-width: 0; /* flex/iframe içi taşmaları engeller */
-        }
-
-        /* pinned sidebar 16rem */
-        body.sidebar-pinned #main-content {
-            margin-left: 16rem;
-            width: calc(100% - 16rem); /* <-- kritik */
-        }
-
-        /* flex içinde taşma sorunlarını kesmek için */
-        #content-frames {
-            min-width: 0;
-            min-height: 0;
-        }
-        @@media (max-width: 768px) {
-            #main-content
-
-        {
-            margin-left: 4rem;
-            width: calc(100% - 4rem);
-        }
-
-        body.sidebar-pinned #main-content {
-            margin-left: 4rem; /* mobilde sabitleme içerik kaydırmasın */
-            width: calc(100% - 4rem);
-        }
-
-        body.sidebar-pinned #sidebar-menu {
-            width: 16rem;
-            z-index: 60;
-        }
-
-        }
-    </style>
+    <script>
+        (function() {
+            // appsettings içindeki ApiAddress değeri buraya gömülür
+            var api = '@(Configuration["LocalAddress"] ?? "")';
+            // sondaki slash varsa temizle
+            api = api ? api.replace(/\/$/, '') : '';
+            window.API_BASE_URL = api;
+            // fallback varsa local path kullan
+            window.CURE_GET_LATEST_URL = api ? api + '/Cure/GetLatestCure' : '/Cure/GetLatestCure';
+        })();
+    </script>
     @RenderSection("Styles", required: false)
-</head>
-<div data-server-page="true" class="hidden"></div>
-<body class="bg-gray-100">
 
-    <nav id="sidebar-menu" class="fixed top-0 left-0 h-full w-16 bg-white shadow-lg rolex-green-border z-40 flex flex-col">
+</head>
+<body class="bg-gray-100 overflow-hidden text-sm">
+
+    <!-- Mobile Overlay -->
+    <div id="mobile-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-30 transition-opacity duration-300 ease-in-out opacity-0 pointer-events-none"></div>
+
+    <nav id="sidebar-menu" class="hidden md:flex fixed top-0 left-0 h-full w-16 bg-white text-gray-800 shadow-xl z-50 transition-all duration-300 ease-in-out flex-col group">
         <div class="p-3 flex items-center justify-start h-16 flex-shrink-0">
-            <button id="sidebar-toggle" class="text-gray-700 focus:outline-none pl-2 flex-shrink-0">
+            <button id="sidebar-toggle" class="text-gray-700 focus:outline-none pl-2 flex-shrink-0 transition-colors hover:text-green-700">
                 <i class="fas fa-bars text-xl"></i>
             </button>
-            <div class="relative ml-3 flex-grow sidebar-text">
-                <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
-                <input type="text" id="sidebar-search" placeholder="Menüde Ara..." class="w-full bg-gray-100 border border-gray-200 rounded-md py-1.5 pl-9 pr-3 text-xs focus:outline-none focus:ring-1 focus:ring-green-700">
+            <div class="relative ml-4 flex-grow sidebar-text">
+                <span class="font-bold text-lg text-gray-800 tracking-wide">KuyumHesap</span>
             </div>
         </div>
         <div id="menu-links-container" class="py-2 overflow-y-auto overflow-x-hidden flex-grow">
+            <!-- ARAMA ALANI EKLENDİ (Dar modda simge, genişte input) -->
             <div class="sidebar-link-container">
-                <a asp-controller="Dashboard" asp-action="IndexDashboard" class="sidebar-link flex items-center px-5 py-2.5 text-gray-700 transition-colors">
+                <div class="relative flex items-center px-5 py-2 text-gray-700 transition-colors overflow-hidden">
+                    <i class="fas fa-search w-6 text-center text-xl text-gray-500 flex-shrink-0"></i>
+                    <div class="ml-3 flex-grow sidebar-text">
+                        <input type="text" id="sidebar-search" placeholder="Menüde Ara..." class="w-full bg-gray-100 border border-gray-200 rounded-md py-1.5 px-3 text-xs focus:outline-none focus:ring-1 focus:ring-green-700">
+                    </div>
+                </div>
+            </div>
+            <div class="sidebar-link-container">
+                <a href="@Url.Action("IndexDashboard", "Dashboard")" onclick="openTab('@Url.Action("IndexDashboard", "Dashboard")', 'Ana Sayfa')" class="sidebar-link flex items-center px-5 py-2.5 text-gray-700 transition-colors">
                     <i class="fas fa-home w-6 text-center text-xl text-gray-500"></i>
                     <span class="ml-3 font-semibold text-sm sidebar-text whitespace-nowrap">Ana Sayfa</span>
                 </a>
             </div>
+
             <div class="sidebar-link-container">
-                <a asp-controller="SellAndCari" asp-action="Index" class="sidebar-link flex items-center px-5 py-2.5 text-gray-700 transition-colors">
-                    <i class="fas fa-cash-register w-6 text-center text-xl text-gray-500"></i>
-                    <span class="ml-3 font-semibold text-sm sidebar-text whitespace-nowrap">Satış&Cari</span>
-                </a>
-            </div>
-            <div class="sidebar-link-container">
-                <a asp-controller="Barcode" asp-action="Index" class="sidebar-link flex items-center px-5 py-2.5 text-gray-700 transition-colors">
-                    <i class="fas fa-qrcode w-6 text-center text-xl text-gray-500"></i>
-                    <span class="ml-3 font-semibold text-sm sidebar-text whitespace-nowrap">Ürün Barkodlama</span>
+                <a href="@Url.Action("Index", "SellAndCari")" data-no-tab="true" class="sidebar-link flex items-center px-5 py-2.5 text-gray-700 transition-colors">
+                    <i class="fas fa-shopping-cart w-6 text-center text-xl text-gray-500"></i>
+                    <span class="ml-3 font-semibold text-sm sidebar-text whitespace-nowrap">Satış ve Cari</span>
                 </a>
             </div>
 
             <div class="sidebar-link-container">
                 <div class="sidebar-link flex items-center px-5 py-2.5 text-gray-700 transition-colors cursor-pointer">
-                    <i class="fas fa-plus w-6 text-center text-xl text-gray-500"></i>
+                    <i class="fas fa-chart-line w-6 text-center text-xl text-gray-500"></i>
+                    <span class="ml-3 font-semibold text-sm sidebar-text whitespace-nowrap">Cari Raporlar</span>
+                    <i class="fas fa-chevron-right ml-auto sidebar-text chevron-icon text-xs"></i>
+                </div>
+                <div class="submenu hidden">
+                    <a href="javascript:void(0);" onclick="openTab('@Url.Action("KasaRaporu", "Raporlar")', 'Kasa Raporu')" class="flex items-center px-4 py-2.5 text-xs font-medium text-gray-600 hover:bg-gray-50 hover:text-green-700 transition-colors border-l-2 border-transparent hover:border-green-600 group">
+                        <i class="fas fa-wallet w-5 text-center text-gray-400 mr-2 group-hover:text-green-600 transition-colors"></i><span>Kasa Raporu</span>
+                    </a>
+                    <a href="javascript:void(0);" onclick="openTab('@Url.Action("NakitGirisCikis", "Raporlar")', 'Nakit Giriş Çıkış Raporu')" class="flex items-center px-4 py-2.5 text-xs font-medium text-gray-600 hover:bg-gray-50 hover:text-green-700 transition-colors border-l-2 border-transparent hover:border-green-600 group">
+                        <i class="fas fa-exchange-alt w-5 text-center text-gray-400 mr-2 group-hover:text-green-600 transition-colors"></i><span>Nakit Giriş Çıkış Raporu</span>
+                    </a>
+                </div>
+            </div>
+
+            <div class="sidebar-link-container">
+                <div class="sidebar-link flex items-center px-5 py-2.5 text-gray-700 transition-colors cursor-pointer">
+                    <i class="fas fa-sitemap w-6 text-center text-xl text-gray-500"></i>
                     <span class="ml-3 font-semibold text-sm sidebar-text whitespace-nowrap">Tanımlamalar</span>
                     <i class="fas fa-chevron-right ml-auto sidebar-text chevron-icon text-xs"></i>
                 </div>
                 <div class="submenu hidden">
-                    <a asp-controller="Account" asp-action="Index" class="block py-1.5 text-xs text-gray-600 hover:bg-gray-100">[ Hesap Tanımlama ]</a>
-                    <a asp-controller="AccountType" asp-action="Index" class="block py-1.5 text-xs text-gray-600 hover:bg-gray-100">[ Hesap Tipleri Tanımlama ]</a>
-                    <a asp-controller="Exchange" asp-action="Index" class="block py-1.5 text-xs text-gray-600 hover:bg-gray-100">[ Döviz Tanımlama ]</a>
-                    <a asp-controller="StockGroup" asp-action="Index" class="block py-1.5 text-xs text-gray-600 hover:bg-gray-100">[ Stok Grubu Tanımlama ]</a>
-                    <a asp-controller="StockType" asp-action="Index" class="block py-1.5 text-xs text-gray-600 hover:bg-gray-100">[ Stok Tipleri Tanımlama ]</a>
-                    <a asp-controller="Stock" asp-action="Index" class="block py-1.5 text-xs text-gray-600 hover:bg-gray-100">[ Stok Tanımlama ]</a>
-                    <a asp-controller="ProductType" asp-action="Index" class="block py-1.5 text-xs text-gray-600 hover:bg-gray-100">[ Ürün Tipi Tanımlama ]</a>
-                    <a asp-controller="User" asp-action="Index" class="block py-1.5 text-xs text-gray-600 hover:bg-gray-100">[ Kullanıcı Tanımlama ]</a>
-                    <a asp-controller="MovementType" asp-action="Index" class="block py-1.5 text-xs text-gray-600 hover:bg-gray-100">[ Hareket Tipleri Tanımlama ]</a>
+                    <a href="javascript:void(0);" onclick="openTab('@Url.Action("Index", "HesapTipleri")', 'Hesap Tipleri Tanımlama')" class="flex items-center px-4 py-2 text-xs font-medium text-gray-600 hover:bg-gray-50 hover:text-green-700 transition-colors border-l-2 border-transparent hover:border-green-600 group">
+                        <i class="fas fa-tags w-5 text-center text-gray-400 mr-2 group-hover:text-green-600 transition-colors"></i><span>Hesap Tipleri Tanımlama</span>
+                    </a>
+                    <a href="javascript:void(0);" onclick="openTab('@Url.Action("Index", "Doviz")', 'Döviz Tanımlama')" class="flex items-center px-4 py-2 text-xs font-medium text-gray-600 hover:bg-gray-50 hover:text-green-700 transition-colors border-l-2 border-transparent hover:border-green-600 group">
+                        <i class="fas fa-coins w-5 text-center text-gray-400 mr-2 group-hover:text-green-600 transition-colors"></i><span>Döviz Tanımlama</span>
+                    </a>
+                    <a href="javascript:void(0);" onclick="openTab('@Url.Action("Index", "StokGrubu")', 'Stok Grubu Tanımlama')" class="flex items-center px-4 py-2 text-xs font-medium text-gray-600 hover:bg-gray-50 hover:text-green-700 transition-colors border-l-2 border-transparent hover:border-green-600 group">
+                        <i class="fas fa-layer-group w-5 text-center text-gray-400 mr-2 group-hover:text-green-600 transition-colors"></i><span>Stok Grubu Tanımlama</span>
+                    </a>
+                    <a href="javascript:void(0);" onclick="openTab('@Url.Action("Index", "StokTipleri")', 'Stok Tipleri Tanımlama')" class="flex items-center px-4 py-2 text-xs font-medium text-gray-600 hover:bg-gray-50 hover:text-green-700 transition-colors border-l-2 border-transparent hover:border-green-600 group">
+                        <i class="fas fa-cubes w-5 text-center text-gray-400 mr-2 group-hover:text-green-600 transition-colors"></i><span>Stok Tipleri Tanımlama</span>
+                    </a>
+                    <a href="javascript:void(0);" onclick="openTab('@Url.Action("Index", "Stoklar")', 'Stok Tanımlama')" class="flex items-center px-4 py-2 text-xs font-medium text-gray-600 hover:bg-gray-50 hover:text-green-700 transition-colors border-l-2 border-transparent hover:border-green-600 group">
+                        <i class="fas fa-box w-5 text-center text-gray-400 mr-2 group-hover:text-green-600 transition-colors"></i><span>Stok Tanımlama</span>
+                    </a>
+                    <a href="javascript:void(0);" onclick="openTab('@Url.Action("Index", "UrunTipleri")', 'Ürün Tipi Tanımlama')" class="flex items-center px-4 py-2 text-xs font-medium text-gray-600 hover:bg-gray-50 hover:text-green-700 transition-colors border-l-2 border-transparent hover:border-green-600 group">
+                        <i class="fas fa-gem w-5 text-center text-gray-400 mr-2 group-hover:text-green-600 transition-colors"></i><span>Ürün Tipi Tanımlama</span>
+                    </a>
+                    <a href="javascript:void(0);" onclick="openTab('@Url.Action("Index", "Kullanicilar")', 'Kullanıcı Tanımlama')" class="flex items-center px-4 py-2 text-xs font-medium text-gray-600 hover:bg-gray-50 hover:text-green-700 transition-colors border-l-2 border-transparent hover:border-green-600 group">
+                        <i class="fas fa-users-cog w-5 text-center text-gray-400 mr-2 group-hover:text-green-600 transition-colors"></i><span>Kullanıcı Tanımlama</span>
+                    </a>
                 </div>
             </div>
         </div>
         <div class="mt-auto flex-shrink-0">
-            <!-- YENİ EKLENEN AYARLAR MENÜSÜ -->
-            <div class="sidebar-link-container">
-                <div class="sidebar-link flex items-center px-5 py-2.5 text-gray-700 transition-colors cursor-pointer">
-                    <i class="fas fa-cog w-6 text-center text-xl text-gray-500"></i>
-                    <span class="ml-3 font-semibold text-sm sidebar-text whitespace-nowrap">Ayarlar</span>
-                    <i class="fas fa-chevron-right ml-auto sidebar-text chevron-icon text-xs"></i>
-                </div>
-                <div class="submenu hidden">
-                    <a asp-controller="BarcodeSetting" asp-action="Index" class="block py-1.5 text-xs text-gray-600 hover:bg-gray-100">[ Barkod Ayarları ]</a>
-                </div>
-            </div>
-            <!-- MEVCUT KULLANICI BİLGİSİ -->
             <div class="sidebar-link-container">
                 <a href="#" class="sidebar-link flex items-center px-5 py-2.5 text-gray-700 transition-colors">
                     <i class="fas fa-user-circle w-6 text-center text-xl text-gray-500"></i>
@@ -305,380 +126,31 @@
                 </a>
             </div>
             <div class="sidebar-link-container">
-                <form asp-controller="Auth" asp-action="Logout" method="post">
-                    <button class="sidebar-link flex items-center px-5 py-2.5 text-gray-700 transition-colors hover:text-red-600">
-                        <i class="fas fa-sign-out-alt w-6 text-center text-xl text-gray-500"></i>
-                        <span class="ml-3 font-semibold text-sm sidebar-text whitespace-nowrap">Çıkış Yap</span>
-                    </button>
-                </form>
-
+                <a id="logout-button" href="#" class="sidebar-link flex items-center px-5 py-2.5 text-gray-700 transition-colors hover:text-red-600">
+                    <i class="fas fa-sign-out-alt w-6 text-center text-xl text-gray-500"></i>
+                    <span class="ml-3 font-semibold text-sm sidebar-text whitespace-nowrap">Çıkış Yap</span>
+                </a>
             </div>
         </div>
     </nav>
 
     <div id="submenu-flyout" class="fixed top-0 h-full z-30 bg-white shadow-lg rolex-green-border transition-opacity duration-200 ease-in-out opacity-0 pointer-events-none" style="width: 220px;"></div>
 
-    <main id="main-content"
-          class="h-screen flex flex-col min-h-0 overflow-hidden"
-          data-login-url="@Url.Action("Login", "Auth")"
-          data-dashboard-url="@Url.Action("IndexDashboard", "Dashboard")">
-
-        <div id="tabs-container" class="flex-shrink-0"></div>
-
-        <div id="content-frames" class="flex-1 min-h-0 relative overflow-hidden">
-            @RenderBody()
+    <main id="main-content" data-login-url="@Url.Action("Login", "Auth")" data-dashboard-url=" @Url.Action("IndexDashboard", "Dashboard")" class="h-screen flex flex-col transition-all duration-300 ease-in-out w-full pl-0 md:pl-16">
+        <div class="flex items-center w-full bg-gray-100 border-b border-gray-300" style="height: 40px;">
+            <div id="mobile-top-hamburger" class="md:hidden flex-shrink-0 flex items-center justify-center px-4 h-full cursor-pointer text-gray-600 hover:text-green-700 border-r border-gray-300 bg-white transition-colors shadow-sm relative z-40">
+                <i class="fas fa-bars text-lg"></i>
+            </div>
+            <div id="tabs-container" class="flex-grow flex-shrink-0 h-full overflow-x-auto hide-scrollbar flex items-end"></div>
         </div>
- 
+        @RenderBody()
+          <div id="content-frames" class="flex-1 min-h-0 relative overflow-hidden"></div>
     </main>
-
-    <!-- JavaScript Kodları Yeniden Düzenlendi ve Sadeleştirildi -->
-
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const mainElement = document.getElementById('main-content');
-            const loginUrl = mainElement.dataset.loginUrl;
-            const dashboardUrl = mainElement.dataset.dashboardUrl;
-
-
-
-
-
-
-            const sidebarMenu = document.getElementById('sidebar-menu');
-            const sidebarToggle = document.getElementById('sidebar-toggle');
-            const toggleIcon = sidebarToggle.querySelector('i');
-            const searchInput = document.getElementById('sidebar-search');
-            const tabsContainer = document.getElementById('tabs-container');
-            const contentFrames = document.getElementById('content-frames');
-            const logoutButton = document.getElementById('logout-button');
-            const submenuFlyout = document.getElementById('submenu-flyout');
-            const menuItemsWithSubmenu = Array.from(document.querySelectorAll('.sidebar-link-container')).filter(item => item.querySelector('.submenu'));
-
-            let openTabs = [];
-            const MAX_TABS = 10;
-            let isPinned = false; // Ana hamburger sabitlemesini tutar
-            let pinnedTrigger = null; // Tıklanan alt menü başlığını tutar
-
-            const clearSearch = () => {
-                if (searchInput.value !== '') {
-                    searchInput.value = '';
-                    searchInput.dispatchEvent(new Event('input', { bubbles: true }));
-                }
-            };
-
-            // SADECE geçici alt menü durumunu sıfırlar
-            const resetSubmenuState = () => {
-                if (pinnedTrigger) {
-                    pinnedTrigger.classList.remove('pinned');
-                    pinnedTrigger = null;
-                }
-                submenuFlyout.classList.add('opacity-0', 'pointer-events-none');
-                sidebarMenu.classList.remove('submenu-active');
-                if (!isPinned) {
-                    clearSearch();
-                }
-            };
-
-            // Alt menü başlıklarına tıklama olayı
-            menuItemsWithSubmenu.forEach(item => {
-                const trigger = item.querySelector('.sidebar-link');
-                trigger.addEventListener('click', (e) => {
-                    e.stopPropagation();
-
-                    const isAlreadyActive = trigger === pinnedTrigger;
-                    if (isAlreadyActive) {
-                        resetSubmenuState(); // Tekrar tıklayınca kapat
-                        return;
-                    }
-
-                    resetSubmenuState(); // Önce diğerini kapat
-
-                    if (!isPinned) {
-                        sidebarMenu.classList.add('submenu-active');
-                    }
-
-                    trigger.classList.add('pinned');
-                    pinnedTrigger = trigger;
-
-                    const submenuContent = item.querySelector('.submenu').innerHTML;
-                    submenuFlyout.innerHTML = `<div class="py-2 flex flex-col">${submenuContent}</div>`;
-
-                    const sidebarWidth = sidebarMenu.offsetWidth;
-                    submenuFlyout.style.left = `${sidebarWidth}px`;
-                    submenuFlyout.classList.remove('opacity-0', 'pointer-events-none');
-                });
-            });
-
-            // Alt menüsü OLMAYAN linklere tıklama olayı
-            const nonSubmenuLinks = document.querySelectorAll('.sidebar-link-container:not(:has(.submenu)) a.sidebar-link');
-            nonSubmenuLinks.forEach(link => {
-                link.addEventListener('click', resetSubmenuState);
-            });
-
-            // Açılan alt menü (flyout) içindeki linklere tıklama olayı
-            submenuFlyout.addEventListener('click', (e) => {
-                if (e.target.tagName === 'A' || e.target.closest('A')) {
-                    resetSubmenuState();
-                }
-            });
-
-            // Dışarıya tıklama olayı
-            document.addEventListener('click', (e) => {
-                if (!sidebarMenu.contains(e.target) && !submenuFlyout.contains(e.target)) {
-                    resetSubmenuState();
-                }
-            });
-
-            // Ana Hamburger Butonu Tıklama Olayı
-            sidebarToggle.addEventListener('click', () => {
-                document.body.classList.toggle('sidebar-pinned');
-                isPinned = document.body.classList.contains('sidebar-pinned');
-
-                if (isPinned) {
-                    toggleIcon.classList.add('text-green-700');
-                    resetSubmenuState(); // Sabitlerken geçici durumu temizle
-                } else {
-                    toggleIcon.classList.remove('text-green-700');
-                    clearSearch();
-                }
-            });
-
-                 if (logoutButton) {
-          logoutButton.addEventListener('click', (e) => {
-            e.preventDefault();
-            localStorage.removeItem('jwt_token');
-            window.location.href = loginUrl;
-          });
-        }
-
-            // --- Sekme Yönetim Fonksiyonları (Değişiklik Gerekmiyor) ---
-            window.openTab = function (url, title) {
-                const existingTab = openTabs.find(tab => tab.url === url);
-                if (existingTab) { switchTab(existingTab.id); return; }
-                if (openTabs.length >= MAX_TABS) { alert(`Maksimum ${MAX_TABS} sekme açabilirsiniz.`); return; }
-                const tabId = 'tab-' + Date.now();
-                const frameId = 'frame-' + Date.now();
-                const tabButton = document.createElement('button');
-                tabButton.className = 'tab-button flex items-center px-3 py-1.5 text-xs font-medium';
-                tabButton.dataset.tabId = tabId;
-                const isDashboard = url === dashboardUrl;
-                tabButton.innerHTML = `<span>${title}</span>` + (isDashboard ? '' : `<span class="close-tab-btn ml-2 text-gray-500 hover:text-gray-800">&times;</span>`);
-                tabsContainer.appendChild(tabButton);
-                const iframe = document.createElement('iframe');
-                iframe.id = frameId;
-                iframe.className = 'w-full h-full';
-                iframe.src = url;
-                contentFrames.appendChild(iframe);
-                openTabs.push({ id: tabId, url, title, frameId });
-                if (!isDashboard) {
-                    tabButton.querySelector('.close-tab-btn').addEventListener('click', (e) => { e.stopPropagation(); closeTab(tabId); });
-                }
-                tabButton.addEventListener('click', () => switchTab(tabId));
-                switchTab(tabId);
-            }
-
-                    function wireOpenTabForLinks(containerEl) {
-          if (!containerEl) return;
-
-          containerEl.addEventListener("click", (e) => {
-            const a = e.target.closest("a");
-            if (!a) return;
-
-            const href = a.getAttribute("href");
-            if (!href || href === "#" || href.startsWith("javascript:")) return;
-
-            // aynı sayfada normal yönlenme olmasın
-            e.preventDefault();
-            e.stopPropagation();
-
-            // Title: link text ( [ ... ] gibi geliyor, temizleyelim )
-            const rawTitle = (a.textContent || "").trim();
-            const title = rawTitle.replace(/^\[\s*/, "").replace(/\s*\]$/, "") || "Sayfa";
-
-            // Tab aç
-            window.openTab(href, title);
-
-            // Flyout'u kapat / state reset
-            resetSubmenuState();
-          }, true);
-        }
-
-        // Sidebar içindeki linkler (Ana menü + normal linkler)
-        wireOpenTabForLinks(document.getElementById("menu-links-container"));
-
-        // Flyout içindeki Tanımlamalar linkleri
-        wireOpenTabForLinks(document.getElementById("submenu-flyout"));
-
-            function switchTab(tabId) {
-                openTabs.forEach(tab => {
-                    const button = document.querySelector(`.tab-button[data-tab-id="${tab.id}"]`);
-                    const frame = document.getElementById(tab.frameId);
-                    if (button && frame) {
-                        const isActive = tab.id === tabId;
-                        button.classList.toggle('active', isActive);
-                        frame.classList.toggle('active', isActive);
-                    }
-                });
-                updateActiveSidebarLink(tabId);
-            }
-
-            function closeTab(tabId) {
-                const tabIndex = openTabs.findIndex(tab => tab.id === tabId);
-                if (tabIndex === -1) return;
-                const tabToClose = openTabs[tabIndex];
-                const button = document.querySelector(`.tab-button[data-tab-id="${tabToClose.id}"]`);
-                const frame = document.getElementById(tabToClose.frameId);
-                if (button) button.remove();
-                if (frame) frame.remove();
-                openTabs.splice(tabIndex, 1);
-                if (button && button.classList.contains('active') && openTabs.length > 0) {
-                    const nextActiveTab = openTabs[Math.max(0, tabIndex - 1)];
-                    switchTab(nextActiveTab.id);
-                } else if (openTabs.length === 0) {
-                    openTab(dashboardUrl, 'Ana Sayfa');
-                }
-            }
-
-            searchInput.addEventListener('input', (e) => {
-                const searchTerm = e.target.value.toLowerCase().trim();
-                document.querySelectorAll('#menu-links-container .sidebar-link-container').forEach(container => {
-                    const mainLink = container.querySelector('.sidebar-link');
-                    const submenu = container.querySelector('.submenu');
-                    if (submenu) {
-                        let hasVisibleChild = false;
-                        submenu.querySelectorAll('a').forEach(subLink => {
-                            const linkText = subLink.textContent.toLowerCase();
-                            if (linkText.includes(searchTerm)) {
-                                subLink.style.display = 'block';
-                                hasVisibleChild = true;
-                            } else {
-                                subLink.style.display = 'none';
-                            }
-                        });
-                        const mainLinkText = mainLink.querySelector('.sidebar-text').textContent.toLowerCase();
-                        container.style.display = (hasVisibleChild || mainLinkText.includes(searchTerm)) ? 'block' : 'none';
-                    } else if (mainLink) {
-                        const linkText = mainLink.textContent.toLowerCase();
-                        container.style.display = linkText.includes(searchTerm) ? 'block' : 'none';
-                    }
-                });
-            });
-
-            function updateActiveSidebarLink(activeTabId) {
-                document.querySelectorAll('.sidebar-link-container.active-link').forEach(el => el.classList.remove('active-link'));
-                const activeTab = openTabs.find(tab => tab.id === activeTabId);
-                if (activeTab) {
-                    const allLinks = document.querySelectorAll('.sidebar-link-container a[onclick]');
-                    allLinks.forEach(link => {
-                        if (link.getAttribute('onclick').includes(`'${activeTab.url}'`)) {
-                            const parentContainer = link.closest('.sidebar-link-container');
-                            if (parentContainer) parentContainer.classList.add('active-link');
-                            const submenu = link.closest('.submenu');
-                            if (submenu) {
-                                submenu.previousElementSibling.closest('.sidebar-link-container').classList.add('active-link');
-                            }
-                        }
-                    });
-                }
-            }
-
-             if (openTabs.length === 0) {
-          openTab(dashboardUrl, 'Ana Sayfa');
-        }
-    </script>
-
-    <script>
-        document.addEventListener("DOMContentLoaded", () => {
-          const sidebarMenu = document.getElementById("sidebar-menu");
-          const submenuFlyout = document.getElementById("submenu-flyout");
-
-          if (!sidebarMenu || !submenuFlyout) return;
-
-          let activeTrigger = null; // açık olan submenu başlığı
-
-          function closeFlyout() {
-            if (activeTrigger) {
-              activeTrigger.classList.remove("pinned");
-              const chev = activeTrigger.querySelector(".chevron-icon");
-              if (chev) chev.classList.remove("rotate-180");
-              activeTrigger = null;
-            }
-            submenuFlyout.classList.add("opacity-0", "pointer-events-none");
-            submenuFlyout.innerHTML = "";
-            sidebarMenu.classList.remove("submenu-active");
-          }
-
-          function openFlyout(triggerEl, submenuHtml) {
-            // aynı başlığa tekrar tıklandıysa kapat
-            if (activeTrigger === triggerEl) {
-              closeFlyout();
-              return;
-            }
-
-            closeFlyout();
-
-            activeTrigger = triggerEl;
-            triggerEl.classList.add("pinned");
-
-            const chev = triggerEl.querySelector(".chevron-icon");
-            if (chev) chev.classList.add("rotate-180");
-
-            submenuFlyout.innerHTML = `<div class="py-2 flex flex-col">${submenuHtml}</div>`;
-
-            // sidebar genişliğine göre yan paneli hizala
-            const sidebarWidth = sidebarMenu.offsetWidth || 64;
-            submenuFlyout.style.left = `${sidebarWidth}px`;
-
-            submenuFlyout.classList.remove("opacity-0", "pointer-events-none");
-
-            // pinned değilse sidebar hover genişlemesin diye class
-            if (!document.body.classList.contains("sidebar-pinned")) {
-              sidebarMenu.classList.add("submenu-active");
-            }
-          }
-
-          // ✅ Sadece submenu olan başlıkları yakala (Tanımlamalar / Ayarlar vb.)
-          document.querySelectorAll(".sidebar-link-container").forEach(container => {
-            const submenu = container.querySelector(".submenu");
-            if (!submenu) return;
-
-            const trigger = container.querySelector(":scope > .sidebar-link"); // container içindeki üst başlık div'i
-            if (!trigger) return;
-
-            trigger.addEventListener("click", (e) => {
-              e.preventDefault();
-              e.stopPropagation();
-
-              // trigger içindeyken bir <a> tıklandıysa karışma (normal link aksın)
-              if (e.target.closest("a")) return;
-
-              openFlyout(trigger, submenu.innerHTML);
-            });
-          });
-
-          // Flyout içindeki linke tıklayınca kapat
-          submenuFlyout.addEventListener("click", (e) => {
-            const a = e.target.closest("a");
-            if (!a) return;
-            closeFlyout();
-            // burada e.preventDefault() yok => link normal gider
-          });
-
-          // Dışarı tıklayınca kapat
-          document.addEventListener("click", (e) => {
-            if (!sidebarMenu.contains(e.target) && !submenuFlyout.contains(e.target)) {
-              closeFlyout();
-            }
-          });
-
-          // ESC ile kapat
-          document.addEventListener("keydown", (e) => {
-            if (e.key === "Escape") closeFlyout();
-          });
-        });
-    </script>
     @RenderSection("Scripts", required: false)
 
+    <script src="~/js/home_index.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/slim-select@1.27.0/dist/slimselect.min.js"></script>
 </body>
 </html>
+
 

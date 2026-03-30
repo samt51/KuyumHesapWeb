@@ -1,11 +1,10 @@
-﻿using KuyumHesapWeb.Core.Commond.Models;
-using KuyumHesapWeb.Core.Commond.Models.Dtos;
-using MediatR;
+﻿using KuyumHesapWeb.Core.Feature.ReceiptFeature.Dtos;
 
-namespace KuyumHesapWeb.Core.Feature.ReceiptFeature.Commands.Create
+namespace KuyumHesapWeb.Core.Feature.ReceiptFeature.Queries.GetById
 {
-    public class CreateReceiptCommandRequest : IRequest<ResponseDto<CreateReceiptCommandResponse>>
+    public class GetByIdReceiptQueryResponse
     {
+        public int Id { get; set; }
         /// <summary>
         /// Fiş Numarası Otomatik Atama
         /// </summary>
@@ -18,6 +17,16 @@ namespace KuyumHesapWeb.Core.Feature.ReceiptFeature.Commands.Create
         /// Cari Hesap Id
         /// </summary>
         public int AccountId { get; set; }
+        /// <summary>
+        /// Hesap adı (firma, kişi veya kurum adı)
+        /// </summary>
+        public string AccountName { get; set; } = null!;
+
+        /// <summary>
+        /// Hesap tipi kimliği (Foreign Key -> AccountTypes)
+        /// </summary>
+        public int AccountTypeId { get; set; }
+        public string AccountTypeName { get; set; }
         /// <summary>
         /// Personel Id Bilgisi
         /// </summary>
@@ -38,6 +47,8 @@ namespace KuyumHesapWeb.Core.Feature.ReceiptFeature.Commands.Create
         /// Açık Hesap Tutarı
         /// </summary>
         public decimal? OpenBalanceAmount { get; set; }
-        public List<CreateMovementReceiptRequestDto> CreateMovementReceiptRequestDtos { get; set; }
+
+
+        public List<GetMovementByCustomerIdResponse> Movements { get; set; }
     }
 }

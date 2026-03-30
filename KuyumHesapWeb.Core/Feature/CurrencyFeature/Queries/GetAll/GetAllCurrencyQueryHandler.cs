@@ -15,7 +15,7 @@ namespace KuyumHesapWeb.Core.Feature.CurrencyFeature.Queries.GetAll
         {
             var data = await _apiService.GetAsync<List<GetAllCurrencyQueryResponse>>("Currency/GetAll");
 
-            return new ResponseDto<List<GetAllCurrencyQueryResponse>>().Success(data.data);
+            return data;
         }
     }
 }

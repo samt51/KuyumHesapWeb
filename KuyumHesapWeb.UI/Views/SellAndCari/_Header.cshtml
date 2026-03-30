@@ -1,0 +1,142 @@
+﻿@* Header & Main Layout: Masaustu ve Mobil uyumlu Grid *@
+
+<main class="h-[calc(100dvh-16px)] w-full grid grid-cols-1 lg:grid-cols-12 lg:grid-rows-[auto_1fr] gap-0 lg:gap-4 relative pb-20 lg:pb-0">
+
+    <!-- Ust Kisim / Header (Masaustunde Sol Ustte, Mobilde En Ustte) -->
+    <header id="header-box" class="bg-white p-2 md:p-3 rounded-xl shadow-sm theme-border mb-3 lg:mb-0 lg:col-span-4 lg:col-start-1 lg:row-start-1 h-auto z-20">
+        <!-- Top Half: Settings & Selectors -->
+        <div class="flex flex-col gap-3">
+            <!-- Toggle, Currency, Customer -->
+            <div class="flex flex-col xl:flex-row gap-2">
+                <div class="flex gap-2">
+                    <div class="toggle-container flex-shrink-0 origin-left">
+                        <input type="checkbox" id="operation-type-toggle" class="toggle-checkbox" name="operation-type-toggle">
+                        <label for="operation-type-toggle" class="toggle-label">
+                            <span class="toggle-text">SATIŞ</span>
+                            <span class="toggle-text">CARİ</span>
+                        </label>
+                    </div>
+                    <div class="flex-shrink-0">
+                        <select id="currency-select" name="currency-select" class="form-select w-[75px] bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-1.5 h-[38px]"></select>
+                    </div>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <select id="customer-select" name="customer-select"></select>
+                </div>
+            </div>
+            <!-- Buttons and Salesperson -->
+            <div class="flex flex-col xl:flex-row gap-2">
+                <div class="flex gap-1 justify-center xl:justify-start flex-shrink-0">
+                    <button class="bg-white hover:bg-gray-100 text-gray-800 font-semibold py-1.5 px-2 border border-gray-300 rounded-lg shadow-sm text-xs"><i class="fas fa-users xl:mr-1.5"></i><span class="hidden xl:inline">CRM</span></button>
+                    <button id="ekstre-button" class="bg-white hover:bg-gray-100 text-gray-800 font-semibold py-1.5 px-2 border border-gray-300 rounded-lg shadow-sm text-xs"><i class="fas fa-file-invoice xl:mr-1.5"></i><span class="hidden xl:inline">Ekstre</span></button>
+                    <button id="sales-list-button" class="bg-white hover:bg-gray-100 text-gray-800 font-semibold py-1.5 px-2 border border-gray-300 rounded-lg shadow-sm text-xs"><i class="fas fa-list xl:mr-1.5"></i><span class="hidden xl:inline">Liste</span></button>
+                </div>
+                <div class="w-full xl:flex-grow">
+                    <select id="salesperson-select" name="salesperson-select"></select>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Mobile Tabs Navigation (Sadece Mobilde) -->
+    <div class="flex lg:hidden sticky top-0 bg-[#f7f8fc] z-10 pt-0 pb-3 h-auto">
+        <div class="relative flex bg-gray-200 p-1 w-full rounded-lg shadow-inner">
+            <div id="mobile-tab-indicator" class="absolute top-1 left-1 bottom-1 w-[calc(50%-4px)] bg-white rounded-md shadow-sm transition-transform duration-300 ease-in-out" style="transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);"></div>
+            <button id="tab-btn-islem" class="relative z-10 flex-1 py-1.5 text-center text-sm font-semibold text-blue-600 transition-colors duration-300 focus:outline-none" onclick="switchMobileTab('islem')">İşlem Seçiniz</button>
+            <button id="tab-btn-fis" class="relative z-10 flex-1 py-1.5 text-center text-sm font-medium text-gray-500 hover:text-gray-700 transition-colors duration-300 focus:outline-none" onclick="switchMobileTab('fis')">Fiş</button>
+        </div>
+    </div>
+
+    <!-- Mobile Form Modal Backdrop -->
+    <div id="mobile-form-backdrop" class="fixed inset-0 bg-black/50 z-40 hidden lg:hidden" onclick="closeMobileModal()"></div>
+
+    <!-- ACTION BUTTONS (Masaüstünde Sol Altta, Mobilde Tab 1) -->
+    <div id="mobile-tab-islem" class="flex lg:flex lg:col-span-4 lg:col-start-1 lg:row-start-2 h-full flex-col gap-4 animate-fadeIn overflow-y-auto">
+        <div class="bg-white rounded-xl shadow-md p-3 theme-border relative flex flex-col h-full min-h-[300px]">
+
+            <!-- Hiding overlay (before customer is selected) -->
+            <div id="action-buttons-overlay" class="absolute inset-0 z-10 flex flex-col items-center justify-center bg-white/90 backdrop-blur-sm rounded-xl transition-all duration-300">
+                <div class="bg-gray-100 p-4 rounded-full mb-3 text-gray-400">
+                    <i class="fas fa-hand-pointer fa-2x"></i>
+                </div>
+                <p class="font-semibold text-gray-600 text-center px-4">Önce hesap ve işlem tipi seçiniz.</p>
+            </div>
+
+            <!-- Action Buttons -->
+            <div id="action-buttons-container" class="transition-opacity duration-300 opacity-50 pointer-events-none flex-grow">
+                <div class="border-b pb-2 mb-2">
+                    <div class="grid grid-cols-2 gap-2">
+                        <button id="btn-nakit-tahsilat" class="flex flex-col items-center justify-center p-2 bg-white hover:bg-gray-50 rounded-lg theme-border-50 action-btn"><i id="icon-nakit-tahsilat" class="fas fa-hand-holding-dollar text-xl mb-1 theme-icon-color income" style="transform: scaleX(-1);"></i><span id="label-nakit-tahsilat" class="block text-xs font-semibold"></span></button>
+                        <button id="btn-nakit-odeme" class="flex flex-col items-center justify-center p-2 bg-white hover:bg-gray-50 rounded-lg theme-border-50 action-btn"><i id="icon-nakit-odeme" class="fas fa-hand-holding-dollar text-xl mb-1 theme-icon-color expense"></i><span id="label-nakit-odeme" class="block text-xs font-semibold"></span></button>
+                    </div>
+                </div>
+                <div class="border-b pb-2 mb-2">
+                    <div class="grid grid-cols-2 gap-2">
+                        <button id="btn-urun-alis" class="flex flex-col items-center justify-center p-2 bg-white hover:bg-gray-50 rounded-lg theme-border-50 action-btn"><i id="icon-urun-alis" class="fas fa-gem text-xl mb-1 theme-icon-color income"></i><span id="label-urun-alis" class="block text-xs font-semibold"></span></button>
+                        <button id="btn-urun-satis" class="flex flex-col items-center justify-center p-2 bg-white hover:bg-gray-50 rounded-lg theme-border-50 action-btn"><i id="icon-urun-satis" class="fas fa-tag text-xl mb-1 theme-icon-color expense"></i><span id="label-urun-satis" class="block text-xs font-semibold"></span></button>
+                    </div>
+                </div>
+                <div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button id="btn-iskonto" class="flex flex-col items-center justify-center p-2 bg-white hover:bg-gray-50 rounded-lg theme-border-50 action-btn"><i class="fas fa-percent text-xl mb-1 theme-icon-color expense"></i><span class="block text-xs font-semibold">İskonto</span></button>
+                        <button id="btn-virman" class="flex flex-col items-center justify-center p-2 bg-white hover:bg-gray-50 rounded-lg theme-border-50 action-btn"><i class="fas fa-exchange-alt text-xl mb-1 theme-icon-color income"></i><span class="block text-xs font-semibold">Virman</span></button>
+                        <button id="btn-acik-hesap" class="flex flex-col items-center justify-center p-2 bg-white hover:bg-gray-50 rounded-lg theme-border-50 action-btn"><i class="fas fa-book-open text-xl mb-1 theme-icon-color income"></i><span class="block text-xs font-semibold">Açık Hesap</span></button>
+                        <button id="btn-ceviri" class="flex flex-col items-center justify-center p-2 bg-white hover:bg-gray-50 rounded-lg theme-border-50 action-btn"><i class="fas fa-random text-xl mb-1 theme-icon-color income"></i><span class="block text-xs font-semibold">Çeviri</span></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MIDDLE COLUMN (Masaustunde Ortada) FORM PANELI -->
+    <div id="mobile-modal-wrapper" class="hidden fixed inset-0 z-50 items-end lg:items-stretch lg:static lg:z-auto lg:flex lg:p-0 lg:col-span-4 lg:col-start-5 lg:row-span-2 lg:row-start-1 h-full">
+        <div id="middle-panel" class="bg-white rounded-t-2xl lg:rounded-xl shadow-2xl lg:shadow-sm flex flex-col theme-border h-[85vh] lg:h-full w-full overflow-hidden transform transition-transform translate-y-full lg:translate-y-0" style="transition: transform 0.3s ease-out;">
+
+            <!-- Mobile Drag Handle and Title -->
+            <div class="lg:hidden flex flex-col items-center p-3 border-b border-gray-200 bg-gray-50">
+                <div class="w-12 h-1.5 bg-gray-300 rounded-full mb-2"></div>
+                <div class="flex justify-between items-center w-full">
+                    <h3 class="font-bold text-gray-800" id="mobile-modal-title">İşlem Detayı</h3>
+                    <button onclick="closeMobileModal()" class="text-gray-500 hover:text-red-500 w-8 h-8 flex items-center justify-center rounded-full hover:bg-red-50"><i class="fas fa-times text-xl"></i></button>
+                </div>
+            </div>
+
+            <div id="dynamic-content-area" class="flex-grow p-4 overflow-y-auto custom-scrollbar min-h-0"></div>
+            <div class="p-3 border-t border-gray-200 flex justify-end gap-2 flex-shrink-0">
+                <button id="delete-button" class="hidden bg-red-100 hover:bg-red-200 text-red-800 font-semibold py-1.5 px-4 rounded-md text-sm transition-colors border border-red-200"><i class="fas fa-trash mr-1.5"></i>Sil</button>
+                <button id="add-button" class="hidden bg-blue-100 hover:bg-blue-200 text-blue-800 font-semibold py-1.5 px-4 rounded-md text-sm transition-colors border border-blue-200"><i class="fas fa-check mr-1.5"></i>Ekle</button>
+                <button id="cancel-button" class="hidden bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold py-1.5 px-4 rounded-md text-sm transition-colors border border-gray-200"><i class="fas fa-times mr-1.5"></i>Vazgeç</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- RIGHT COLUMN (Masaustunde En Sagda) FİŞ PANELİ -->
+    <div id="mobile-tab-fis" class="hidden lg:flex lg:col-span-4 lg:col-start-9 lg:row-span-2 lg:row-start-1 flex-col gap-3 h-full animate-fadeIn overflow-hidden">
+        <div class="bg-white rounded-xl shadow-sm flex flex-col theme-border h-full overflow-hidden">
+            <div class="p-3 border-b border-gray-200 flex-shrink-0 bg-gray-50">
+                <div class="flex justify-between items-center">
+                    <h5 id="receipt-title" class="text-lg font-bold text-gray-700">Satış Fişi</h5>
+                    <input type="datetime-local" id="fis-tarihi" class="text-sm bg-transparent text-gray-600 border-none focus:ring-0 p-0 w-auto">
+                </div>
+            </div>
+            <div id="receipt-log" class="flex-grow p-3 overflow-y-auto custom-scrollbar min-h-0 bg-white"></div>
+            <div id="receipt-totals" class="p-3 border-t border-gray-200 flex-shrink-0 max-h-48 overflow-y-auto custom-scrollbar bg-white">
+                <div id="satis-totals" class="space-y-1">
+                    <div class="flex justify-between items-center text-xs"><strong class="font-medium text-gray-600">Giren Toplam:</strong><span id="giren-toplam" class="font-bold text-green-600">0,00 TRY</span></div>
+                    <div class="flex justify-between items-center text-xs"><strong class="font-medium text-gray-600">Çıkan Toplam:</strong><span id="cikan-toplam" class="font-bold text-red-600">0,00 TRY</span></div>
+                    <hr class="my-1">
+                    <div class="flex justify-between items-center text-sm"><strong class="font-semibold text-gray-800">Fark:</strong><span id="fark-toplam" class="font-extrabold text-blue-700">0,00 TRY</span></div>
+                </div>
+                <div id="cari-totals" class="hidden">
+                </div>
+            </div>
+            <div class="p-3 bg-gray-100 border-t border-gray-200 flex-shrink-0 mt-auto rounded-b-xl">
+                <div class="flex gap-2">
+                    <button id="main-save-button" class="flex-1 bg-green-200 hover:bg-green-300 text-green-800 font-semibold py-2 px-4 rounded-lg transition-colors border border-green-300 text-sm"><i class="fas fa-save mr-2"></i>Kaydet</button>
+                    <button id="main-reset-button" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg transition-colors border border-gray-300 text-sm"><i class="fas fa-sync-alt mr-2"></i>Yeni İşlem</button>
+                    <button id="main-delete-button" class="flex-1 bg-red-200 hover:bg-red-300 text-red-800 font-semibold py-2 px-4 rounded-lg transition-colors border border-red-300 text-sm hidden"><i class="fas fa-trash mr-2"></i>Sil</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>

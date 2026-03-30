@@ -20,7 +20,6 @@
     <Folder Include="Feature\DashboardFeature\Commands\" />
     <Folder Include="Feature\ReceiptFeature\Commands\Update\" />
     <Folder Include="Feature\ReceiptFeature\Queries\GetAll\" />
-    <Folder Include="Feature\ReceiptFeature\Queries\GetById\" />
     <Folder Include="Feature\SellAndCariFeature\Commands\" />
     <Folder Include="Feature\SellAndCariFeature\Queries\" />
     <Folder Include="Feature\StockTypeFeature\Dtos\" />

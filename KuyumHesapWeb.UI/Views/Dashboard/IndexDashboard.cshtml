@@ -2,359 +2,72 @@
 @model GetAllDashboardQueryResponse
 @{
     ViewData["Title"] = "Index";
-    Layout = "~/Views/Shared/_Layout.cshtml";
+    var noLayout = Context.Request.Query["noLayout"].ToString() == "1";
+    Layout = noLayout ? null : "~/Views/Shared/_Layout.cshtml";
 }
-<!DOCTYPE html>
-<html lang="tr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ana Sayfa | KuyumHesap</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <style>
-        :root {
-            --scrolling-ticker-bg: #343a40;
-            --scrolling-ticker-text: #ffffff;
-            --ticker-item-border: #107c41;
-        }
+@section Styles {
+    <link rel="stylesheet" href="~/css/home_dashboard.css" asp-append-version="true" />
+}
+<div class="p-6">
+    <p id="welcome-text" class="text-base font-semibold text-gray-600"></p>
 
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f8f9fa;
-            padding-bottom: 60px; /* Ticker height */
-        }
-
-        .scrolling-ticker-content {
-            display: inline-block;
-            animation: marquee 60s linear infinite;
-        }
-
-        .scrolling-ticker-container:hover .scrolling-ticker-content {
-            animation-play-state: paused;
-        }
-
-        @@keyframes marquee {
-            0% {
-                transform: translateX(0%);
-            }
-
-            100% {
-                transform: translateX(-50%);
-            }
-        }
-
-        .percentage-change.positive {
-            color: #22c55e;
-        }
-
-        .percentage-change.negative {
-            color: #ef4444;
-        }
-
-        /* Dashboard Kart Stilleri */
-        .dashboard-card {
-            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-        }
-
-            .dashboard-card:hover {
-                transform: translateY(-5px);
-                box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-            }
-
-        .modal-bg {
-            background-color: rgba(0,0,0,0.5);
-        }
-    </style>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-</head>
-<body>
-
-    <!-- Rapor Kartları Alanı -->
-    <div class="p-8">
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <!-- Kasa Durumu Kartı -->
-            <div id="kasa-karti" class="dashboard-card bg-white p-5 rounded-xl shadow-md border border-[#4C9779]">
-                <div class="flex items-start justify-between">
-                    <span class="text-sm font-semibold text-gray-500">Kasa Son Durum</span>
-                    <a href="#" id="kasa-detay-link" class="text-xs font-medium text-blue-600 hover:underline">Detay</a>
+    <div class="mt-6 flex flex-wrap gap-5">
+        <div id="kasalar-card"
+             class="bg-white rounded-xl shadow-md border-t-4 border-green-500 cursor-pointer hover:shadow-lg transition-shadow"
+             style="width: 320px;">
+            <div class="flex items-center justify-between px-5 pt-4 pb-2">
+                <div>
+                    <h2 class="text-sm font-bold text-gray-700 uppercase tracking-wide">Kasalar</h2>
+                    <p class="text-xs text-gray-400 mt-0.5">Nakit Toplam (HAS)</p>
                 </div>
-                <div class="flex items-center gap-4 mt-2">
-                    <div class="flex-shrink-0">
-                        <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center"><i class="fas fa-layer-group text-2xl text-yellow-500"></i></div>
-                    </div>
-                    <div>
-                        <p id="kasa-bakiye-has" class="text-3xl font-bold text-gray-800">@String.Format("{0:N2}", Model.CashReport.TotalBalanceHas)</p>
-                        <p class="text-sm text-gray-400 font-medium">HAS</p>
-                    </div>
-                </div>
+                <i class="fas fa-wallet text-xl text-green-500"></i>
             </div>
-            <!-- BANKALAR Durumu Kartı -->
-            <div id="bankalar-karti" class="dashboard-card bg-white p-5 rounded-xl shadow-md border border-[#4C9779]">
-                <div class="flex items-start justify-between">
-                    <span class="text-sm font-semibold text-gray-500">Bankalar Son Durum</span>
-                    <a href="#" id="bankalar-detay-link" class="text-xs font-medium text-blue-600 hover:underline">Detay</a>
+            <div class="px-5 pb-4">
+                <div id="kasalar-ozet" class="flex items-end gap-2 mt-1">
+                    <i class="fas fa-spinner fa-spin text-gray-300 text-xl"></i>
                 </div>
-                <div class="flex items-center gap-4 mt-2">
-                    <div class="flex-shrink-0"><div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center"><i class="fas fa-university text-2xl text-blue-500"></i></div></div>
-                    <div>
-                        <p id="bankalar-bakiye" class="text-3xl font-bold text-gray-800">0</p>
-                        <p class="text-sm text-gray-400 font-medium">HAS</p>
-                    </div>
-                </div>
-            </div>
-            <!-- POSLAR Durumu Kartı -->
-            <div id="poslar-karti" class="dashboard-card bg-white p-5 rounded-xl shadow-md border border-[#4C9779]">
-                <div class="flex items-start justify-between">
-                    <span class="text-sm font-semibold text-gray-500">Poslar Son Durum</span>
-                    <a href="#" id="poslar-detay-link" class="text-xs font-medium text-blue-600 hover:underline">Detay</a>
-                </div>
-                <div class="flex items-center gap-4 mt-2">
-                    <div class="flex-shrink-0"><div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center"><i class="fas fa-credit-card text-2xl text-green-500"></i></div></div>
-                    <div>
-                        <p id="poslar-bakiye" class="text-3xl font-bold text-gray-800">0</p>
-                        <p class="text-sm text-gray-400 font-medium">HAS</p>
-                    </div>
-                </div>
-            </div>
-            <!-- Diğer kartlar buraya eklenebilir -->
-        </div>
-    </div>
-
-
-    <div id="toast-container" class="fixed top-5 right-5 z-50 flex flex-col items-end gap-2"></div>
-
-    <div class="fixed bottom-0 left-0 w-full bg-[var(--scrolling-ticker-bg)] text-[var(--scrolling-ticker-text)] shadow-[0_-2px_5px_rgba(0,0,0,0.2)] z-50 flex items-center">
-        <div class="flex-grow overflow-hidden whitespace-nowrap scrolling-ticker-container py-2.5">
-            <div class="scrolling-ticker-content" id="tickerContent">
-                <!-- JS ile doldurulacak -->
-            </div>
-        </div>
-        <!-- Last Updated Timestamp -->
-        <div class="flex-shrink-0 text-center px-4">
-            <p class="text-xs text-gray-400">Son Güncelleme</p>
-            <p id="last-updated-time" class="text-sm font-semibold text-white">-</p>
-        </div>
-        <button id="refresh-dashboard-btn" class="flex-shrink-0 px-4 py-2.5 h-full text-white hover:bg-gray-600 transition-colors duration-200" title="Dashboard'u Güncelle">
-            <i class="fas fa-sync-alt"></i>
-        </button>
-    </div>
-
-    <!-- Detay Modalı -->
-    <!-- Kasa Detay Modalı -->
-    <div id="kasa-detay-modal" class="hidden fixed inset-0 modal-bg flex items-center justify-center z-50 p-4">
-        <div class="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col">
-            <div class="flex justify-between items-center p-4 border-b">
-                <div class="flex items-center gap-4">
-                    <h3 class="text-lg font-bold text-gray-800">Kasa Detay Raporu</h3>
-                    <select id="kasa-hesap-combo" class="border rounded px-2 py-1 text-sm">
-                        <option value="">Hepsi</option>
-                    </select>
-                </div>
-                <button id="modal-close-button" class="text-gray-500 hover:text-gray-800 text-2xl">&times;</button>
-            </div>
-            <div class="p-4 overflow-y-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Para Birimi</th>
-                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Devreden</th>
-                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Giren</th>
-                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Çıkan</th>
-                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Bakiye</th>
-                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">HAS Karşılığı</th>
-                        </tr>
-                    </thead>
-                    <tbody id="kasa-detay-tablosu" class="bg-white divide-y divide-gray-200">
-                        <!-- Veriler buraya dinamik olarak eklenecek -->
-                    </tbody>
-                </table>
+                <p class="text-xs text-gray-400 mt-3">Detaylar için tıklayın →</p>
             </div>
         </div>
     </div>
-    <!-- BANKALAR Detay Modalı -->
-    <div id="bankalar-detay-modal" class="hidden fixed inset-0 modal-bg flex items-center justify-center z-50 p-4">
-        <div class="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col">
-            <div class="flex justify-between items-center p-4 border-b">
-                <div class="flex items-center gap-4">
-                    <h3 class="text-lg font-bold text-gray-800">Bankalar Detay Raporu</h3>
-                    <select id="bankalar-hesap-combo" class="border rounded px-2 py-1 text-sm">
-                        <option value="">Hepsi</option>
-                    </select>
-                </div>
-                <button id="bankalar-modal-close-button" class="text-gray-500 hover:text-gray-800 text-2xl">&times;</button>
+</div>
+
+<!-- Modal ve toastlar (aynı) -->
+<div id="kasalar-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center">
+    <div class="absolute inset-0 bg-black bg-opacity-50" id="kasalar-modal-bg"></div>
+    <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 z-10 overflow-hidden">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+            <div class="flex items-center gap-3">
+                <i class="fas fa-wallet text-green-500 text-xl"></i>
+                <h3 class="font-bold text-gray-800 text-lg">Kasa Detayları</h3>
             </div>
-            <div class="p-4 overflow-y-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Para Birimi</th>
-                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Devreden</th>
-                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Giren</th>
-                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Çıkan</th>
-                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Bakiye</th>
-                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">HAS Karşılığı</th>
-                        </tr>
-                    </thead>
-                    <tbody id="bankalar-detay-tablosu" class="bg-white divide-y divide-gray-200">
-                        <!-- Veriler buraya dinamik olarak eklenecek -->
-                    </tbody>
-                </table>
+            <button id="kasalar-modal-close" class="text-gray-400 hover:text-gray-700 text-2xl leading-none">&times;</button>
+        </div>
+        <div id="kasalar-modal-body" class="p-6 space-y-3 max-h-96 overflow-y-auto">
+            <div class="flex items-center justify-center py-8">
+                <i class="fas fa-spinner fa-spin text-gray-300 text-3xl"></i>
             </div>
         </div>
     </div>
-    <!-- POSLAR Detay Modalı -->
-    <div id="poslar-detay-modal" class="hidden fixed inset-0 modal-bg flex items-center justify-center z-50 p-4">
-        <div class="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col">
-            <div class="flex justify-between items-center p-4 border-b">
-                <div class="flex items-center gap-4">
-                    <h3 class="text-lg font-bold text-gray-800">Poslar Detay Raporu</h3>
-                    <select id="poslar-hesap-combo" class="border rounded px-2 py-1 text-sm">
-                        <option value="">Hepsi</option>
-                    </select>
-                </div>
-                <button id="poslar-modal-close-button" class="text-gray-500 hover:text-gray-800 text-2xl">&times;</button>
-            </div>
-            <div class="p-4 overflow-y-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Para Birimi</th>
-                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Devreden</th>
-                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Giren</th>
-                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Çıkan</th>
-                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Bakiye</th>
-                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">HAS Karşılığı</th>
-                        </tr>
-                    </thead>
-                    <tbody id="poslar-detay-tablosu" class="bg-white divide-y divide-gray-200">
-                        <!-- Veriler buraya dinamik olarak eklenecek -->
-                    </tbody>
-                </table>
-            </div>
+</div>
+
+<div id="toast-container" class="fixed top-5 right-5 z-50 flex flex-col items-end gap-2"></div>
+
+<!-- removed left-0 and w-full; positioning handled by CSS var and JS -->
+<div class="scrolling-ticker-bar fixed bottom-0 bg-[var(--scrolling-ticker-bg)] text-[var(--scrolling-ticker-text)] shadow-[0_-2px_5px_rgba(0,0,0,0.2)] z-50 flex items-center">
+    <div class="flex-grow overflow-hidden whitespace-nowrap scrolling-ticker-container py-2.5">
+        <div class="scrolling-ticker-content" id="tickerContent">
+            <!-- JS ile doldurulacak -->
         </div>
     </div>
+    <button id="refresh-rates-btn" class="flex-shrink-0 px-4 py-2.5 h-full text-white hover:bg-gray-600 transition-colors duration-200" title="Kurları Güncelle">
+        <i class="fas fa-sync-alt"></i>
+    </button>
+</div>
+@section Scripts {
+    <script>
+        window.CURE_GET_LATEST_URL = '@Url.Action("GetLatestCure", "Cure")';
+    </script>
 
-
-</body>
-</html>
-
-
-@*     <div id="page-header" class="px-8 pt-4">
-        <div class="bg-white rounded-lg shadow-md border border-gray-200 p-6 mb-6">
-            <div class="flex items-center justify-between mb-4">
-                <div class="flex items-center gap-4">
-                    <div class="text-xl font-semibold text-gray-800">Merhaba, <span id="kullanici-adi-gorev">MAHMUT</span></div>
-                    <div class="text-sm text-gray-600"><span id="db-adi-gorev">KuyumHesap</span> şirketine hoşgeldin. Görevlerini buradan takip edebilirsin.</div>
-                </div>
-                <div class="flex gap-3">
-                    <button id="gorev-ekle-btn" class="px-6 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold rounded-md shadow-sm transition"><i class="fas fa-plus mr-2"></i>Görev Ekle</button>
-                    <button id="gorev-listesi-btn" class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-md shadow-sm transition"><i class="fas fa-list mr-2"></i>Görev Listesi</button>
-                </div>
-            </div>
-
-            <!-- Görev Kategorileri -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div class="border border-gray-300 rounded-lg p-4 bg-gray-50">
-                    <h3 class="text-md font-semibold text-gray-700 mb-3 flex items-center"><i class="fas fa-history text-red-500 mr-2"></i>Geçmiş Görevler (Gecikmiş)</h3>
-                    <ul class="space-y-2 task-list overflow-y-auto pr-2" style="max-height: 6rem;">
-                      
-                            <li class="flex items-center">
-                                <input type="checkbox" id="task3" class="h-4 w-4 rounded border-gray-300 text-green-600 focus:ring-green-500">
-                                <label for="task3" class="ml-3 text-gray-800 cursor-pointer" onclick="openTaskDetails(this)" data-title="">
-                                    
-                                </label>
-                            </li>
-                       
-                    </ul>
-                </div>
-                <div class="border border-gray-300 rounded-lg p-4 bg-gray-50">
-                    <h3 class="text-md font-semibold text-gray-700 mb-3 flex items-center"><i class="fas fa-calendar-day text-blue-500 mr-2"></i>Bugünkü Görevler</h3>
-                    <ul class="space-y-2 task-list overflow-y-auto pr-2" style="max-height: 6rem;">
-                   
-                            <li class="flex items-center">
-                                <input type="checkbox" id="task3" class="h-4 w-4 rounded border-gray-300 text-green-600 focus:ring-green-500">
-                                <label for="task3" class="ml-3 text-gray-800 cursor-pointer" onclick="openTaskDetails(this)" data-title="">
-                            
-                                </label>
-                            </li>
-                    
-                    </ul>
-                </div>
-                <div class="border border-gray-300 rounded-lg p-4 bg-gray-50">
-                    <h3 class="text-md font-semibold text-gray-700 mb-3 flex items-center"><i class="fas fa-calendar-week text-green-500 mr-2"></i>Gelecek Görevler (Haftalık)</h3>
-                    <ul class="space-y-2 task-list overflow-y-auto pr-2" style="max-height: 6rem;">
-                  
-                            <li class="flex items-center">
-                                <input type="checkbox" id="task3" class="h-4 w-4 rounded border-gray-300 text-green-600 focus:ring-green-500">
-                                <label for="task3" class="ml-3 text-gray-800 cursor-pointer" onclick="openTaskDetails(this)" data-title="">
-                               
-                                </label>
-                            </li>
-                     
-                    </ul>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div id="page-header" class="px-8 pb-8">
-        <div class="bg-white rounded-2xl border border-[#4C9779] shadow-md p-6">
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <!-- Kasa -->
-                <div id="kasa-karti" class="dashboard-card bg-white p-5 rounded-xl shadow-md border border-[#4C9779]">
-                    <div class="flex items-start justify-between">
-                        <span class="text-sm font-semibold text-gray-500">Kasa Son Durum</span>
-                        <a href="#" id="kasa-detay-link" class="text-xs font-medium text-blue-600 hover:underline">Detay</a>
-                    </div>
-                    <div class="flex items-center gap-4 mt-2">
-                        <div class="flex-shrink-0">
-                            <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center"><i class="fas fa-layer-group text-2xl text-yellow-500"></i></div>
-                        </div>
-                        <div>
-                            <p id="kasa-bakiye-has" class="text-3xl font-bold text-gray-800"></p>
-                            <p class="text-sm text-gray-400 font-medium">HAS</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Bankalar -->
-                <div id="bankalar-karti" class="dashboard-card bg-white p-5 rounded-xl shadow-md border border-[#4C9779]">
-                    <div class="flex items-start justify-between">
-                        <span class="text-sm font-semibold text-gray-500">Bankalar Son Durum</span>
-                        <a href="#" id="bankalar-detay-link" class="text-xs font-medium text-blue-600 hover:underline">Detay</a>
-                    </div>
-                    <div class="flex items-center gap-4 mt-2">
-                        <div class="flex-shrink-0"><div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center"><i class="fas fa-university text-2xl text-blue-500"></i></div></div>
-                        <div>
-                            <p id="bankalar-bakiye" class="text-3xl font-bold text-gray-800"></p>
-                            <p class="text-sm text-gray-400 font-medium">HAS</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Poslar -->
-                <div id="poslar-karti" class="dashboard-card bg-white p-5 rounded-xl shadow-md border border-[#4C9779]">
-                    <div class="flex items-start justify-between">
-                        <span class="text-sm font-semibold text-gray-500">Poslar Son Durum</span>
-                        <a href="#" id="poslar-detay-link" class="text-xs font-medium text-blue-600 hover:underline">Detay</a>
-                    </div>
-                    <div class="flex items-center gap-4 mt-2">
-                        <div class="flex-shrink-0"><div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center"><i class="fas fa-credit-card text-2xl text-green-500"></i></div></div>
-                        <div>
-                            <p id="poslar-bakiye" class="text-3xl font-bold text-gray-800"></p>
-                            <p class="text-sm text-gray-400 font-medium">HAS</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div> *@
-
-
-
-
-
-
+    <script src="~/js/home_dashboard.js" asp-append-version="true"></script>
+}

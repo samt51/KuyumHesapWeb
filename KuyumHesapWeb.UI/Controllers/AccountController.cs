@@ -57,5 +57,15 @@ namespace KuyumHesapWeb.UI.Controllers
             var accountData = await _mediator.Send(req);
             return RedirectToAction("Index");
         }
+        [HttpGet]
+        public async Task<IActionResult> GetAll()
+        {
+            var accountData = await _mediator.Send(new GetAllAccountQueryRequest());
+            // API client-side kodları genelde ya doğrudan dizi ya da { data: [...] } bekliyor.
+            // Burada frontend'in daha güvenli çalışması için doğrudan veri dizisini döndürüyoruz.
+            if (accountData == null) return NotFound();
+            return Ok(accountData.data);
+        }
+
     }
 }

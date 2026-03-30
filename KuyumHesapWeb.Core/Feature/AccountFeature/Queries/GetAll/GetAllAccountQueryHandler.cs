@@ -15,7 +15,7 @@ namespace KuyumHesapWeb.Core.Feature.AccountFeature.Queries.GetAll
         {
             var data = await _apiService.GetAsync<List<GetAllAccountQueryResponse>>($"Account/GetAll?accountTypeName={request.AccountTypeName}");
 
-            return new ResponseDto<List<GetAllAccountQueryResponse>>().Success(data.data);
+            return data;
         }
     }
 }

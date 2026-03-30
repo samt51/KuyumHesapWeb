@@ -13,6 +13,8 @@ builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<Pr
 
 builder.Services.AddHttpContextAccessor();
 
+
+
 builder.Services
     .AddAuthentication(options =>
     {
@@ -64,8 +66,26 @@ static IAsyncPolicy<HttpResponseMessage> GetCircuitBreakerPolicy()
         .CircuitBreakerAsync(5, TimeSpan.FromSeconds(30));
 }
 
+var MyAllowLocalDev = "_myAllowLocalDev";
+
+// builder tarafýnda
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(name: MyAllowLocalDev,
+        policy =>
+        {
+            // Geliþtirme ortamýnda rahat test için; prod ortamda kesinlikle daraltýn
+            policy.AllowAnyOrigin()
+                  .AllowAnyHeader()
+                  .AllowAnyMethod();
+        });
+});
+
+// app tarafýnda
+
 var app = builder.Build();
 
+app.UseCors(MyAllowLocalDev);
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
