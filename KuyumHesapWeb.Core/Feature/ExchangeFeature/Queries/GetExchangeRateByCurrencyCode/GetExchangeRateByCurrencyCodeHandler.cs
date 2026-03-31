@@ -13,7 +13,11 @@ namespace KuyumHesapWeb.Core.Feature.ExchangeFeature.Queries.GetExchangeRateByCu
 
         public async Task<ResponseDto<GetExchangeRateByCurrencyCodeResponse>> Handle(GetExchangeRateByCurrencyCodeRequest request, CancellationToken cancellationToken)
         {
-            var data = await _apiService.GetAsync<GetExchangeRateByCurrencyCodeResponse>($"Exchange/GetExchangeRateByCurrencyCode/{request.CurrencyId}");
+
+            var isEntry = request.IsEntry ?? false;
+
+            var data = await _apiService.GetAsync<GetExchangeRateByCurrencyCodeResponse>(
+                $"Exchange/GetExchangeRateByCurrencyCode/{request.CurrencyId}/{isEntry}");
 
             return data;
         }

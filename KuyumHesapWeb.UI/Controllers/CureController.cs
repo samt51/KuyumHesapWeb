@@ -20,12 +20,17 @@ namespace KuyumHesapWeb.UI.Controllers
             _mapper = mapper;
         }
 
-        public async Task<decimal> GetLastCure(int id)
+        public async Task<decimal> GetLastCure(int id, bool? isEntry = null)
         {
-            var result = await _mediator.Send(new GetExchangeRateByCurrencyCodeRequest { CurrencyId = id });
+            if (id == 3)
+            {
+                return 1;
+            }
+            var result = await _mediator.Send(new GetExchangeRateByCurrencyCodeRequest { CurrencyId = id, IsEntry = isEntry });
 
             return result.isSuccess ? result.data.Result : 0;
         }
+
         [HttpGet]
         public async Task<ResponseDto<List<GetLatestCureQueryResponse>>> GetLatestCure(CancellationToken token)
         {
