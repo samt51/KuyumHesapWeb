@@ -5,29 +5,29 @@
 @using KuyumHesapWeb.Core.Feature.AccountFeature.Queries.GetAll
 @model GeneralSettingsViewModel
 @{
-    Layout = null;
+    Layout = "~/Views/Shared/_Layout.cshtml";
     ViewData["Title"] = "Genel Ayarlar";
 }
-<!DOCTYPE html>
-<html lang="tr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Genel Ayarlar | KuyumHesap</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-</head>
-<body style="font-family:'Inter',sans-serif; background-color:#f8faff;">
-
 
 <style>
+    /* Gizle: dashboard'dan taşan "Kasalar" bloğunu bu view içinde kaldır */
+    #kasalar-card,
+    #kasalar-modal,
+    #kasalar-ozet,
+    div.mt-6.flex.flex-wrap.gap-5 {
+        display: none !important;
+        visibility: hidden !important;
+        height: 0 !important;
+        overflow: hidden !important;
+    }
+    /* mevcut stilleriniz korunuyor */
     .settings-card {
         background: linear-gradient(135deg, #ffffff 0%, #f8faff 100%);
         border: 1px solid rgba(99, 102, 241, 0.12);
         border-radius: 16px;
         box-shadow: 0 4px 24px -4px rgba(0,0,0,0.08);
     }
+
     .settings-group-title {
         font-size: 0.75rem;
         font-weight: 700;
@@ -38,6 +38,7 @@
         border-bottom: 2px solid #e0e7ff;
         margin-bottom: 1.5rem;
     }
+
     .settings-row {
         display: flex;
         align-items: center;
@@ -46,287 +47,423 @@
         border-bottom: 1px solid #f1f5f9;
         transition: background 0.2s;
     }
-    .settings-row:last-child { border-bottom: none; }
+
+        .settings-row:last-child {
+            border-bottom: none;
+        }
+
     .settings-icon {
-        width: 32px; height: 32px;
-        display: flex; align-items: center; justify-content: center;
-        border-radius: 8px; font-size: 0.75rem; flex-shrink: 0;
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        font-size: 0.75rem;
+        flex-shrink: 0;
     }
+
     .settings-label-text {
         flex: 0 0 200px;
-        font-size: 0.875rem; font-weight: 600; color: #374151;
-        display: flex; align-items: center; gap: 0.5rem;
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: #374151;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
     }
+
     .settings-description {
-        flex: 1; font-size: 0.75rem; color: #9ca3af; min-width: 0;
+        flex: 1;
+        font-size: 0.75rem;
+        color: #9ca3af;
+        min-width: 0;
     }
-    .settings-select-wrap { flex: 0 0 280px; }
-    .settings-select-wrap select {
-        width: 100%; border: 1px solid #d1d5db; border-radius: 8px;
-        background: white; font-size: 0.8rem; height: 38px;
-        padding: 0 10px; color: #374151; outline: none;
+
+    .settings-select-wrap {
+        flex: 0 0 280px;
     }
-    .settings-select-wrap select:focus {
-        border-color: #6366f1;
-        box-shadow: 0 0 0 3px rgba(99,102,241,0.15);
-    }
+
+        .settings-select-wrap select {
+            width: 100%;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            background: white;
+            font-size: 0.8rem;
+            height: 38px;
+            padding: 0 10px;
+            color: #374151;
+            outline: none;
+        }
+
+            .settings-select-wrap select:focus {
+                border-color: #6366f1;
+                box-shadow: 0 0 0 3px rgba(99,102,241,0.15);
+            }
+
     .save-btn {
         background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
-        color: white; border: none; border-radius: 10px;
-        padding: 0.65rem 2.5rem; font-weight: 600; font-size: 0.9rem;
-        cursor: pointer; transition: all 0.2s;
+        color: white;
+        border: none;
+        border-radius: 10px;
+        padding: 0.65rem 2.5rem;
+        font-weight: 600;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: all 0.2s;
         box-shadow: 0 4px 12px rgba(99,102,241,0.35);
-        display: flex; align-items: center; gap: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
     }
-    .save-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(99,102,241,0.45); }
+
+        .save-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 18px rgba(99,102,241,0.45);
+        }
+
     .toast-success {
         background: linear-gradient(135deg, #22c55e, #16a34a);
-        color: white; border-radius: 10px; padding: 0.75rem 1.25rem;
-        font-size: 0.875rem; font-weight: 600;
-        display: flex; align-items: center; gap: 0.5rem;
-        box-shadow: 0 4px 12px rgba(22,163,74,0.3); margin-bottom: 1rem;
+        color: white;
+        border-radius: 10px;
+        padding: 0.75rem 1.25rem;
+        font-size: 0.875rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        box-shadow: 0 4px 12px rgba(22,163,74,0.3);
+        margin-bottom: 1rem;
     }
+
     .toast-error {
         background: linear-gradient(135deg, #ef4444, #dc2626);
-        color: white; border-radius: 10px; padding: 0.75rem 1.25rem;
-        font-size: 0.875rem; font-weight: 600;
-        display: flex; align-items: center; gap: 0.5rem;
-        box-shadow: 0 4px 12px rgba(220,38,38,0.3); margin-bottom: 1rem;
+        color: white;
+        border-radius: 10px;
+        padding: 0.75rem 1.25rem;
+        font-size: 0.875rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        box-shadow: 0 4px 12px rgba(220,38,38,0.3);
+        margin-bottom: 1rem;
     }
+
     .toast-warning {
         background: linear-gradient(135deg, #f59e0b, #d97706);
-        color: white; border-radius: 10px; padding: 0.75rem 1.25rem;
-        font-size: 0.875rem; font-weight: 600;
-        display: flex; align-items: center; gap: 0.5rem;
-        box-shadow: 0 4px 12px rgba(217,119,6,0.3); margin-bottom: 1rem;
+        color: white;
+        border-radius: 10px;
+        padding: 0.75rem 1.25rem;
+        font-size: 0.875rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        box-shadow: 0 4px 12px rgba(217,119,6,0.3);
+        margin-bottom: 1rem;
     }
-    .missing-key { font-size: 0.75rem; color: #f87171; font-style: italic; }
+
+    .missing-key {
+        font-size: 0.75rem;
+        color: #f87171;
+        font-style: italic;
+    }
+
+    /* Yeni: layout değiştirmeden bu view içinde kaydırma sağlar.
+           80px yüksekliği üst bar + spacing için tahmini değerdir; gerekirse ayarlayın. */
+    .view-container {
+        max-height: calc(100vh - 80px);
+        overflow: auto;
+        -webkit-overflow-scrolling: touch;
+    }
 </style>
 
-<div class="p-5 max-w-5xl mx-auto">
-    <div class="flex items-center gap-2 text-xs text-gray-400 mb-4">
-        <i class="fas fa-cog"></i><span>Ayarlar</span>
-        <i class="fas fa-chevron-right text-gray-300 text-[10px]"></i>
-        <span class="text-indigo-600 font-semibold">Genel Ayarlar</span>
-    </div>
-
-    <div class="mb-6">
-        <h1 class="text-2xl font-bold text-gray-800 flex items-center gap-2">
-            <span>⚙️</span> Genel Ayarlar
-        </h1>
-        <p class="text-sm text-gray-500 mt-1">Sistem genelinde kullanılan hesap tipleri ve varsayılan değerleri yapılandırın.</p>
-    </div>
-
-    @if (TempData["SuccessMessage"] != null)
-    {
-        <div class="toast-success">
-            <i class="fas fa-check-circle"></i>
-            <span>@TempData["SuccessMessage"]</span>
+<div class="view-container">
+    <div class="p-5 max-w-5xl mx-auto">
+        <div class="flex items-center gap-2 text-xs text-gray-400 mb-4">
+            <i class="fas fa-cog"></i><span>Ayarlar</span>
+            <i class="fas fa-chevron-right text-gray-300 text-[10px]"></i>
+            <span class="text-indigo-600 font-semibold">Genel Ayarlar</span>
         </div>
-    }
 
-    @if (TempData["ErrorMessage"] != null)
-    {
-        <div class="toast-error">
-            <i class="fas fa-exclamation-circle"></i>
-            <span>@TempData["ErrorMessage"]</span>
+        <div class="mb-6">
+            <h1 class="text-2xl font-bold text-gray-800 flex items-center gap-2">
+                <span>⚙️</span> Genel Ayarlar
+            </h1>
+            <p class="text-sm text-gray-500 mt-1">Sistem genelinde kullanılan hesap tipleri ve varsayılan değerleri yapılandırın.</p>
         </div>
-    }
 
-    @if (TempData["WarningMessage"] != null)
-    {
-        <div class="toast-warning">
-            <i class="fas fa-exclamation-triangle"></i>
-            <span>@TempData["WarningMessage"]</span>
-        </div>
-    }
-
-    <form method="post" asp-action="General" asp-controller="Settings">
-        @Html.AntiForgeryToken()
-
-        @{
-            var visibleKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { 
-                "CashAccountTypeId", "PosAccountTypeId", "BankAccountTypeId", 
-                "CashierAccountTypeId", "CustomerAccountTypeId", "SalesCurrencyId", 
-                "DefaultCustomerAccountId", "DefaultCashAccountId", "DefaultDiscountAccountId"
-            };
-        }
-
-        @for (int i = 0; i < Model.Settings.Count; i++)
+        @if (TempData["SuccessMessage"] != null)
         {
-            <input type="hidden" name="Settings[@i].Id" value="@Model.Settings[i].Id" />
-            <input type="hidden" name="Settings[@i].Key" value="@Model.Settings[i].Key" />
-            <input type="hidden" name="Settings[@i].Description" value="@Model.Settings[i].Description" />
-            
-            if (!visibleKeys.Contains(Model.Settings[i].Key))
-            {
-                <input type="hidden" name="Settings[@i].Value" value="@Model.Settings[i].Value" />
-            }
+            <div class="toast-success">
+                <i class="fas fa-check-circle"></i>
+                <span>@TempData["SuccessMessage"]</span>
+            </div>
         }
 
-        @* ── HESAP TİPİ EŞLEŞTİRMELERİ ── *@
-        <div class="settings-card p-6 mb-5">
-            <div class="settings-group-title">
-                <i class="fas fa-layer-group mr-1"></i> Hesap Tipi Eşleştirmeleri
+        @if (TempData["ErrorMessage"] != null)
+        {
+            <div class="toast-error">
+                <i class="fas fa-exclamation-circle"></i>
+                <span>@TempData["ErrorMessage"]</span>
             </div>
+        }
+
+        @if (TempData["WarningMessage"] != null)
+        {
+            <div class="toast-warning">
+                <i class="fas fa-exclamation-triangle"></i>
+                <span>@TempData["WarningMessage"]</span>
+            </div>
+        }
+
+        <form method="post" asp-action="General" asp-controller="Settings">
+            @Html.AntiForgeryToken()
 
             @{
-                var accountTypeRows = new[]
-                {
-                    new { Key = "CashAccountTypeId",    Label = "Kasa Hesap Tipi",      Icon = "fas fa-cash-register", Color = "bg-green-100 text-green-600",   Desc = "Nakit tahsilat/ödeme işlemlerinde kullanılacak kasa hesabının tipi" },
-                    new { Key = "PosAccountTypeId",     Label = "POS Hesap Tipi",       Icon = "fas fa-credit-card",   Color = "bg-blue-100 text-blue-600",     Desc = "POS cihazı üzerinden yapılan tahsilat/ödeme hesabının tipi" },
-                    new { Key = "BankAccountTypeId",    Label = "Banka Hesap Tipi",     Icon = "fas fa-university",    Color = "bg-purple-100 text-purple-600", Desc = "Banka havalesi/EFT işlemlerinde kullanılacak hesabın tipi" },
-                    new { Key = "CashierAccountTypeId", Label = "Tezgahtar Hesap Tipi", Icon = "fas fa-user-tag",      Color = "bg-yellow-100 text-yellow-600", Desc = "Satış ekranında tezgahtar seçiminde listelenen hesapların tipi" },
-                    new { Key = "CustomerAccountTypeId",Label = "Müşteri Hesap Tipi",   Icon = "fas fa-users",         Color = "bg-indigo-100 text-indigo-600", Desc = "Satış ekranında müşteri listesinde gösterilecek hesapların tipi" }
-                };
+                var visibleKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase) {
+                        "CashAccountTypeId", "PosAccountTypeId", "BankAccountTypeId",
+                        "CashierAccountTypeId", "CustomerAccountTypeId", "SalesCurrencyId",
+                        "DefaultCustomerAccountId", "DefaultCashAccountId", "DefaultDiscountAccountId"
+                        };
             }
 
-            @foreach (var row in accountTypeRows)
+            @for (int i = 0; i < Model.Settings.Count; i++)
             {
-                var idx = Model.Settings.FindIndex(s => s.Key.Equals(row.Key, StringComparison.OrdinalIgnoreCase));
-                var val = idx >= 0 ? (Model.Settings[idx].Value ?? "").Trim() : "";
-                var fieldName = idx >= 0 ? $"Settings[{idx}].Value" : "";
+                <input type="hidden" name="Settings[@i].Id" value="@Model.Settings[i].Id" />
+                <input type="hidden" name="Settings[@i].Key" value="@Model.Settings[i].Key" />
+                <input type="hidden" name="Settings[@i].Description" value="@Model.Settings[i].Description" />
+                if (!visibleKeys.Contains(Model.Settings[i].Key))
+                {
+                    <input type="hidden" name="Settings[@i].Value" value="@Model.Settings[i].Value" />
+                }
+            }
 
+            @* HESAP TİPİ EŞLEŞTİRMELERİ *@
+            <div class="settings-card p-6 mb-5">
+                <div class="settings-group-title">
+                    <i class="fas fa-layer-group mr-1"></i> Hesap Tipi Eşleştirmeleri
+                </div>
+
+                @{
+                    var accountTypeRows = new[]
+                    {
+                                new { Key = "CashAccountTypeId",    Label = "Kasa Hesap Tipi",      Icon = "fas fa-cash-register", Color = "bg-green-100 text-green-600",   Desc = "Nakit tahsilat/ödeme işlemlerinde kullanılacak kasa hesabının tipi" },
+                                new { Key = "PosAccountTypeId",     Label = "POS Hesap Tipi",       Icon = "fas fa-credit-card",   Color = "bg-blue-100 text-blue-600",     Desc = "POS cihazı üzerinden yapılan tahsilat/ödeme hesabının tipi" },
+                                new { Key = "BankAccountTypeId",    Label = "Banka Hesap Tipi",     Icon = "fas fa-university",    Color = "bg-purple-100 text-purple-600", Desc = "Banka havalesi/EFT işlemlerinde kullanılacak hesabın tipi" },
+                                new { Key = "CashierAccountTypeId", Label = "Tezgahtar Hesap Tipi", Icon = "fas fa-user-tag",      Color = "bg-yellow-100 text-yellow-600", Desc = "Satış ekranında tezgahtar seçiminde listelenen hesapların tipi" },
+                                new { Key = "CustomerAccountTypeId",Label = "Müşteri Hesap Tipi",   Icon = "fas fa-users",         Color = "bg-indigo-100 text-indigo-600", Desc = "Satış ekranında müşteri listesinde gösterilecek hesapların tipi" }
+                                };
+                }
+
+                @foreach (var row in accountTypeRows)
+                {
+                    var idx = Model.Settings.FindIndex(s => s.Key.Equals(row.Key, StringComparison.OrdinalIgnoreCase));
+                    var val = idx >= 0 ? (Model.Settings[idx].Value ?? "").Trim() : "";
+                    var fieldName = idx >= 0 ? $"Settings[{idx}].Value" : "";
+
+                    <div class="settings-row">
+                        <div class="settings-label-text">
+                            <span class="settings-icon @row.Color"><i class="@row.Icon"></i></span>
+                            @row.Label
+                        </div>
+                        <div class="settings-description">@row.Desc</div>
+                        <div class="settings-select-wrap">
+                            <select name="@fieldName" data-current-val="@val">
+                                <option value="">— Seçiniz —</option>
+                                @foreach (var at in Model.AccountTypes.Where(a => a.IsActive))
+                                {
+                                    if (val == at.Id.ToString())
+                                    {
+                                        <option value="@at.Id" selected="selected">@at.AccountTypeName</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@at.Id">@at.AccountTypeName</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            @* VARSAYILAN DEĞERLER *@
+            <div class="settings-card p-6 mb-5">
+                <div class="settings-group-title">
+                    <i class="fas fa-sliders-h mr-1"></i> Varsayılan Değerler
+                </div>
+
+                @{
+                    var currIdx = Model.Settings.FindIndex(s => s.Key.Equals("SalesCurrencyId", StringComparison.OrdinalIgnoreCase));
+                    var currVal = currIdx >= 0 ? (Model.Settings[currIdx].Value ?? "").Trim() : "";
+                    var currFieldName = currIdx >= 0 ? $"Settings[{currIdx}].Value" : "";
+                }
                 <div class="settings-row">
                     <div class="settings-label-text">
-                        <span class="settings-icon @row.Color"><i class="@row.Icon"></i></span>
-                        @row.Label
+                        <span class="settings-icon bg-emerald-100 text-emerald-600"><i class="fas fa-coins"></i></span>
+                        Satış Para Birimi
                     </div>
-                    <div class="settings-description">@row.Desc</div>
+                    <div class="settings-description">Satış işlemlerinde varsayılan olarak seçilecek para birimi</div>
                     <div class="settings-select-wrap">
-                        <select name="@fieldName" data-current-val="@val">
+                        <select name="@currFieldName" data-current-val="@currVal">
                             <option value="">— Seçiniz —</option>
-                            @foreach (var at in Model.AccountTypes.Where(a => a.IsActive))
+                            @foreach (var c in Model.Currencies.Where(c => c.IsActive))
                             {
-                                if (val == at.Id.ToString())
+                                if (currVal == c.Id.ToString())
                                 {
-                                    <option value="@at.Id" selected="selected">@at.AccountTypeName</option>
+                                    <option value="@c.Id" selected="selected">@c.CurrencyCode — @c.CurrencyName</option>
                                 }
                                 else
                                 {
-                                    <option value="@at.Id">@at.AccountTypeName</option>
+                                    <option value="@c.Id">@c.CurrencyCode — @c.CurrencyName</option>
                                 }
                             }
                         </select>
                     </div>
                 </div>
-            }
-        </div>
 
-        @* ── VARSAYILAN DEĞERLER ── *@
-        <div class="settings-card p-6 mb-5">
-            <div class="settings-group-title">
-                <i class="fas fa-sliders-h mr-1"></i> Varsayılan Değerler
-            </div>
-
-            @{
-                var currIdx = Model.Settings.FindIndex(s => s.Key.Equals("SalesCurrencyId", StringComparison.OrdinalIgnoreCase));
-                var currVal = currIdx >= 0 ? (Model.Settings[currIdx].Value ?? "").Trim() : "";
-                var currFieldName = currIdx >= 0 ? $"Settings[{currIdx}].Value" : "";
-            }
-            <div class="settings-row">
-                <div class="settings-label-text">
-                    <span class="settings-icon bg-emerald-100 text-emerald-600"><i class="fas fa-coins"></i></span>
-                    Satış Para Birimi
-                </div>
-                <div class="settings-description">Satış işlemlerinde varsayılan olarak seçilecek para birimi</div>
-                <div class="settings-select-wrap">
-                    <select name="@currFieldName" data-current-val="@currVal">
-                        <option value="">— Seçiniz —</option>
-                        @foreach (var c in Model.Currencies.Where(c => c.IsActive)) {
-                            if (currVal == c.Id.ToString()) {
-                                <option value="@c.Id" selected="selected">@c.CurrencyCode — @c.CurrencyName</option>
-                            } else {
-                                <option value="@c.Id">@c.CurrencyCode — @c.CurrencyName</option>
+                @{
+                    var defCustIdx = Model.Settings.FindIndex(s => s.Key.Equals("DefaultCustomerAccountId", StringComparison.OrdinalIgnoreCase));
+                    var defCustVal = defCustIdx >= 0 ? (Model.Settings[defCustIdx].Value ?? "").Trim() : "";
+                    var defCustFieldName = defCustIdx >= 0 ? $"Settings[{defCustIdx}].Value" : "";
+                }
+                <div class="settings-row">
+                    <div class="settings-label-text">
+                        <span class="settings-icon bg-rose-100 text-rose-600"><i class="fas fa-user-check"></i></span>
+                        Sabit Müşteri
+                    </div>
+                    <div class="settings-description">Satış ekranı açıldığında varsayılan olarak seçili gelecek müşteri hesabı</div>
+                    <div class="settings-select-wrap">
+                        <select name="@defCustFieldName" data-current-val="@defCustVal">
+                            <option value="">— Seçiniz —</option>
+                            @foreach (var acc in Model.Accounts.Where(a => a.IsActive))
+                            {
+                                if (defCustVal == acc.AccountId.ToString())
+                                {
+                                    <option value="@acc.AccountId" selected="selected">@acc.AccountName</option>
+                                }
+                                else
+                                {
+                                    <option value="@acc.AccountId">@acc.AccountName</option>
+                                }
                             }
-                        }
-                    </select>
+                        </select>
+                    </div>
                 </div>
-            </div>
 
-            @{
-                var defCustIdx = Model.Settings.FindIndex(s => s.Key.Equals("DefaultCustomerAccountId", StringComparison.OrdinalIgnoreCase));
-                var defCustVal = defCustIdx >= 0 ? (Model.Settings[defCustIdx].Value ?? "").Trim() : "";
-                var defCustFieldName = defCustIdx >= 0 ? $"Settings[{defCustIdx}].Value" : "";
-            }
-            <div class="settings-row">
-                <div class="settings-label-text">
-                    <span class="settings-icon bg-rose-100 text-rose-600"><i class="fas fa-user-check"></i></span>
-                    Sabit Müşteri
-                </div>
-                <div class="settings-description">Satış ekranı açıldığında varsayılan olarak seçili gelecek müşteri hesabı</div>
-                <div class="settings-select-wrap">
-                    <select name="@defCustFieldName" data-current-val="@defCustVal">
-                        <option value="">— Seçiniz —</option>
-                        @foreach (var acc in Model.Accounts.Where(a => a.IsActive)) {
-                            if (defCustVal == acc.AccountId.ToString()) {
-                                <option value="@acc.AccountId" selected="selected">@acc.AccountName</option>
-                            } else {
-                                <option value="@acc.AccountId">@acc.AccountName</option>
+                @{
+                    var defCashIdx = Model.Settings.FindIndex(s => s.Key.Equals("DefaultCashAccountId", StringComparison.OrdinalIgnoreCase));
+                    var defCashVal = defCashIdx >= 0 ? (Model.Settings[defCashIdx].Value ?? "").Trim() : "";
+                    var defCashFieldName = defCashIdx >= 0 ? $"Settings[{defCashIdx}].Value" : "";
+                }
+                <div class="settings-row">
+                    <div class="settings-label-text">
+                        <span class="settings-icon bg-green-100 text-green-600"><i class="fas fa-wallet"></i></span>
+                        Varsayılan Kasa Hesabı
+                    </div>
+                    <div class="settings-description">Nakit tahsilat/ödeme işlemlerinde varsayılan kasa hesabı</div>
+                    <div class="settings-select-wrap">
+                        <select name="@defCashFieldName" data-current-val="@defCashVal">
+                            <option value="">— Seçiniz —</option>
+                            @foreach (var acc in Model.Accounts.Where(a => a.IsActive && a.AccountTypeId == 7))
+                            {
+                                if (defCashVal == acc.AccountId.ToString())
+                                {
+                                    <option value="@acc.AccountId" selected="selected">@acc.AccountName</option>
+                                }
+                                else
+                                {
+                                    <option value="@acc.AccountId">@acc.AccountName</option>
+                                }
                             }
-                        }
-                    </select>
+                        </select>
+                    </div>
                 </div>
-            </div>
 
-            @{
-                var defCashIdx = Model.Settings.FindIndex(s => s.Key.Equals("DefaultCashAccountId", StringComparison.OrdinalIgnoreCase));
-                var defCashVal = defCashIdx >= 0 ? (Model.Settings[defCashIdx].Value ?? "").Trim() : "";
-                var defCashFieldName = defCashIdx >= 0 ? $"Settings[{defCashIdx}].Value" : "";
-            }
-            <div class="settings-row">
-                <div class="settings-label-text">
-                    <span class="settings-icon bg-green-100 text-green-600"><i class="fas fa-wallet"></i></span>
-                    Varsayılan Kasa Hesabı
-                </div>
-                <div class="settings-description">Nakit tahsilat/ödeme işlemlerinde varsayılan kasa hesabı</div>
-                <div class="settings-select-wrap">
-                    <select name="@defCashFieldName" data-current-val="@defCashVal">
-                        <option value="">— Seçiniz —</option>
-                        @foreach (var acc in Model.Accounts.Where(a => a.IsActive && a.AccountTypeId == 7)) {
-                            if (defCashVal == acc.AccountId.ToString()) {
-                                <option value="@acc.AccountId" selected="selected">@acc.AccountName</option>
-                            } else {
-                                <option value="@acc.AccountId">@acc.AccountName</option>
+                @{
+                    var defDiscIdx = Model.Settings.FindIndex(s => s.Key.Equals("DefaultDiscountAccountId", StringComparison.OrdinalIgnoreCase));
+                    var defDiscVal = defDiscIdx >= 0 ? (Model.Settings[defDiscIdx].Value ?? "").Trim() : "";
+                    var defDiscFieldName = defDiscIdx >= 0 ? $"Settings[{defDiscIdx}].Value" : "";
+                }
+                <div class="settings-row">
+                    <div class="settings-label-text">
+                        <span class="settings-icon bg-yellow-100 text-yellow-600"><i class="fas fa-percentage"></i></span>
+                        İskonto Hesabı
+                    </div>
+                    <div class="settings-description">İskonto işlemlerinde borçlandırılacak hesap</div>
+                    <div class="settings-select-wrap">
+                        <select name="@defDiscFieldName" data-current-val="@defDiscVal">
+                            <option value="">— Seçiniz —</option>
+                            @foreach (var acc in Model.Accounts.Where(a => a.IsActive && a.AccountTypeId == 9))
+                            {
+                                if (defDiscVal == acc.AccountId.ToString())
+                                {
+                                    <option value="@acc.AccountId" selected="selected">@acc.AccountName</option>
+                                }
+                                else
+                                {
+                                    <option value="@acc.AccountId">@acc.AccountName</option>
+                                }
                             }
-                        }
-                    </select>
+                        </select>
+                    </div>
                 </div>
             </div>
 
-            @{
-                var defDiscIdx = Model.Settings.FindIndex(s => s.Key.Equals("DefaultDiscountAccountId", StringComparison.OrdinalIgnoreCase));
-                var defDiscVal = defDiscIdx >= 0 ? (Model.Settings[defDiscIdx].Value ?? "").Trim() : "";
-                var defDiscFieldName = defDiscIdx >= 0 ? $"Settings[{defDiscIdx}].Value" : "";
-            }
-            <div class="settings-row">
-                <div class="settings-label-text">
-                    <span class="settings-icon bg-yellow-100 text-yellow-600"><i class="fas fa-percentage"></i></span>
-                    İskonto Hesabı
-                </div>
-                <div class="settings-description">İskonto işlemlerinde borçlandırılacak hesap</div>
-                <div class="settings-select-wrap">
-                    <select name="@defDiscFieldName" data-current-val="@defDiscVal">
-                        <option value="">— Seçiniz —</option>
-                        @foreach (var acc in Model.Accounts.Where(a => a.IsActive && a.AccountTypeId == 9)) {
-                            if (defDiscVal == acc.AccountId.ToString()) {
-                                <option value="@acc.AccountId" selected="selected">@acc.AccountName</option>
-                            } else {
-                                <option value="@acc.AccountId">@acc.AccountName</option>
-                            }
-                        }
-                    </select>
-                </div>
+            <div class="flex justify-end">
+                <button type="submit" class="save-btn">
+                    <i class="fas fa-save"></i>
+                    Ayarları Kaydet
+                </button>
             </div>
-        </div>
-
-        <div class="flex justify-end">
-            <button type="submit" class="save-btn">
-                <i class="fas fa-save"></i>
-                Ayarları Kaydet
-            </button>
-        </div>
-    </form>
+        </form>
+    </div>
 </div>
-</body>
-</html>
+
+<script>
+    // Bu view içinde istemediğimiz 'Kasalar' başlık/çerçevesini gizlemek için güvenli, lokal script.
+    // Layout veya başka sayfaları etkilemez. Üstteki dashboard'dan taşan statik "Kasalar" öğelerini kaldırır.
+    document.addEventListener('DOMContentLoaded', function () {
+        try {
+            // Başlık metni tam olarak 'Kasalar' olan H1..H6 etiketlerini hedefle (ancak #kasalar-card içindeyse dokunma)
+            document.querySelectorAll('h1,h2,h3,h4,h5,h6').forEach(function (h) {
+                if (h.textContent && h.textContent.trim() === 'Kasalar' && !h.closest('#kasalar-card')) {
+                    h.style.display = 'none';
+                    // Başlığın hemen sonrasındaki birkaç elemanı kontrol edip benzer metin içeriyorsa gizle
+                    var next = h.nextElementSibling;
+                    var steps = 0;
+                    while (next && steps < 6) {
+                        var txt = (next.textContent || '').trim();
+                        if (!txt) {
+                            next.style.display = 'none';
+                        } else if (txt.includes('Nakit Toplam') || txt.includes('Detaylar için tıklayın') || txt.startsWith('Detaylar için') || txt.includes('Kasa Detayları')) {
+                            next.style.display = 'none';
+                        } else {
+                            break;
+                        }
+                        next = next.nextElementSibling;
+                        steps++;
+                    }
+                }
+            });
+
+            // Ek güvenlik: yalnızca bu view içinde bulunan ID'leri gizle (eğer varsa)
+            ['kasalar-card', 'kasalar-modal', 'kasalar-ozet'].forEach(function (id) {
+                var el = document.getElementById(id);
+                if (el && !el.closest('#kasalar-card')) el.style.display = 'none';
+            });
+
+            // Ayrıca tek başına "Detaylar için tıklayın" vb. metinleri taşıyan p/div/span'leri gizle (kasalar-card içinde değilse)
+            document.querySelectorAll('p,div,span').forEach(function (el) {
+                var txt = (el.textContent || '').trim();
+                if ((txt === 'Kasalar' || txt.startsWith('Detaylar için tıklayın') || txt === 'Kasa Detayları') && !el.closest('#kasalar-card')) {
+                    el.style.display = 'none';
+                }
+            });
+        } catch (e) {
+            console.warn('cleanup kasalar error', e);
+        }
+    });
+</script>

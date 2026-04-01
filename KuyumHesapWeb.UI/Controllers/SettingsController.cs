@@ -37,12 +37,6 @@ namespace KuyumHesapWeb.UI.Controllers
         [HttpGet]
         public async Task<IActionResult> General(CancellationToken token)
         {
-            // 1. Tablo kontrolü ve gerekirse oluşturma
-            var checkResult = await _mediator.Send(new CheckSettingTableQueryRequest(), token);
-            if (checkResult != null && checkResult.data != null && checkResult.data.TableCreated)
-            {
-                TempData["WarningMessage"] = "Ayarlar tablosu bulunamadı ve sistem tarafından otomatik olarak oluşturuldu. Lütfen varsayılan değerleri kontrol edip kaydediniz.";
-            }
 
             var settingsTask = _mediator.Send(new GetAllSettingsQueryRequest(), token);
             var accountTypesTask = _mediator.Send(new GetAllAccountTypeQueryRequest(), token);

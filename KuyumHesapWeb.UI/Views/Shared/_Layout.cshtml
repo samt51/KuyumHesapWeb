@@ -117,6 +117,21 @@
                     </a>
                 </div>
             </div>
+            <div class="sidebar-link-container">
+                <div class="sidebar-link flex items-center px-5 py-2.5 text-gray-700 transition-colors cursor-pointer">
+                    <i class="fas fa-cog menu-icon"></i>
+                    <span class="ml-3 font-semibold text-sm sidebar-text whitespace-nowrap">Ayarlar</span>
+                    <i class="fas fa-chevron-right ml-auto sidebar-text chevron-icon text-xs"></i>
+                </div>
+                <div class="submenu hidden">
+                    <a href="@Url.Action("General", "Settings")" data-no-tab="true" class="sidebar-link flex items-center px-5 py-2.5 text-gray-700 transition-colors">
+                        <i class="fas fa-wallet w-5 text-center text-gray-400 mr-2 group-hover:text-green-600 transition-colors"></i><span>Genel Ayarlar</span>
+                    </a>
+                    <a href="@Url.Action("Index", "BarcodeSetting")" data-no-tab="true" class="sidebar-link flex items-center px-5 py-2.5 text-gray-700 transition-colors">
+                        <i class="fas fa-wallet w-5 text-center text-gray-400 mr-2 group-hover:text-green-600 transition-colors"></i><span>Barkod Ayarlar</span>
+                    </a>
+                </div>
+            </div>
         </div>
         <div class="mt-auto flex-shrink-0">
             <div class="sidebar-link-container">
