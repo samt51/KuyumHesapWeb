@@ -113,7 +113,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     const token = localStorage.getItem('jwt_token');
     // API base URL güncellendi
-    const API_BASE_URL = 'https://localhost:5152';
+    const API_BASE_URL = Front_BASE_URL;
     let state =
     {
         operationType: 'satis',
