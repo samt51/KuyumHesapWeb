@@ -327,10 +327,11 @@
             switchTab(tabId);
         };
 
-        function switchTab(tabId) {
+        function switchTab(tabId, skipHistory) {
             const nativeContent = document.getElementById('native-content');
             const contentFrames = document.getElementById('content-frames');
             let isNativeActive = false;
+            let activeTab = null;
 
             openTabs.forEach(tab => {
                 const button = document.querySelector(`.tab-button[data-tab-id="${tab.id}"]`);
@@ -338,6 +339,7 @@
                 if (button) button.classList.toggle('active', tab.id === tabId);
                 
                 if (tab.id === tabId) {
+                    activeTab = tab;
                     if (tab.isNative) {
                         isNativeActive = true;
                     }
@@ -356,15 +358,38 @@
             if (nativeContent && contentFrames) {
                 if (isNativeActive) {
                     nativeContent.style.display = '';
+                    nativeContent.style.flex = '';
                     contentFrames.classList.add('hidden');
+                    contentFrames.style.flex = '0';
                 } else {
                     nativeContent.style.display = 'none';
+                    nativeContent.style.flex = '0 0 0px';
                     contentFrames.classList.remove('hidden');
+                    contentFrames.style.flex = '1 1 0%';
                 }
+            }
+
+            // URL'i aktif sekmenin URL'iyle güncelle
+            if (!skipHistory && activeTab) {
+                const newUrl = activeTab.url || dashboardUrl;
+                history.pushState({ tabId: tabId }, activeTab.title || '', newUrl);
+                document.title = (activeTab.title ? activeTab.title + ' | ' : '') + 'KuyumHesap';
             }
 
             updateActiveSidebarLink(tabId);
         }
+
+        // Geri/ileri buton desteği
+        window.addEventListener('popstate', (e) => {
+            if (e.state && e.state.tabId) {
+                const tab = openTabs.find(t => t.id === e.state.tabId);
+                if (tab) { switchTab(tab.id, true); return; }
+            }
+            // State yoksa URL'e göre bul
+            const loc = (window.location.pathname || '').replace(/\/$/, '').toLowerCase();
+            const found = openTabs.find(t => t.url && t.url.replace(/\/$/, '').toLowerCase() === loc);
+            if (found) switchTab(found.id, true);
+        });
 
         function closeTab(tabId) {
             const tabIndex = openTabs.findIndex(tab => tab.id === tabId);

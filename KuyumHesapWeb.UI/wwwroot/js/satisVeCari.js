@@ -440,6 +440,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let allExchangeRates = [];
     let allStoklar = [];
     let originalCustomerOptions = [];
+    // expose early for debugging (exists immediately)
+    window.originalCustomerOptions = originalCustomerOptions;
     let customerSlimSelect;
     let salespersonSlimSelect;
     let bakiyeSnapshots = [];
@@ -467,6 +469,134 @@ document.addEventListener('DOMContentLoaded', () => {
             accountTypeIdCache[settingKey] = null;
             return null;
         }
+    }
+
+    // Wait for a select (or slim select wrapper) to contain an option with given value, then select it.
+    async function waitForOptionsAndSelect(selectObj, optionValue, timeout = 3000) {
+        const waitUntil = (predicate, interval = 50) => new Promise(resolve => {
+            const start = Date.now();
+            (function check() {
+                try {
+                    if (predicate()) return resolve(true);
+                } catch (e) { /* ignore */ }
+                if (Date.now() - start > timeout) return resolve(false);
+                setTimeout(check, interval);
+            })();
+        });
+
+        const predicate = () => {
+            try {
+                if (selectObj && typeof selectObj.getData === 'function') {
+                    const data = selectObj.getData();
+                    return Array.isArray(data) && data.some(d => String(d.value) === String(optionValue));
+                }
+            } catch (e) { /* ignore */ }
+
+            const native = document.getElementById('customer-select');
+            if (native && native.options && native.options.length > 0) {
+                return Array.from(native.options).some(o => String(o.value) === String(optionValue));
+            }
+            return false;
+        };
+
+        const ready = await waitUntil(predicate, 50);
+        if (!ready) return false;
+
+        try {
+            if (selectObj && typeof selectObj.setSelected === 'function') {
+                selectObj.setSelected(String(optionValue));
+            } else {
+                const native = document.getElementById('customer-select');
+                if (native) {
+                    native.value = String(optionValue);
+                    native.dispatchEvent(new Event('change', { bubbles: true }));
+                }
+            }
+            return true;
+        } catch (err) {
+            console.warn('waitForOptionsAndSelect error', err);
+            return false;
+        }
+    }
+
+    // --- BEGIN: helper to wait for select/options readiness and set default safely ---
+    async function waitForOptionsAndSelect(selectObj, optionValue, timeout = 3000) {
+        const waitUntil = (predicate, interval = 50) => new Promise(resolve => {
+            const start = Date.now();
+            (function check() {
+                try {
+                    if (predicate()) return resolve(true);
+                } catch (e) { /* ignore */ }
+                if (Date.now() - start > timeout) return resolve(false);
+                setTimeout(check, interval);
+            })();
+        });
+
+        const predicate = () => {
+            // If slim/select component exposes data/getData, prefer that
+            try {
+                if (selectObj && typeof selectObj.getData === 'function') {
+                    const data = selectObj.getData();
+                    return Array.isArray(data) && data.some(d => String(d.value) === String(optionValue));
+                }
+            } catch (e) { /* ignore */ }
+
+            // Fallback: native select element presence
+            const native = document.getElementById('customer-select');
+            if (native && native.options && native.options.length > 0) {
+                return Array.from(native.options).some(o => String(o.value) === String(optionValue));
+            }
+            return false;
+        };
+
+        const ready = await waitUntil(predicate, 50);
+        if (!ready) return false;
+
+        try {
+            if (selectObj && typeof selectObj.setSelected === 'function') {
+                selectObj.setSelected(String(optionValue));
+            } else {
+                const native = document.getElementById('customer-select');
+                if (native) {
+                    native.value = String(optionValue);
+                    native.dispatchEvent(new Event('change', { bubbles: true }));
+                }
+            }
+            return true;
+        } catch (err) {
+            console.warn('waitForOptionsAndSelect error', err);
+            return false;
+        }
+    }
+    // --- END helper ---
+    // Try setting selected value repeatedly (useful when setData is asynchronous)
+    async function trySetSelectedWithRetry(selectObj, optionValue, attempts = 12, delayMs = 250) {
+        for (let i = 0; i < attempts; i++) {
+            try {
+                if (selectObj && typeof selectObj.setSelected === 'function') {
+                    selectObj.setSelected(String(optionValue));
+                } else {
+                    const native = document.getElementById('customer-select');
+                    if (native) {
+                        native.value = String(optionValue);
+                        native.dispatchEvent(new Event('change', { bubbles: true }));
+                    }
+                }
+            } catch (e) {
+                // ignore and retry
+            }
+
+            // small wait
+            await new Promise(r => setTimeout(r, delayMs));
+
+            try {
+                const current = (selectObj && typeof selectObj.getSelected === 'function') ? selectObj.getSelected() : (document.getElementById('customer-select')?.value ?? '');
+                let curVal = current;
+                if (Array.isArray(current)) curVal = current[0];
+                if (String(curVal) === String(optionValue)) return true;
+            } catch (e) { /* ignore */ }
+        }
+        return false;
     }
     const showToast = (message, type = 'warning') => {
         console.log(`${type.toUpperCase()}: ${message}`);
@@ -1141,9 +1271,33 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 customerSlimSelect.setData(salesOptions);
 
-                const pesinMusteriExists = salesOptions.some(opt => opt.value == '29');
-                if (pesinMusteriExists) { customerSlimSelect.setSelected('29'); }
-                else { customerSlimSelect.setSelected(''); }
+                // after customerSlimSelect.setData(salesOptions);
+                try {
+                    const defaultCustomerId = await fetchAccountTypeIdByKey('DefaultCustomerAccountId');
+                    if (defaultCustomerId) {
+                        // First try quick waiter then fallback to retry setter
+                        let ok = await waitForOptionsAndSelect(customerSlimSelect, defaultCustomerId, 1000);
+                        if (!ok) {
+                            ok = await trySetSelectedWithRetry(customerSlimSelect, defaultCustomerId, 12, 250);
+                        }
+                        if (!ok) {
+                            console.warn('DefaultCustomerAccountId could not be applied - options not ready or id not present.');
+                            if (customerSlimSelect && typeof customerSlimSelect.setSelected === 'function') customerSlimSelect.setSelected('');
+                            else {
+                                const native = document.getElementById('customer-select');
+                                if (native) { native.value = ''; native.dispatchEvent(new Event('change', { bubbles: true })); }
+                            }
+                        }
+                    } else {
+                        if (customerSlimSelect && typeof customerSlimSelect.setSelected === 'function') customerSlimSelect.setSelected('');
+                        else {
+                            const native = document.getElementById('customer-select');
+                            if (native) { native.value = ''; native.dispatchEvent(new Event('change', { bubbles: true })); }
+                        }
+                    }
+                } catch (e) {
+                    console.warn('Applying default customer failed', e);
+                }
             })();
         }
         updateActiveCurrency();
@@ -1152,7 +1306,27 @@ document.addEventListener('DOMContentLoaded', () => {
         // fetchAndRenderCariBakiye(); // resetTransaction içinde çağrılıyor
         window.salespersonSlimSelect = salespersonSlimSelect;
         window.customerSlimSelect = customerSlimSelect;
+        // expose some internals for debugging in console (useful during development)
+        window.originalCustomerOptions = originalCustomerOptions;
+        window.allAccounts = allAccounts;
+        window.allFinancialAccounts = allFinancialAccounts;
         updateActionButtonsVisibility();
+        // Re-apply default customer after full initialization in case other init steps cleared it.
+        (async () => {
+            try {
+                // Only apply for SATIŞ mode (sales) where default customer is expected
+                if (state.operationType === 'satis') {
+                    const defaultCustomerId = await fetchAccountTypeIdByKey('DefaultCustomerAccountId');
+                    if (defaultCustomerId) {
+                        // Give other init code time to run then attempt multiple retries
+                        await new Promise(r => setTimeout(r, 300));
+                        const ok = await trySetSelectedWithRetry(customerSlimSelect, defaultCustomerId, 20, 200);
+                        if (!ok) console.debug('Re-apply default customer failed or id not present in options:', defaultCustomerId);
+                        else console.debug('Default customer applied after init:', defaultCustomerId);
+                    }
+                }
+            } catch (e) { console.warn('Re-apply default customer error', e); }
+        })();
     };
     const handlePanelChange = (panelType, itemToEdit = null) => {
         console.log("handlePanelChange çağrıldı:", panelType, itemToEdit);
@@ -3450,36 +3624,26 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
         } else {
-            // SATIŞ modu: kesinlikle (Tutar * KaynakKur) / HedefKur kullanılacak
+            // SATIŞ modu:
             try {
-                const sourceCurrencyId = currencyId;
                 const targetCurrencyId = state.activeCurrencyId || (nationalCurrency ? nationalCurrency.id : null);
-
-                // isEntry flag: öncelik fonksiyon parametresi, değilse mevcut item'in yönü
-                const originalItem = state.receiptItems[state.selectedItemIndex];
-                const isEntryFlag = (typeof isIncomeParam === 'boolean') ? isIncomeParam : (originalItem ? !!originalItem.isIncome : false);
-
-                const { equivalent, sourceRate, targetRate, displayedRate } = await computeEquivalentForCurrencies(amount, sourceCurrencyId, targetCurrencyId, isEntryFlag);
-
+                
                 const exchangeRateInput = document.getElementById('form-exchange-rate');
-                if (exchangeRateInput) {
-                    exchangeRateInput.dataset.sourceRate = String(sourceRate);
-                    exchangeRateInput.dataset.targetRate = String(targetRate);
-                    exchangeRateInput.value = formatRate(displayedRate);
-                }
+                const amountEquivalentInput = document.getElementById('form-amount-equivalent');
+                
+                let exchangeRate = exchangeRateInput ? parseFormattedNumber(exchangeRateInput.value) : 1.0;
+                let equivalentTotal = amountEquivalentInput ? parseFormattedNumber(amountEquivalentInput.value) : (amount * exchangeRate);
 
                 updatedItem.total = amount;
                 updatedItem.currency = currency;
-                updatedItem.exchangeRate = displayedRate;
-                updatedItem.miktarKuru = sourceRate;
-                updatedItem.hesapKuru = targetRate;
-                updatedItem.equivalentTotal = parseFloat((equivalent || 0).toFixed(2));
+                updatedItem.exchangeRate = exchangeRate;
+                updatedItem.miktarKuru = exchangeRate;
+                updatedItem.hesapKuru = 1.0;
+                updatedItem.equivalentTotal = parseFloat((equivalentTotal || 0).toFixed(2));
                 const targetCurrencyObj = allCurrencies.find(c => String(c.id) === String(targetCurrencyId)) || allCurrencies.find(c => c.dovizKodu === state.activeCurrency);
                 updatedItem.equivalentCurrency = targetCurrencyObj ? targetCurrencyObj.dovizKodu : state.activeCurrency;
                 updatedItem.equivalentCurrencyId = targetCurrencyObj ? targetCurrencyObj.id : state.activeCurrencyId;
 
-                const amountEquivalentInput = document.getElementById('form-amount-equivalent');
-                if (amountEquivalentInput) amountEquivalentInput.value = formatCurrency(updatedItem.equivalentTotal, 2);
             } catch (err) {
                 console.error('Satış karşılık hesaplama hatası (güncelleme):', err);
 
@@ -3769,37 +3933,28 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
         } else {
-            // --- SATIŞ MODU: kesinlikle (Tutar * KaynakKur) / HedefKur kullan ---
+            // --- SATIŞ MODU ---
             try {
-                const sourceCurrencyId = currencyId;
                 const targetCurrencyId = state.activeCurrencyId || (nationalCurrency ? nationalCurrency.id : null);
-
-                // Burada isEntry parametresi olarak 'isIncome' gönderiyoruz.
-                const { equivalent, sourceRate, targetRate, displayedRate } = await computeEquivalentForCurrencies(total, sourceCurrencyId, targetCurrencyId, isIncome, false);
-                // exchangeRate input shows displayedRate (source/target) for user
+                
                 const exchangeRateInput = document.getElementById('form-exchange-rate');
-                if (exchangeRateInput) {
-                    exchangeRateInput.dataset.sourceRate = String(sourceRate);
-                    exchangeRateInput.dataset.targetRate = String(targetRate);
-                    exchangeRateInput.value = formatCurrency(displayedRate, 4);
-                }
+                const amountEquivalentInput = document.getElementById('form-amount-equivalent');
+                
+                let exchangeRate = exchangeRateInput ? parseFormattedNumber(exchangeRateInput.value) : 1.0;
+                let equivalentTotal = amountEquivalentInput ? parseFormattedNumber(amountEquivalentInput.value) : (total * exchangeRate);
 
                 newItem.total = total;
                 newItem.currency = currency;
-                newItem.exchangeRate = displayedRate; // gösterilen kur (source/target)
-                newItem.miktarKuru = sourceRate;
-                newItem.hesapKuru = targetRate;
-                newItem.equivalentTotal = parseFloat((equivalent || 0).toFixed(2));
+                newItem.exchangeRate = exchangeRate; 
+                newItem.miktarKuru = exchangeRate; 
+                newItem.hesapKuru = 1.0; 
+                newItem.equivalentTotal = parseFloat((equivalentTotal || 0).toFixed(2));
+                
                 const targetCurrencyObj = allCurrencies.find(c => String(c.id) === String(targetCurrencyId)) || allCurrencies.find(c => c.dovizKodu === state.activeCurrency);
                 newItem.equivalentCurrency = targetCurrencyObj ? targetCurrencyObj.dovizKodu : state.activeCurrency;
                 newItem.equivalentCurrencyId = targetCurrencyObj ? targetCurrencyObj.id : state.activeCurrencyId;
-
-                // UI'ya da yaz (eğer form üzerindeyse)
-                const amountEquivalentInput = document.getElementById('form-amount-equivalent');
-                if (amountEquivalentInput) amountEquivalentInput.value = formatCurrency(newItem.equivalentTotal, 2);
             } catch (err) {
-                console.error('Satış karşılık hesaplama hatası:', err);
-                // Fallback: eskiden olduğu gibi gösterilmiş değeri kullan
+                console.error('Satış karşılık ataması hatası:', err);
                 const exchangeRate = parseFormattedNumber(document.getElementById('form-exchange-rate').value);
                 const equivalentTotal = parseFormattedNumber(document.getElementById('form-amount-equivalent').value);
                 newItem.total = total;
@@ -3995,8 +4150,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const exchangeRateMiktarInput = document.getElementById('form-exchange-rate-miktar');
         const exchangeRateHesapInput = document.getElementById('form-exchange-rate-hesap');
         const equivalentCurrencySelect = document.getElementById('form-currency-equivalent');
-
-        // bind currency select -> update only form-exchange-rate
         (function bindCurrencySelectToExchangeRate() {
             try {
                 const rateInputEl = document.getElementById('form-exchange-rate'); // hedef input
@@ -4306,11 +4459,34 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Edit mode: set values directly without triggering change events / network calls
         if (isEditing && itemToEdit) {
-            setTimeout(() => {
+            setTimeout(async () => {
                 try {
-                    const accountType = allFinancialAccounts.find(a => a.hesapID == itemToEdit.details.accountId)?.hesapTipiAdi || accountTypes[0].value;
-                    const targetOption = toggleContainer.querySelector(`.tri-toggle-option[data-value="${accountType}"]`);
-                    if (targetOption) targetOption.click();
+                    // Try to match the exact type or default to KASALAR
+                    // allFinancialAccounts map to `hesapTipiID` 7 (Kasa), 5 (Banka), 6 (Pos) vs.
+                    // Instead of string name, map ID if possible
+                    const account = allFinancialAccounts.find(a => String(a.hesapID) === String(itemToEdit.details.accountId));
+                    let accountTypeId = account ? account.hesapTipiID : null;
+                    
+                    let toggleValue = accountTypes[0].value; // "KASALAR" default
+                    if (accountTypeId == 5) toggleValue = "BANKALAR";
+                    else if (accountTypeId == 6) toggleValue = "POSLAR";
+                    else if (accountTypeId == 7) toggleValue = "KASALAR";
+
+                    const targetOption = toggleContainer.querySelector(`.tri-toggle-option[data-value="${toggleValue}"]`);
+                    
+                    // Trigger rendering async first and wait!
+                    if (targetOption && toggleContainer.dataset.selected !== toggleValue) {
+                        toggleContainer.dataset.selected = toggleValue;
+                        const toggleOptions = toggleContainer.querySelectorAll('.tri-toggle-option');
+                        toggleOptions.forEach(opt => opt.classList.remove('active'));
+                        targetOption.classList.add('active');
+                        await updateNakitHesapList(toggleValue);
+                    } else if (!targetOption) {
+                        await updateNakitHesapList(accountTypes[0].value);
+                    } else {
+                        // It is the same tab, but maybe updateNakitHesapList is not complete. Let's make sure it's updated
+                        await updateNakitHesapList(toggleValue);
+                    }
 
                     if (nameSelect) {
                         nameSelect.value = itemToEdit.details.accountId ?? '';
@@ -4331,6 +4507,11 @@ document.addEventListener('DOMContentLoaded', () => {
                         const miktarKuru = itemToEdit.miktarKuru ?? itemToEdit.hesapKuru ?? itemToEdit.exchangeRate ?? 1;
                         exchangeRateMiktarInput.value = formatCurrency(miktarKuru, 4);
                     }
+                    if (exchangeRateInput) {
+                        const rate = itemToEdit.exchangeRate ?? itemToEdit.miktarKuru ?? 1;
+                        exchangeRateInput.value = formatCurrency(rate, 4);
+                    }
+
 
                     // Karşılık: miktar, birim ve kur - ÖNEMLİ: edit sırasında karşılık alanları doldurulacak
                     const eqCurrencyId = itemToEdit.equivalentCurrencyId ?? (itemToEdit.equivalentCurrency ? (allCurrencies.find(c => c.dovizKodu === itemToEdit.equivalentCurrency)?.id) : '') ?? '';

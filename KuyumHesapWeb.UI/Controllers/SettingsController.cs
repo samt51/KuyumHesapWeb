@@ -82,6 +82,10 @@ namespace KuyumHesapWeb.UI.Controllers
         {
             if (vm?.Settings == null || vm.Settings.Count == 0)
             {
+                if (!string.IsNullOrEmpty(Request.Query["noLayout"]))
+                {
+                    return RedirectToAction(nameof(General), new { noLayout = Request.Query["noLayout"].ToString() });
+                }
                 return RedirectToAction(nameof(General));
             }
 
@@ -134,6 +138,10 @@ namespace KuyumHesapWeb.UI.Controllers
                 }
             }
 
+            if (!string.IsNullOrEmpty(Request.Query["noLayout"]))
+            {
+                return RedirectToAction(nameof(General), new { noLayout = Request.Query["noLayout"].ToString() });
+            }
             return RedirectToAction(nameof(General));
         }
     }

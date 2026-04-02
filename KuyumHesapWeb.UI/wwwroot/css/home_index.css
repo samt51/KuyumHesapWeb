@@ -1,4 +1,4 @@
-﻿/* home_index.css - Home\Index.cshtml */
+/* home_index.css - Home\Index.cshtml */
 
 body {
     font-family: 'Inter', sans-serif;
@@ -97,9 +97,16 @@ body {
         background-color: #e5e7eb;
     }
 
+#native-content {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+}
+
 #content-frames {
     position: relative;
     flex-grow: 1;
+    min-height: 0;
 }
 
     #content-frames iframe {

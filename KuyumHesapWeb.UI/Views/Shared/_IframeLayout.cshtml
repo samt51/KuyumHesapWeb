@@ -2,7 +2,7 @@
     Layout = null;
 }
 <!DOCTYPE html>
-<html lang="tr" class="h-full w-full overflow-hidden">
+<html lang="tr" class="h-full w-full overflow-hidden" style="height: 100%; overflow: hidden;">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -27,7 +27,7 @@
     @RenderSection("Styles", required: false)
 
 </head>
-<body class="bg-gray-100 overflow-hidden flex flex-col h-full w-full m-0 box-border">
+<body class="bg-gray-100 overflow-hidden flex flex-col h-full w-full m-0 box-border" style="height: 100%; overflow: hidden; display: flex; flex-direction: column;">
     @RenderBody()
     <script src="https://cdn.jsdelivr.net/npm/slim-select@1.27.0/dist/slimselect.min.js"></script>
     @RenderSection("Scripts", required: false)

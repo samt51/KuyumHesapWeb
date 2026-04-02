@@ -219,7 +219,7 @@
             </div>
         }
 
-        <form method="post" asp-action="General" asp-controller="Settings">
+        <form method="post" asp-action="General" asp-controller="Settings" asp-route-noLayout="@Context.Request.Query["noLayout"]">
             @Html.AntiForgeryToken()
 
             @{
