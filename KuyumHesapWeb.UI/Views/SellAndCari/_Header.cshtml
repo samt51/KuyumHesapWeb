@@ -1,37 +1,35 @@
 @* Header & Main Layout: Masaustu ve Mobil uyumlu Grid *@
 
-<main class="flex-1 min-h-0 min-w-0 h-full w-full grid grid-cols-1 lg:grid-cols-12 lg:grid-rows-[auto_1fr] gap-0 lg:gap-4 relative pb-20 lg:pb-0">
+<main class="flex flex-col flex-1 min-h-0 min-w-0 h-screen w-full lg:grid lg:grid-cols-12 lg:grid-rows-[auto_1fr] gap-0 lg:gap-4 relative pb-2 lg:pb-0 overflow-hidden">
 
     <!-- Ust Kisim / Header (Masaustunde Sol Ustte, Mobilde En Ustte) -->
     <header id="header-box" class="bg-white p-2 md:p-3 rounded-xl shadow-sm theme-border mb-3 lg:mb-0 lg:col-span-4 lg:col-start-1 lg:row-start-1 h-auto z-20">
         <!-- Top Half: Settings & Selectors -->
         <div class="flex flex-col gap-3">
             <!-- Toggle, Currency, Customer -->
-            <div class="flex flex-col xl:flex-row gap-2">
-                <div class="flex gap-2">
-                    <div class="toggle-container flex-shrink-0 origin-left">
-                        <input type="checkbox" id="operation-type-toggle" class="toggle-checkbox" name="operation-type-toggle">
-                        <label for="operation-type-toggle" class="toggle-label">
-                            <span class="toggle-text">SATIŞ</span>
-                            <span class="toggle-text">CARİ</span>
-                        </label>
-                    </div>
-                    <div class="flex-shrink-0">
-                        <select id="currency-select" name="currency-select" class="form-select w-[75px] bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-1.5 h-[38px]"></select>
-                    </div>
+            <div class="flex flex-wrap xl:flex-nowrap gap-2 items-center">
+                <div class="toggle-container flex-shrink-0 origin-left">
+                    <input type="checkbox" id="operation-type-toggle" class="toggle-checkbox" name="operation-type-toggle">
+                    <label for="operation-type-toggle" class="toggle-label">
+                        <span class="toggle-text">SATIŞ</span>
+                        <span class="toggle-text">CARİ</span>
+                    </label>
                 </div>
-                <div class="flex-1 min-w-0">
+                <div class="flex-shrink-0">
+                    <select id="currency-select" name="currency-select" class="form-select w-[75px] bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-1.5 h-[38px]"></select>
+                </div>
+                <div class="flex-1 min-w-[150px]">
                     <select id="customer-select" name="customer-select"></select>
                 </div>
             </div>
             <!-- Buttons and Salesperson -->
-            <div class="flex flex-col xl:flex-row gap-2">
-                <div class="flex gap-1 justify-center xl:justify-start flex-shrink-0">
-                    <button class="bg-white hover:bg-gray-100 text-gray-800 font-semibold py-1.5 px-2 border border-gray-300 rounded-lg shadow-sm text-xs"><i class="fas fa-users xl:mr-1.5"></i><span class="hidden xl:inline">CRM</span></button>
-                    <button id="ekstre-button" class="bg-white hover:bg-gray-100 text-gray-800 font-semibold py-1.5 px-2 border border-gray-300 rounded-lg shadow-sm text-xs"><i class="fas fa-file-invoice xl:mr-1.5"></i><span class="hidden xl:inline">Ekstre</span></button>
-                    <button id="sales-list-button" class="bg-white hover:bg-gray-100 text-gray-800 font-semibold py-1.5 px-2 border border-gray-300 rounded-lg shadow-sm text-xs"><i class="fas fa-list xl:mr-1.5"></i><span class="hidden xl:inline">Liste</span></button>
+            <div class="flex flex-row gap-2 items-center">
+                <div class="flex gap-1 flex-shrink-0">
+                    <button class="bg-white hover:bg-gray-100 text-gray-800 font-semibold py-1.5 px-2 border border-gray-300 rounded-lg shadow-sm text-xs flex items-center justify-center min-w-[38px] h-[38px] outline-none"><i class="fas fa-users xl:mr-1.5"></i><span class="hidden xl:inline">CRM</span></button>
+                    <button id="ekstre-button" class="bg-white hover:bg-gray-100 text-gray-800 font-semibold py-1.5 px-2 border border-gray-300 rounded-lg shadow-sm text-xs flex items-center justify-center min-w-[38px] h-[38px] outline-none"><i class="fas fa-file-invoice xl:mr-1.5"></i><span class="hidden xl:inline">Ekstre</span></button>
+                    <button id="sales-list-button" class="bg-white hover:bg-gray-100 text-gray-800 font-semibold py-1.5 px-2 border border-gray-300 rounded-lg shadow-sm text-xs flex items-center justify-center min-w-[38px] h-[38px] outline-none"><i class="fas fa-list xl:mr-1.5"></i><span class="hidden xl:inline">Liste</span></button>
                 </div>
-                <div class="w-full xl:flex-grow">
+                <div class="flex-grow min-w-0">
                     <select id="salesperson-select" name="salesperson-select"></select>
                 </div>
             </div>
@@ -131,10 +129,10 @@
                 </div>
             </div>
             <div class="p-3 bg-gray-100 border-t border-gray-200 flex-shrink-0 mt-auto rounded-b-xl">
-                <div class="flex gap-2">
-                    <button id="main-save-button" class="flex-1 bg-green-200 hover:bg-green-300 text-green-800 font-semibold py-2 px-4 rounded-lg transition-colors border border-green-300 text-sm"><i class="fas fa-save mr-2"></i>Kaydet</button>
-                    <button id="main-reset-button" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg transition-colors border border-gray-300 text-sm"><i class="fas fa-sync-alt mr-2"></i>Yeni İşlem</button>
-                    <button id="main-delete-button" class="flex-1 bg-red-200 hover:bg-red-300 text-red-800 font-semibold py-2 px-4 rounded-lg transition-colors border border-red-300 text-sm hidden"><i class="fas fa-trash mr-2"></i>Sil</button>
+                <div class="flex gap-2 justify-start">
+                    <button id="main-save-button" class="bg-green-200 hover:bg-green-300 text-green-800 font-semibold py-1.5 px-4 rounded-lg transition-colors border border-green-300 text-xs w-auto"><i class="fas fa-save mr-2"></i>Kaydet</button>
+                    <button id="main-reset-button" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-1.5 px-4 rounded-lg transition-colors border border-gray-300 text-xs w-auto"><i class="fas fa-sync-alt mr-2"></i>Yeni İşlem</button>
+                    <button id="main-delete-button" class="bg-red-200 hover:bg-red-300 text-red-800 font-semibold py-1.5 px-4 rounded-lg transition-colors border border-red-300 text-xs w-auto hidden"><i class="fas fa-trash mr-2"></i>Sil</button>
                 </div>
             </div>
         </div>

@@ -171,12 +171,58 @@
         font-style: italic;
     }
 
-    /* Yeni: layout değiştirmeden bu view içinde kaydırma sağlar.
-           80px yüksekliği üst bar + spacing için tahmini değerdir; gerekirse ayarlayın. */
+    /* Yeni: layout değiştirmeden bu view içinde kaydırma sağlar. */
     .view-container {
         max-height: calc(100vh - 80px);
         overflow: auto;
         -webkit-overflow-scrolling: touch;
+    }
+
+    /* Responsive Düzenlemeler */
+    @@media (max-width: 768px) {
+        .p-5 {
+            padding: 1rem !important;
+        }
+
+        .settings-card {
+            padding: 1rem !important;
+            border-radius: 12px;
+        }
+
+        .settings-row {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 0.5rem;
+            padding: 1rem 0;
+        }
+
+        .settings-label-text {
+            flex: 1 1 auto;
+            width: 100%;
+            font-size: 0.8rem;
+        }
+
+        .settings-description {
+            flex: 1 1 auto;
+            width: 100%;
+            margin-bottom: 0.25rem;
+            font-size: 0.7rem;
+            line-height: 1.2;
+        }
+
+        .settings-select-wrap {
+            flex: 1 1 auto;
+            width: 100%;
+        }
+
+        .save-btn {
+            width: 100%;
+            justify-content: center;
+        }
+
+        h1 {
+            font-size: 1.25rem !important;
+        }
     }
 </style>
 

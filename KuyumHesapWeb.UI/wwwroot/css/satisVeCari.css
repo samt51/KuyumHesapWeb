@@ -1,4 +1,4 @@
-﻿/* ================================================================
+/* ================================================================
  * satisVeCari.css
  * KuyumHesapWEB - Satis ve Cari ekrani stilleri
  * ================================================================ */
@@ -724,10 +724,10 @@ button:disabled {
     background-color: white;
     border: 1px solid #e5e7eb;
     border-radius: 0.5rem;
-    padding: 3px 16px;
+    padding: 6px 12px;
     display: flex;
     align-items: center;
-    gap: 0.75rem;
+    gap: 0.5rem;
     box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
     min-height: auto;
     cursor: pointer;
@@ -840,9 +840,13 @@ input:checked + .mutabakat-slider {
     background-color: #ffffff;
     border: 1px solid #e5e7eb;
     border-radius: 0.75rem;
-    padding: 1.75rem 1rem 1rem 1rem;
+    padding: 1.25rem 0.75rem 0.75rem 0.75rem;
     box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.07), 0 2px 4px -2px rgb(0 0 0 / 0.07);
     position: relative;
+    min-height: 85px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
 }
 
 .card-title-absolute {
@@ -911,7 +915,7 @@ input:checked + .mutabakat-slider {
     }
 
 #ekstre-bakiye-ozeti {
-    max-height: 116px;
+    max-height: 80px;
     overflow-y: auto;
 }
 
@@ -944,7 +948,7 @@ input:checked + .mutabakat-slider {
     display: flex;
     flex-direction: column;
     flex-shrink: 0;
-    width: 110px;
+    width: 95px;
     justify-content: center;
 }
 
@@ -962,7 +966,7 @@ input:checked + .mutabakat-slider {
 .ekstre-v3-orta {
     display: flex;
     flex-grow: 1;
-    gap: 1.5rem;
+    gap: 0.75rem;
     align-items: center;
     font-family: 'Roboto Mono', monospace;
 }
@@ -970,6 +974,74 @@ input:checked + .mutabakat-slider {
 .ekstre-v3-detay-grup {
     display: flex;
     flex-direction: column;
+}
+
+/* RESPONSIVE EKSTRE (MOBIL UYUM) */
+@media (max-width: 1023px) {
+    .ekstre-item {
+        flex-direction: column;
+        align-items: stretch;
+        padding: 6px 10px;
+        gap: 6px;
+    }
+
+    .ekstre-v3-sol {
+        width: 100%;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px dashed #e5e7eb;
+        padding-bottom: 4px;
+    }
+
+    .ekstre-v3-orta {
+        width: 100%;
+        flex-wrap: wrap;
+        gap: 6px;
+        justify-content: space-between;
+    }
+
+    .ekstre-v3-detay-grup {
+        min-width: 45%;
+        flex-grow: 1;
+    }
+
+    .ekstre-v3-detay-grup.text-right {
+        text-align: left !important;
+    }
+
+    .ekstre-blok-sag {
+        width: 100%;
+        margin-left: 0;
+        padding-top: 6px;
+        border-top: 1px solid #f3f4f6;
+        justify-content: space-between;
+    }
+
+    /* Fiş listesi için yatay görünüm dayatması */
+    .fis-list-item {
+        flex-direction: row !important;
+        align-items: center !important;
+        padding: 4px 8px !important;
+        gap: 6px !important;
+        flex-wrap: nowrap !important;
+        overflow-x: auto;
+    }
+
+    .fis-list-item span {
+        font-size: 11px !important;
+        white-space: nowrap;
+    }
+
+    .fis-list-item .flex-grow {
+        min-width: 100px;
+    }
+
+    .ekstre-blok-sag .bakiye-grup {
+        text-align: left;
+        min-width: unset;
+        flex-grow: 1;
+    }
 }
 /* Fallback: Tailwind yüklenmezse temel renkler ve border görünümü için */
 .bg-rolex-green {

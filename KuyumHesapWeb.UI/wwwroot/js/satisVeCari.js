@@ -1076,6 +1076,7 @@ document.addEventListener('DOMContentLoaded', () => {
         state.selectedItemIndex = -1;
         renderReceipt();
         updateHeaderLockState();
+        if (window.closeMobileModal) window.closeMobileModal();
     };
     const updateButtonLabels = () => {
         const isCari = state.operationType === 'cari';
@@ -4701,18 +4702,18 @@ document.addEventListener('DOMContentLoaded', () => {
             detayHTML = `
             <div class="ekstre-v3-sol">
                 <span class="baslik ${colorClass}">${islem}</span>
-                <span class="tarih">${tarih}</span>
+                <span class="tarih text-[10px]">${tarih}</span>
             </div>
             <div class="ekstre-v3-orta">
-                <div class="ekstre-v3-detay-grup">
-                    <span class="font-semibold text-sm">${stokAdi} ${formatCurrency(miktar, 2)} ${birim} (${formatCurrency(milyem, 3)})</span>
-                    <span class="text-xs text-gray-600">İşçilik: (${formatCurrency(get(hareket, 'LaborCost', 'laborCost', 'iscilik') || 0, 3)}) ${get(hareket, 'LaborUnit', 'laborUnit', 'iscilikBirimi') || ''} ${formatCurrency(iscilik, 2)} HAS</span>
+                <div class="ekstre-v3-detay-grup flex-grow">
+                    <span class="font-semibold text-xs leading-none">${stokAdi} ${formatCurrency(miktar, 2)} ${birim} (${formatCurrency(milyem, 3)})</span>
+                    <span class="text-[10px] text-gray-500 leading-tight">İşçilik: (${formatCurrency(get(hareket, 'LaborCosmt', 'laborCost', 'iscilik') || 0, 3)}) ${get(hareket, 'LaborUnit', 'laborUnit', 'iscilikBirimi') || ''} ${formatCurrency(iscilik, 2)} HAS</span>
                 </div>
-                <div class="ekstre-v3-detay-grup text-right">
-                    <span class="text-sm font-semibold text-gray-700">${formatCurrency(urunHasDegeri, 2)} HAS</span>
+                <div class="ekstre-v3-detay-grup text-right min-w-[70px]">
+                    <span class="text-xs font-semibold text-gray-600">${formatCurrency(urunHasDegeri, 2)} HAS</span>
                 </div>
-                <div class="ekstre-v3-detay-grup text-right">
-                    <span class="font-bold text-base ${colorClass}">${formatCurrency(toplamHas, 2)} HAS</span>
+                <div class="ekstre-v3-detay-grup text-right min-w-[80px]">
+                    <span class="font-bold text-sm ${colorClass}">${formatCurrency(toplamHas, 2)} HAS</span>
                 </div>
             </div>`;
         } else {
@@ -4729,23 +4730,23 @@ document.addEventListener('DOMContentLoaded', () => {
             detayHTML = `
             <div class="ekstre-v3-sol">
                 <span class="baslik ${colorClass}">${islem || description}</span>
-                <span class="tarih">${tarih}</span>
+                <span class="tarih text-[10px]">${tarih}</span>
             </div>
             <div class="ekstre-v3-orta">
-                <div class="ekstre-v3-detay-grup">
-                    <span class="font-semibold text-sm">${foreignAmountText}</span>
-                    <span class="text-xs text-gray-600">${kurTextPrimary}</span>
+                <div class="ekstre-v3-detay-grup min-w-[100px]">
+                    <span class="font-semibold text-sm leading-tight">${foreignAmountText}</span>
+                    <span class="text-[10px] text-gray-500">${kurTextPrimary}</span>
                 </div>
-                <div class="ekstre-v3-detay-grup">
-                    <span class="font-mono font-semibold">${baseAmountText}</span>
-                      <span class="text-xs text-gray-600">${kurTextCounter}</span>
+                <div class="ekstre-v3-detay-grup min-w-[100px]">
+                    <span class="font-mono font-semibold text-xs leading-tight">${baseAmountText}</span>
+                      <span class="text-[10px] text-gray-500">${kurTextCounter}</span>
                 </div>
             </div>`;
         }
 
-        const bakiyeBlok = `<div class="bakiye-grup">
-                           <span class="eski-bakiye">EB: ${formatCurrency(eskiBakiye, 2)} ${karsilikBirimi || ''}</span>
-                           <span class="son-bakiye">SB: ${formatCurrency(sonBakiye, 2)} ${karsilikBirimi || ''}</span>
+        const bakiyeBlok = `<div class="bakiye-grup leading-tight">
+                           <span class="eski-bakiye text-[10px]">EB: ${formatCurrency(eskiBakiye, 2)} ${karsilikBirimi || ''}</span>
+                           <span class="son-bakiye text-xs">SB: ${formatCurrency(sonBakiye, 2)} ${karsilikBirimi || ''}</span>
                          </div>`;
 
         const mutabakatBlok = `<div class="flex flex-col items-center">
@@ -5217,11 +5218,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Her bir satıra 'ekstre-item' class'ını ekleyerek çerçeveli görünümü kazandırıyoruz.
                 contentHTML += `
                                     <div class="ekstre-item fis-list-item" data-fis-id="${fis.fisID}">
-                                        <span class="font-mono text-gray-600 w-36 flex-shrink-0">${tarih}</span>
-                                        <span class="font-mono text-gray-500 w-20 flex-shrink-0">#${fis.fisID}</span>
-                                        <span class="font-semibold text-gray-800 flex-grow truncate" title="${hesap ? hesap.hesapAdi : ''}">${hesap ? hesap.hesapAdi : 'Bilinmeyen Hesap'}</span>
-                                        <span class="font-mono text-gray-700 w-40 flex-shrink-0">${fis.fisNo}</span>
-                                        <div class="ml-auto">
+                                        <span class="font-mono text-gray-600 w-32 flex-shrink-0">${tarih}</span>
+                                        <span class="font-mono text-gray-500 w-12 flex-shrink-0">#${fis.fisID}</span>
+                                        <span class="font-semibold text-gray-800 flex-grow truncate text-xs" title="${hesap ? hesap.hesapAdi : ''}">${hesap ? hesap.hesapAdi : 'Bilinmeyen Hesap'}</span>
+                                        <span class="font-mono text-gray-700 w-36 flex-shrink-0 text-right pr-2">${fis.fisNo}</span>
+                                        <div class="flex-shrink-0">
                                             ${duzenleButonu}
                                         </div>
                                     </div>

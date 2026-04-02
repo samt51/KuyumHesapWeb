@@ -1,4 +1,4 @@
-﻿/* home_dashboard.js - Home\Dashboard.cshtml */
+/* home_dashboard.js - Home\Dashboard.cshtml */
 
 document.addEventListener('DOMContentLoaded', async () => {
     // localStorage token kullanılmıyor (geçici)
@@ -305,7 +305,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 hasToplamı: data.totalHas
             });
 
-            const fmt = v => v.toLocaleString('tr-TR', { minimumFractionDigits: 3, maximumFractionDigits: 3 });
+            const fmt = v => v.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
             const renk = data.totalHas >= 0 ? 'text-green-600' : 'text-red-600';
             ozet.innerHTML = `
             <span class="text-2xl font-extrabold font-mono ${renk}">${fmt(data.totalHas)}</span>
@@ -345,7 +345,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <div class="bg-gray-50 rounded-xl p-4 border border-gray-100">
                         <div class="flex items-center justify-between mb-2">
                             <span class="font-bold text-gray-700 text-sm">${kasa.ad}</span>
-                            <span class="font-extrabold font-mono text-sm ${renk}">${fmt(kasa.hasToplamı, 3)} HAS</span>
+                            <span class="font-extrabold font-mono text-sm ${renk}">${fmt(kasa.hasToplamı, 2)} HAS</span>
                         </div>
                         <div class="space-y-1">
                             ${kasa.bakiyeler.map(b => {
