@@ -19,7 +19,7 @@ namespace KuyumHesapWeb.UI.Controllers
             _mediator = mediator;
             _mapper = mapper;
         }
-
+    
         public async Task<decimal> GetLastCure(int id, bool? isEntry = null)
         {
             if (id == 3)

@@ -4,17 +4,19 @@ using KuyumHesapWeb.Core.Feature.AccountTypeFeature.Queries.GetAll;
 using KuyumHesapWeb.Core.Feature.CurrencyFeature.Queries.GetAll;
 using KuyumHesapWeb.Core.Feature.SettingsFeature.Commands.Create;
 using KuyumHesapWeb.Core.Feature.SettingsFeature.Commands.Update;
-using KuyumHesapWeb.Core.Feature.SettingsFeature.Queries.GetAll;
 using KuyumHesapWeb.Core.Feature.SettingsFeature.Queries.CheckTable;
+using KuyumHesapWeb.Core.Feature.SettingsFeature.Queries.GetAll;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace KuyumHesapWeb.UI.Controllers
 {
     public class SettingsController : Controller
     {
         private readonly IMediator _mediator;
-
+        private readonly IMemoryCache _memoryCache;
+        private const string SettingCacheKey = "settingCachKey";
         // Zorunlu ayar anahtarları ve açıklamaları
         private static readonly Dictionary<string, string> RequiredSettings = new()
         {
@@ -29,9 +31,11 @@ namespace KuyumHesapWeb.UI.Controllers
             { "DefaultDiscountAccountId", "İskonto işlemlerinde varsayılan olarak kullanılacak hesap ID'si" }
         };
 
-        public SettingsController(IMediator mediator)
+        public SettingsController(IMediator mediator, IMemoryCache memoryCache)
         {
             _mediator = mediator;
+            _memoryCache = memoryCache;
+
         }
 
         [HttpGet]
@@ -95,7 +99,10 @@ namespace KuyumHesapWeb.UI.Controllers
                 {
                     Settings = existingSettings
                 }, token));
+
+                _memoryCache.Remove(SettingCacheKey);
             }
+
 
             // Yeni kayıtları tek tek oluştur (Eğer Id=0 gelmişse ve Key doluysa)
             var newSettings = vm.Settings
@@ -114,7 +121,7 @@ namespace KuyumHesapWeb.UI.Controllers
 
             if (tasks.Count > 0)
             {
-                try 
+                try
                 {
                     await Task.WhenAll(tasks);
                     TempData["SuccessMessage"] = "Ayarlar başarıyla kaydedildi.";

@@ -1,8 +1,9 @@
-﻿@using KuyumHesapWeb.Core.Commond.Models.Dtos
+@using KuyumHesapWeb.Core.Commond.Models.Dtos
 @model GetAllAccountResponseDto
 @{
     ViewData["Title"] = "Index";
-    Layout = "~/Views/Shared/_Layout.cshtml";
+    var noLayout = Context.Request.Query["noLayout"].ToString() == "1";
+    Layout = noLayout ? "~/Views/Shared/_IframeLayout.cshtml" : "~/Views/Shared/_Layout.cshtml";
 }
 
 

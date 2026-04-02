@@ -1,14 +1,14 @@
-﻿@using KuyumHesapWeb.Core.Feature.DashboardFeature.Queries.GetAllDashboard
+@using KuyumHesapWeb.Core.Feature.DashboardFeature.Queries.GetAllDashboard
 @model GetAllDashboardQueryResponse
 @{
     ViewData["Title"] = "Index";
     var noLayout = Context.Request.Query["noLayout"].ToString() == "1";
-    Layout = noLayout ? null : "~/Views/Shared/_Layout.cshtml";
+    Layout = noLayout ? "~/Views/Shared/_IframeLayout.cshtml" : "~/Views/Shared/_Layout.cshtml";
 }
 @section Styles {
     <link rel="stylesheet" href="~/css/home_dashboard.css" asp-append-version="true" />
 }
-<div class="p-6">
+<div class="p-6 flex-1 overflow-y-auto min-h-0 min-w-0">
     <p id="welcome-text" class="text-base font-semibold text-gray-600"></p>
 
     <div class="mt-6 flex flex-wrap gap-5">

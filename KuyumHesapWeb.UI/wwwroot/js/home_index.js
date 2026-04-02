@@ -1,4 +1,4 @@
-﻿// Scripts/app/main-layout.js - Düzenlenmiş ve temizlenmiş son hali
+// Scripts/app/main-layout.js - Düzenlenmiş ve temizlenmiş son hali
 (function () {
     'use strict';
 
@@ -295,8 +295,8 @@
 
             const iframe = document.createElement('iframe');
             iframe.id = frameId;
-            iframe.className = 'w-full h-full';
-            iframe.src = isDashboard ? (url.includes('?') ? `${url}&noLayout=1` : `${url}?noLayout=1`) : url;
+            iframe.className = 'w-full h-full border-none overflow-hidden';
+            iframe.src = url.includes('?') ? `${url}&noLayout=1` : `${url}?noLayout=1`;
 
             if (!contentFrames) {
                 console.warn('[home_index] contentFrames element not found — fallback: navigation to url', url);
@@ -328,13 +328,41 @@
         };
 
         function switchTab(tabId) {
+            const nativeContent = document.getElementById('native-content');
+            const contentFrames = document.getElementById('content-frames');
+            let isNativeActive = false;
+
             openTabs.forEach(tab => {
                 const button = document.querySelector(`.tab-button[data-tab-id="${tab.id}"]`);
                 const frame = tab.frameId ? document.getElementById(tab.frameId) : null;
                 if (button) button.classList.toggle('active', tab.id === tabId);
-                if (frame) frame.classList.toggle('active', tab.id === tabId);
-                // Eğer frameId yok ve tab aktifse, gösterilecek özel davranış eklenebilir (şu an main-content zaten görünür)
+                
+                if (tab.id === tabId) {
+                    if (tab.isNative) {
+                        isNativeActive = true;
+                    }
+                    if (frame) {
+                        frame.classList.add('active');
+                        frame.style.display = 'block';
+                    }
+                } else {
+                    if (frame) {
+                        frame.classList.remove('active');
+                        frame.style.display = 'none';
+                    }
+                }
             });
+
+            if (nativeContent && contentFrames) {
+                if (isNativeActive) {
+                    nativeContent.style.display = '';
+                    contentFrames.classList.add('hidden');
+                } else {
+                    nativeContent.style.display = 'none';
+                    contentFrames.classList.remove('hidden');
+                }
+            }
+
             updateActiveSidebarLink(tabId);
         }
 
@@ -386,12 +414,25 @@
             document.querySelectorAll('.sidebar-link-container.active-link').forEach(el => el.classList.remove('active-link'));
             const activeTab = openTabs.find(tab => tab.id === activeTabId);
             if (activeTab) {
-                const allLinks = document.querySelectorAll('.sidebar-link-container a[onclick]');
+                const allLinks = document.querySelectorAll('.sidebar-link-container a');
                 allLinks.forEach(link => {
                     const onclickAttr = link.getAttribute('onclick') || '';
+                    const hrefAttr = link.getAttribute('href') || '';
                     try {
-                        // Basit eşleştirme: URL içeriği ile karşılaştır
+                        const tabUrlLower = activeTab.url.replace(/\/$/, '').toLowerCase();
+                        const hrefLower = hrefAttr.replace(/\/$/, '').toLowerCase();
+                        
+                        // Eşleştirme logic'i
+                        let isMatch = false;
                         if (onclickAttr.includes(`'${activeTab.url}'`) || onclickAttr.includes(`"${activeTab.url}"`)) {
+                            isMatch = true;
+                        } else if (hrefAttr && hrefAttr !== '#' && hrefAttr !== 'javascript:void(0);') {
+                            if (tabUrlLower.includes(hrefLower) || hrefLower.includes(tabUrlLower)) {
+                                isMatch = true;
+                            }
+                        }
+
+                        if (isMatch) {
                             const parentContainer = link.closest('.sidebar-link-container');
                             if (parentContainer) parentContainer.classList.add('active-link');
                             const submenu = link.closest('.submenu');
@@ -409,23 +450,65 @@
 
         // İlk sekmeyi aç
         if (openTabs.length === 0) {
-            // Eğer kullanıcı zaten server-side olarak dashboard sayfasını (Layout ile) görüyorsa,
-            // tekrar iframe ile aynı içeriği açma — bu çift render'a sebep oluyor.
-            // Dolayısıyla mevcut location dashboardUrl içeriyorsa iframe açılmasını atla.
             try {
                 const locPath = (window.location.pathname || '').replace(/\/$/, '').toLowerCase();
                 const normalizedDashboard = dashboardUrl.replace(/\/$/, '').toLowerCase();
                 const pageHasDashboardMarkup = !!document.getElementById('kasalar-card') || !!document.getElementById('welcome-text');
 
-                if (!locPath.includes(normalizedDashboard) && !pageHasDashboardMarkup) {
-                    openTab(dashboardUrl, 'Ana Sayfa');
-                } else {
-                    // Zaten dashboard içeriği server tarafından render edilmiş — yeni iframe açma.
-                    console.log('[home_index] Dashboard sunucu tarafında mevcut, iframe açılmayacak.');
-                    // Yine de bir sekme düğmesi gerekiyorsa oluşturmak isterseniz burada ekleyebilirsiniz.
+                let title = 'Ana Sayfa';
+                let isDashboard = locPath.includes(normalizedDashboard) || pageHasDashboardMarkup;
+                
+                if (!isDashboard) {
+                    const allLinks = document.querySelectorAll('.sidebar-link-container a');
+                    for (const link of allLinks) {
+                        const href = link.getAttribute('href');
+                        const onclickAttr = link.getAttribute('onclick') || '';
+                        let targetUrl = '';
+                        
+                        if (onclickAttr.includes('openTab(')) {
+                            // Extract URL from openTab('/Url', 'Title')
+                            const match = onclickAttr.match(/openTab\(['"]([^'"]+)['"]/);
+                            if (match && match[1]) targetUrl = match[1];
+                        } else if (href && href !== '#' && href !== 'javascript:void(0);') {
+                            targetUrl = href;
+                        }
+
+                        if (targetUrl) {
+                            const normalizedUrl = targetUrl.replace(/\/$/, '').toLowerCase();
+                            if (locPath.includes(normalizedUrl) || normalizedUrl.includes(locPath)) {
+                                const textSpan = link.querySelector('.sidebar-text');
+                                if (textSpan) {
+                                    title = textSpan.textContent.trim();
+                                    break;
+                                }
+                            }
+                        }
+                    }
                 }
+
+                const tabId = generateId('tab');
+                const tabButton = document.createElement('button');
+                tabButton.className = 'tab-button flex items-center px-3 py-1.5 text-xs font-medium active';
+                tabButton.dataset.tabId = tabId;
+                tabButton.innerHTML = `<span>${title}</span>` + (isDashboard ? '' : `<span class="close-tab-btn ml-2 text-gray-500 hover:text-gray-800">&times;</span>`);
+                
+                if (tabsContainer) {
+                    tabsContainer.appendChild(tabButton);
+                }
+                
+                openTabs.push({ id: tabId, url: window.location.pathname, title: title, isNative: true });
+                
+                if (!isDashboard) {
+                    const closeBtn = tabButton.querySelector('.close-tab-btn');
+                    closeBtn && closeBtn.addEventListener('click', (e) => { e.stopPropagation(); closeTab(tabId); });
+                }
+                
+                tabButton.addEventListener('click', () => switchTab(tabId));
+                
+                switchTab(tabId);
+                
             } catch (e) {
-                // Hata olursa güvenli davranış: varsayılan aç
+                console.error("Tab açılış hatası:", e);
                 openTab(dashboardUrl, 'Ana Sayfa');
             }
         }

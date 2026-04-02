@@ -1,4 +1,4 @@
-﻿@{
+@{
     Layout = null;
 }
 
@@ -58,14 +58,14 @@
                 </div>
             </div>
             <div class="sidebar-link-container">
-                <a href="@Url.Action("IndexDashboard", "Dashboard")" onclick="openTab('@Url.Action("IndexDashboard", "Dashboard")', 'Ana Sayfa')" class="sidebar-link flex items-center px-5 py-2.5 text-gray-700 transition-colors">
+                <a href="javascript:void(0);" onclick="openTab('@Url.Action("IndexDashboard", "Dashboard")', 'Ana Sayfa')" class="sidebar-link flex items-center px-5 py-2.5 text-gray-700 transition-colors">
                     <i class="fas fa-home w-6 text-center text-xl text-gray-500"></i>
                     <span class="ml-3 font-semibold text-sm sidebar-text whitespace-nowrap">Ana Sayfa</span>
                 </a>
             </div>
 
             <div class="sidebar-link-container">
-                <a href="@Url.Action("Index", "SellAndCari")" data-no-tab="true" class="sidebar-link flex items-center px-5 py-2.5 text-gray-700 transition-colors">
+                <a href="javascript:void(0);" onclick="openTab('@Url.Action("Index", "SellAndCari")', 'Satış ve Cari')" class="sidebar-link flex items-center px-5 py-2.5 text-gray-700 transition-colors">
                     <i class="fas fa-shopping-cart w-6 text-center text-xl text-gray-500"></i>
                     <span class="ml-3 font-semibold text-sm sidebar-text whitespace-nowrap">Satış ve Cari</span>
                 </a>
@@ -124,10 +124,10 @@
                     <i class="fas fa-chevron-right ml-auto sidebar-text chevron-icon text-xs"></i>
                 </div>
                 <div class="submenu hidden">
-                    <a href="@Url.Action("General", "Settings")" data-no-tab="true" class="sidebar-link flex items-center px-5 py-2.5 text-gray-700 transition-colors">
+                    <a href="javascript:void(0);" onclick="openTab('@Url.Action("General", "Settings")', 'Genel Ayarlar')" class="flex items-center px-4 py-2.5 text-xs font-medium text-gray-600 hover:bg-gray-50 hover:text-green-700 transition-colors border-l-2 border-transparent hover:border-green-600 group">
                         <i class="fas fa-wallet w-5 text-center text-gray-400 mr-2 group-hover:text-green-600 transition-colors"></i><span>Genel Ayarlar</span>
                     </a>
-                    <a href="@Url.Action("Index", "BarcodeSetting")" data-no-tab="true" class="sidebar-link flex items-center px-5 py-2.5 text-gray-700 transition-colors">
+                    <a href="javascript:void(0);" onclick="openTab('@Url.Action("Index", "BarcodeSetting")', 'Barkod Ayarlar')" class="flex items-center px-4 py-2.5 text-xs font-medium text-gray-600 hover:bg-gray-50 hover:text-green-700 transition-colors border-l-2 border-transparent hover:border-green-600 group">
                         <i class="fas fa-wallet w-5 text-center text-gray-400 mr-2 group-hover:text-green-600 transition-colors"></i><span>Barkod Ayarlar</span>
                     </a>
                 </div>
@@ -158,8 +158,10 @@
             </div>
             <div id="tabs-container" class="flex-grow flex-shrink-0 h-full overflow-x-auto hide-scrollbar flex items-end"></div>
         </div>
-        @RenderBody()
-          <div id="content-frames" class="flex-1 min-h-0 relative overflow-hidden"></div>
+        <div id="native-content" class="flex-1 min-h-0 relative overflow-y-auto">
+            @RenderBody()
+        </div>
+        <div id="content-frames" class="flex-1 min-h-0 relative overflow-hidden hidden"></div>
     </main>
     @RenderSection("Scripts", required: false)
 

@@ -5,8 +5,10 @@ using KuyumHesapWeb.Core.Feature.AccountFeature.Dtos;
 using KuyumHesapWeb.Core.Feature.AccountFeature.Queries.GetAll;
 using KuyumHesapWeb.Core.Feature.AccountFeature.Queries.GetById;
 using KuyumHesapWeb.Core.Feature.AccountTypeFeature.Queries.GetAll;
+using KuyumHesapWeb.Core.Feature.SettingsFeature.Queries.GetAll;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using System.Diagnostics.Contracts;
 
 namespace KuyumHesapWeb.UI.Controllers
 {
@@ -61,11 +63,20 @@ namespace KuyumHesapWeb.UI.Controllers
         public async Task<IActionResult> GetAll()
         {
             var accountData = await _mediator.Send(new GetAllAccountQueryRequest());
-            // API client-side kodları genelde ya doğrudan dizi ya da { data: [...] } bekliyor.
-            // Burada frontend'in daha güvenli çalışması için doğrudan veri dizisini döndürüyoruz.
             if (accountData == null) return NotFound();
             return Ok(accountData.data);
         }
+        [HttpGet]
+        public async Task<int> GetAccountTypeBySettingKey(string key)
+        {
+            var data = await _mediator.Send(new GetAllSettingsQueryRequest());
 
+            var result = data.data.FirstOrDefault(c => c.Key == key);
+            if (result == null || string.IsNullOrEmpty(result.Value))
+            {
+                return 0;
+            }
+            return Convert.ToInt32(result.Value);
+        }
     }
 }

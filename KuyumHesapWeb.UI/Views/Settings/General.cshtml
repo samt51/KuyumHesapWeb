@@ -5,7 +5,8 @@
 @using KuyumHesapWeb.Core.Feature.AccountFeature.Queries.GetAll
 @model GeneralSettingsViewModel
 @{
-    Layout = "~/Views/Shared/_Layout.cshtml";
+    var noLayout = Context.Request.Query["noLayout"].ToString() == "1";
+    Layout = noLayout ? "~/Views/Shared/_IframeLayout.cshtml" : "~/Views/Shared/_Layout.cshtml";
     ViewData["Title"] = "Genel Ayarlar";
 }
 

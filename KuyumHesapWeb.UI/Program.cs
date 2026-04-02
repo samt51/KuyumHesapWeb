@@ -13,6 +13,8 @@ builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<Pr
 
 builder.Services.AddHttpContextAccessor();
 
+builder.Services.AddMemoryCache();
+
 
 
 builder.Services
