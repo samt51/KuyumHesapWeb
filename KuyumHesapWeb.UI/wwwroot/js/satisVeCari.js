@@ -74,6 +74,73 @@ window.updateAcikHesapRate = async (...args) => {
     }
 };
 console.log(Front_BASE_URL);
+// Intercept outgoing fetch calls to ensure Update requests carry correct OpenBalanceAmount
+// This is a safe runtime wrapper that recomputes OpenBalanceAmount from `state.receiptItems`
+// so the value sent to the server during update always matches the current UI state.
+(() => {
+    if (typeof window.fetch !== 'function') return;
+    const _realFetch = window.fetch.bind(window);
+    window.fetch = async function (input, init) {
+        try {
+            const url = (typeof input === 'string') ? input : (input && input.url) ? input.url : '';
+            const method = (init && init.method) ? (init.method || 'GET') : (typeof input === 'object' && input && input.method) ? input.method : 'GET';
+            if (method.toUpperCase() === 'POST' && String(url).includes('/Receipt/Update')) {
+                try {
+                    let bodyText = init && init.body ? init.body : null;
+                    if (!bodyText && typeof input === 'object' && input.body) bodyText = input.body;
+                    if (bodyText) {
+                        let parsed = null;
+                        try { parsed = JSON.parse(bodyText); } catch (e) { parsed = null; }
+                        if (parsed && typeof parsed === 'object') {
+                            // compute from current UI state if available
+                            try {
+                                if (window.state && Array.isArray(window.state.receiptItems)) {
+                                    let positiveSum = 0;
+                                    let negativeSum = 0;
+                                    window.state.receiptItems
+                                        .filter(i => i && i.itemClass === 'acik-hesap')
+                                        .forEach(it => {
+                                            const val = Number(it.equivalentTotal ?? it.total ?? 0) || 0;
+                                            // Determine direction: prefer explicit isIncome flag, fallback to description keywords
+                                            let isPositive = null;
+                                            if (typeof it.isIncome === 'boolean') {
+                                                isPositive = it.isIncome;
+                                            } else if (it.description && typeof it.description === 'string') {
+                                                const d = it.description.toLowerCase();
+                                                if (d.includes('alac') || d.includes('alacağı') || d.includes('alacagina') || d.includes('alaca')) isPositive = true;
+                                                else if (d.includes('borc') || d.includes('borcuna')) isPositive = false;
+                                            }
+
+                                            if (isPositive === true) positiveSum += val;
+                                            else if (isPositive === false) negativeSum += val;
+                                            else {
+                                                // As a last resort, use sign of value: positive => positiveSum, negative => negativeSum (abs)
+                                                if (val >= 0) positiveSum += val; else negativeSum += Math.abs(val);
+                                            }
+                                        });
+
+                                    const net = positiveSum - negativeSum;
+                                    parsed.OpenBalanceAmount = Number((isFinite(net) ? net : 0).toFixed(2));
+                                    const newBody = JSON.stringify(parsed);
+                                    if (init) init.body = newBody;
+                                    else if (typeof input === 'object') input.body = newBody;
+                                    console.debug('Auto-updated OpenBalanceAmount for Receipt/Update:', parsed.OpenBalanceAmount, { url, positiveSum, negativeSum });
+                                }
+                            } catch (err) {
+                                console.warn('Failed to compute OpenBalanceAmount from state', err);
+                            }
+                        }
+                    }
+                } catch (err) {
+                    console.warn('Receipt/Update intercept error', err);
+                }
+            }
+        } catch (outer) {
+            // swallow - do not break normal fetch
+        }
+        return _realFetch(input, init);
+    };
+})();
 // ========= MOBILE RESPONSIVE TABS & MODAL LOGIC =========
 window.switchMobileTab = function (tabName) {
     const islemTab = document.getElementById('mobile-tab-islem');
@@ -3628,10 +3695,10 @@ document.addEventListener('DOMContentLoaded', () => {
             // SATIŞ modu:
             try {
                 const targetCurrencyId = state.activeCurrencyId || (nationalCurrency ? nationalCurrency.id : null);
-                
+
                 const exchangeRateInput = document.getElementById('form-exchange-rate');
                 const amountEquivalentInput = document.getElementById('form-amount-equivalent');
-                
+
                 let exchangeRate = exchangeRateInput ? parseFormattedNumber(exchangeRateInput.value) : 1.0;
                 let equivalentTotal = amountEquivalentInput ? parseFormattedNumber(amountEquivalentInput.value) : (amount * exchangeRate);
 
@@ -3937,20 +4004,20 @@ document.addEventListener('DOMContentLoaded', () => {
             // --- SATIŞ MODU ---
             try {
                 const targetCurrencyId = state.activeCurrencyId || (nationalCurrency ? nationalCurrency.id : null);
-                
+
                 const exchangeRateInput = document.getElementById('form-exchange-rate');
                 const amountEquivalentInput = document.getElementById('form-amount-equivalent');
-                
+
                 let exchangeRate = exchangeRateInput ? parseFormattedNumber(exchangeRateInput.value) : 1.0;
                 let equivalentTotal = amountEquivalentInput ? parseFormattedNumber(amountEquivalentInput.value) : (total * exchangeRate);
 
                 newItem.total = total;
                 newItem.currency = currency;
-                newItem.exchangeRate = exchangeRate; 
-                newItem.miktarKuru = exchangeRate; 
-                newItem.hesapKuru = 1.0; 
+                newItem.exchangeRate = exchangeRate;
+                newItem.miktarKuru = exchangeRate;
+                newItem.hesapKuru = 1.0;
                 newItem.equivalentTotal = parseFloat((equivalentTotal || 0).toFixed(2));
-                
+
                 const targetCurrencyObj = allCurrencies.find(c => String(c.id) === String(targetCurrencyId)) || allCurrencies.find(c => c.dovizKodu === state.activeCurrency);
                 newItem.equivalentCurrency = targetCurrencyObj ? targetCurrencyObj.dovizKodu : state.activeCurrency;
                 newItem.equivalentCurrencyId = targetCurrencyObj ? targetCurrencyObj.id : state.activeCurrencyId;
@@ -4467,14 +4534,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Instead of string name, map ID if possible
                     const account = allFinancialAccounts.find(a => String(a.hesapID) === String(itemToEdit.details.accountId));
                     let accountTypeId = account ? account.hesapTipiID : null;
-                    
+
                     let toggleValue = accountTypes[0].value; // "KASALAR" default
                     if (accountTypeId == 5) toggleValue = "BANKALAR";
                     else if (accountTypeId == 6) toggleValue = "POSLAR";
                     else if (accountTypeId == 7) toggleValue = "KASALAR";
 
                     const targetOption = toggleContainer.querySelector(`.tri-toggle-option[data-value="${toggleValue}"]`);
-                    
+
                     // Trigger rendering async first and wait!
                     if (targetOption && toggleContainer.dataset.selected !== toggleValue) {
                         toggleContainer.dataset.selected = toggleValue;
@@ -4856,6 +4923,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     description: musteriHareketi.aciklama || stok.stokAdi || 'Bilinmeyen Ürün',
                     currency: 'HAS',
                     equivalentCurrency: 'HAS',
+                    movementId: musteriHareketi.hareketID,
+                    counterMovementId: karsiTaraf.hareketID,
                     details: {
                         stokId: stok.stokID,
                         stok: stok,
@@ -4905,6 +4974,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     equivalentCurrency: musteriHareketi.birim,  // ✅ Aynı birim
                     miktarKuru: musteriHareketi.kur,
                     hesapKuru: musteriHareketi.kur,
+                    movementId: musteriHareketi.hareketID,
+                    counterMovementId: karsiTaraf.hareketID,
                     details: {
                         karsiHesapId: karsiTaraf.hesapID,
                         karsiHesapAdi: karsiHesap?.hesapAdi || 'Bilinmeyen Hesap',
@@ -4931,6 +5002,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     equivalentCurrency: musteriHareketi.birim,
                     miktarKuru: musteriHareketi.kur,
                     hesapKuru: musteriHareketi.kur,
+                    movementId: musteriHareketi.hareketID,
+                    counterMovementId: karsiTaraf.hareketID,
                     details: {
                         accountId: karsiTaraf.hesapID,
                         accountName: iskontoHesap?.hesapAdi || 'İskonto Hesabı',
@@ -4954,6 +5027,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     equivalentCurrency: karsiTaraf.birim,
                     miktarKuru: musteriHareketi.kur,
                     hesapKuru: karsiTaraf.kur,
+                    movementId: musteriHareketi.hareketID,
+                    counterMovementId: karsiTaraf.hareketID,
                     details: {
                         ceviriTipi: musteriHareketi.girisMi ? 'borcundaki' : 'alacagindaki',
                         kaynakBirim: musteriHareketi.birim,
@@ -4983,6 +5058,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     miktarKuru: musteriHareketi.kur,
                     hesapKuru: musteriHareketi.karsilikKuru || musteriHareketi.kur,
                     equivalentCurrencyId: allCurrencies.find(c => c.dovizKodu === (musteriHareketi.karsilikBirim || musteriHareketi.birim))?.id,
+                    movementId: musteriHareketi.hareketID,
+                    counterMovementId: karsiTaraf.hareketID,
                     details: {
                         accountId: karsiTaraf.hesapID,
                         accountName: finansalHesap?.hesapAdi || 'Bilinmeyen Hesap',
@@ -5360,21 +5437,63 @@ document.addEventListener('DOMContentLoaded', () => {
         showLoadingOverlay();
         try {
             const base = String(API_BASE_URL || Front_BASE_URL).replace(/\/$/, '');
-            const url = `${base}/Receipt/Create`;
-            console.log('SAVE -> POST', url);
-            console.log('SAVE -> Request model', requestModel);
+            const isUpdate = requestModel.Id && requestModel.Id > 0;
+            const url = isUpdate ? `${base}/Receipt/Update` : `${base}/Receipt/Create`;
+
+            console.log(isUpdate ? 'UPDATE -> POST' : 'SAVE -> POST', url);
+            console.log(isUpdate ? 'UPDATE -> Request model' : 'SAVE -> Request model', requestModel);
+
+            
+            // Ensure we always send a proper JSON string and Content-Type header
+            let bodyStr = null;
+            try {
+                bodyStr = JSON.stringify(requestModel);
+            } catch (err) {
+                console.error('Failed to stringify requestModel for saveReceiptToServer', err);
+                throw err;
+            }
 
             if (!navigator.onLine) {
                 throw new Error('Tarayıcı çevrimdışı (offline). İnternet bağlantınızı kontrol edin.');
             }
 
-            // CORS geliştirici durumları için mode:'cors' belirtmek yardımcı olur
-            const response = await fetch(url, {
+            const headers = Object.assign({}, getAuthHeaders());
+            if (!headers['Content-Type']) headers['Content-Type'] = 'application/json; charset=utf-8';
+            if (!headers['Accept']) headers['Accept'] = 'application/json';
+
+            const requestInit = {
                 method: 'POST',
-                headers: getAuthHeaders(),
-                mode: 'cors',
-                body: JSON.stringify(requestModel)
-            });
+                headers,
+                credentials: 'same-origin',
+                body: bodyStr
+            };
+
+
+            const targetUrl = `/Receipt/${isUpdate ? 'Update' : 'Create'}`;
+            const allBtns = document.querySelectorAll('.action-btn, #main-save-button, #main-reset-button, #main-delete-button');
+            
+            // Disable buttons immediately to prevent concurrent requests
+            allBtns.forEach(btn => btn.disabled = true);
+
+            const controller = new AbortController();
+            const timeoutHandle = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+
+            let response = null;
+            try {
+                console.debug('saveReceiptToServer sending request to:', targetUrl);
+                const init = Object.assign({}, requestInit, { signal: controller.signal });
+                response = await fetch(targetUrl, init);
+            } catch (err) {
+                console.error('saveReceiptToServer fetch error:', err);
+                throw err;
+            } finally {
+                clearTimeout(timeoutHandle);
+                allBtns.forEach(btn => btn.disabled = false);
+            }
+
+            if (!response) {
+                throw new Error('Sunucudan yanıt alınamadı.');
+            }
 
             if (!response.ok) {
                 const text = await response.text().catch(() => '');
@@ -5383,7 +5502,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             const result = await response.json().catch(() => null);
-            showToast('Fiş başarıyla kaydedildi!', 'success');
+            showToast(isUpdate ? 'Fiş başarıyla güncellendi!' : 'Fiş başarıyla kaydedildi!', 'success');
             resetTransaction();
             if (state.operationType === 'cari') {
                 await fetchAndRenderCariBakiye();
@@ -5459,14 +5578,20 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // SATIŞ modunda açık hesap kontrolü ve hesaplaması
+        // SATIŞ modunda açık hesap kontrolü ve hesaplaması
         let openBalanceAmount = null;
         let currencyCode = null;
 
         if (state.operationType === 'satis') {
-            const acikHesapItem = state.receiptItems.find(item => item.itemClass === 'acik-hesap');
-            if (acikHesapItem) {
-                openBalanceAmount = acikHesapItem.isIncome ? acikHesapItem.total : -acikHesapItem.total;
-                currencyCode = acikHesapItem.currency;
+            const acikItems = state.receiptItems.filter(item => item.itemClass === 'acik-hesap');
+            if (acikItems.length > 0) {
+                // Alacak (Giriş) +, Borç (Çıkış) - olarak toplanır
+                openBalanceAmount = acikItems.reduce((acc, it) => {
+                    const val = Number(it.total) || 0;
+                    return acc + (it.isIncome ? val : -val);
+                }, 0);
+                // Para birimi ilk açık hesap kaleminden alınır (varsa)
+                currencyCode = acikItems[0].currency || state.activeCurrency;
             }
         } else {
             // Cari modda para birimi boş bırakılabilir; backend gerektiğinde yorumlar
@@ -5474,12 +5599,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const requestModel = {
+            Id: state.loadedFis ? state.loadedFis.fisID : 0,
             ReceiptNumber: state.loadedFis ? (state.loadedFis.fisNo || `WEB-${Date.now()}`) : `WEB-${Date.now()}`,
             ReceiptDate: fisTarihi,
             AccountId: parseInt(selectedCustomerId, 10),
             EmployeeId: (Array.isArray(selectedSalesperson) && selectedSalesperson.length > 0) ? parseInt(selectedSalesperson[0]) : (selectedSalesperson ? parseInt(selectedSalesperson) : null),
             Description: `Web arayüzünden oluşturulan ${state.operationType} işlemi.`,
-            IsCustomerReceipt: state.operationType === 'cari',
+            IsCustomerReceipt: (state.operationType === 'cari' || (state.loadedFis ? state.loadedFis.cariMi === 1 : false)),
             CurrencyCode: currencyCode || (state.operationType === 'satis' ? state.activeCurrency : null),
             OpenBalanceAmount: openBalanceAmount,
             CreateMovementReceiptRequestDtos: []
@@ -5519,6 +5645,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 // müşteri hareketi
                 pushDTO({
+                    MovementId: item.movementId || 0,
                     TransactionTypeId: customerTransactionType,
                     AccountId: parseInt(selectedCustomerId, 10),
                     StockId: null,
@@ -5546,6 +5673,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 // karşı finansal hesap hareketi
                 pushDTO({
+                    MovementId: item.counterMovementId || 0,
                     TransactionTypeId: financialTransactionType,
                     AccountId: parseInt(item.details.accountId, 10),
                     StockId: null,
@@ -5581,6 +5709,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const iskontoType = getOppositeHareketTipID(musteriType) || (item.isIncome ? BORC_ISKONTO_ID : ALACAK_ISKONTO_ID);
 
                 pushDTO({
+                    MovementId: item.movementId || 0,
                     TransactionTypeId: musteriType,
                     AccountId: parseInt(selectedCustomerId, 10),
                     StockId: null,
@@ -5607,6 +5736,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
 
                 pushDTO({
+                    MovementId: item.counterMovementId || 0,
                     TransactionTypeId: iskontoType,
                     AccountId: parseInt(item.details.accountId, 10),
                     StockId: null,
@@ -5645,6 +5775,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const karsiType = getOppositeHareketTipID(musteriType) || (item.isIncome ? VIRMAN_CIKIS_ID : VIRMAN_GIRIS_ID);
 
                 pushDTO({
+                    MovementId: item.movementId || 0,
                     TransactionTypeId: musteriType,
                     AccountId: parseInt(selectedCustomerId, 10),
                     StockId: null,
@@ -5671,6 +5802,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
 
                 pushDTO({
+                    MovementId: item.counterMovementId || 0,
                     TransactionTypeId: karsiType,
                     AccountId: parseInt(item.details.karsiHesapId, 10),
                     StockId: null,
@@ -5709,6 +5841,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const stokType = getOppositeHareketTipID(musteriType) || (item.isIncome ? URUN_CIKIS_ID : URUN_GIRIS_ID);
 
                 pushDTO({
+                    MovementId: item.movementId || 0,
                     TransactionTypeId: musteriType,
                     AccountId: parseInt(selectedCustomerId, 10),
                     StockId: parseInt(stokId, 10),
@@ -5751,6 +5884,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
                 pushDTO({
+                    MovementId: item.counterMovementId || 0,
                     TransactionTypeId: stokType,
                     AccountId: parseInt(dynamicStokHesapId, 10),
                     StockId: parseInt(stokId, 10),
@@ -5782,6 +5916,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const karsiType = getOppositeHareketTipID(musteriType) || (item.isIncome ? CEVIRME_CIKIS_ID : CEVIRME_GIRIS_ID);
 
                 pushDTO({
+                    MovementId: item.movementId || 0,
                     TransactionTypeId: musteriType,
                     AccountId: parseInt(selectedCustomerId, 10),
                     StockId: null,
@@ -5808,6 +5943,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
 
                 pushDTO({
+                    MovementId: item.counterMovementId || 0,
                     TransactionTypeId: karsiType,
                     AccountId: parseInt(selectedCustomerId, 10), // karşı taraf genellikle yine cari içinde ters kayıt
                     StockId: null,

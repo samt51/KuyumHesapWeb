@@ -2,9 +2,9 @@
 using KuyumHesapWeb.Core.Commond.Models.Dtos;
 using MediatR;
 
-namespace KuyumHesapWeb.Core.Feature.ReceiptFeature.Commands.Create
+namespace KuyumHesapWeb.Core.Feature.ReceiptFeature.Commands.Update
 {
-    public class CreateReceiptCommandRequest : IRequest<ResponseDto<CreateReceiptCommandResponse>>
+    public class UpdateReceiptCommandRequest : IRequest<ResponseDto<UpdateReceiptCommandResponse>>
     {
         public int Id { get; set; }
         /// <summary>
