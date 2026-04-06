@@ -85,17 +85,40 @@
             }
         };
 
+        const isMobileView = () => {
+            // Sadece ekran genişliğine göre mobil kontrolü yapalım (768px Tailwind md breakpoint'idir)
+            const isSmall = window.innerWidth < 768;
+            console.log('[home_index] isMobileView check:', { innerWidth: window.innerWidth, isSmall });
+            return isSmall;
+        };
+
         const collapseSidebar = () => {
+            console.log('[home_index] collapseSidebar called');
             if (hoverTimeout) { clearTimeout(hoverTimeout); hoverTimeout = null; }
             if (!sidebarMenu) return;
-            if (window.innerWidth < 768) {
+
+            const isMobile = isMobileView();
+
+            // Genişleme sınıflarını her durumda temizle
+            sidebarMenu.classList.remove('expanded', 'w-64');
+            
+            if (isMobile) {
+                console.log('[home_index] collapsing for mobile');
                 sidebarMenu.classList.add('hidden');
-                sidebarMenu.classList.remove('flex');
-                if (mobileOverlay) mobileOverlay.classList.add('opacity-0', 'pointer-events-none');
+                sidebarMenu.classList.remove('flex'); // Mobilde flex yerine hidden olmalı
+                sidebarMenu.style.display = 'none'; // Force hide inline
+                if (mobileOverlay) {
+                    mobileOverlay.classList.add('opacity-0', 'pointer-events-none');
+                }
             } else {
-                sidebarMenu.classList.remove('expanded', 'w-64');
+                console.log('[home_index] collapsing for desktop');
+                // Masaüstünde Tailwind 'hidden md:flex' kuralı hakimdir, sadece inline stilleri temizleyelim
+                sidebarMenu.classList.remove('hidden');
+                sidebarMenu.style.display = ''; // Inline stilleri tamamen temizle
                 sidebarMenu.classList.add('w-16');
-                mainContent && mainContent.classList.replace('md:pl-64', 'md:pl-16');
+                if (mainContent) {
+                    mainContent.classList.replace('md:pl-64', 'md:pl-16');
+                }
             }
 
             if (pinnedTrigger) {
@@ -121,10 +144,12 @@
             mobileTopHamburger.setAttribute('aria-label', 'Menüyü aç');
 
             const openFromMobileTrigger = (e) => {
+                console.log('[home_index] openFromMobileTrigger');
                 e && e.stopPropagation && e.stopPropagation();
                 e && e.preventDefault && e.preventDefault();
                 if (sidebarMenu) {
                     sidebarMenu.classList.remove('hidden');
+                    sidebarMenu.style.display = ''; // Force show
                     sidebarMenu.classList.add('flex');
                     expandSidebar();
                 }
@@ -214,21 +239,35 @@
         });
 
         // Bağlantı tıklamalarında sidebar davranışı
-        const allSidebarLinks = document.querySelectorAll('.sidebar-link-container .sidebar-link');
+        const allSidebarLinks = document.querySelectorAll('.sidebar-link-container a');
         allSidebarLinks.forEach(link => {
-            const container = link.closest('.sidebar-link-container');
-            const hasSubmenu = container && container.querySelector('.submenu') !== null;
-            if (!hasSubmenu) {
-                link.addEventListener('click', () => {
-                    if (!isPinned) collapseSidebar();
-                });
-            }
+            link.addEventListener('click', () => {
+                const container = link.closest('.sidebar-link-container');
+                const hasSubmenu = container && container.querySelector('.submenu') !== null;
+                
+                // Eğer doğrudan bir link ise veya onclick ile bir sayfa açıyorsa sidebar'ı kapat
+                const isDirectLink = !hasSubmenu || link.hasAttribute('onclick');
+                
+                if (isDirectLink) {
+                    // Mobil ekranlarda her zaman, masaüstünde isPinned değilse kapat
+                    if (isMobileView() || !isPinned) {
+                        collapseSidebar();
+                        hideActiveSubmenu();
+                    }
+                }
+            });
         });
 
         // Flyout tıklaması
-        submenuFlyout && submenuFlyout.addEventListener('click', () => {
-            if (!isPinned) collapseSidebar();
-            hideActiveSubmenu();
+        submenuFlyout && submenuFlyout.addEventListener('click', (e) => {
+            // Sadece bir linke tıklandığında sidebar'ı kapat
+            const link = e.target.closest('a');
+            if (link) {
+                if (isMobileView() || !isPinned) {
+                    collapseSidebar();
+                }
+                hideActiveSubmenu();
+            }
         });
 
         // Dış tıklama: mobil hamburger istisnası
@@ -277,6 +316,13 @@
 
         // Sekme / iframe yönetimi
         window.openTab = function (url, title) {
+            console.log('[home_index] openTab called:', url);
+            // Mobil görünümde herhangi bir sekme açıldığında sidebar'ı kapat (Overlay'i kaldırmak için)
+            if (isMobileView()) {
+                collapseSidebar();
+                hideActiveSubmenu();
+            }
+
             const normalizeUrl = (u) => u.replace(/\/$/, '').toLowerCase();
             const existingTab = openTabs.find(tab => tab.title === title || normalizeUrl(tab.url) === normalizeUrl(url));
 
@@ -537,6 +583,17 @@
                 openTab(dashboardUrl, 'Ana Sayfa');
             }
         }
+        // Ekran boyutu değişimini dinle (Responsive geçişler için)
+        let lastWidth = window.innerWidth;
+        window.addEventListener('resize', () => {
+            const currentWidth = window.innerWidth;
+            // 768px eşiği (mobile/desktop) geçildiğinde sidebar durumunu sıfırla
+            if ((lastWidth < 768 && currentWidth >= 768) || (lastWidth >= 768 && currentWidth < 768)) {
+                console.log('[home_index] resize threshold crossed, collapsing sidebar to reset state');
+                collapseSidebar();
+            }
+            lastWidth = currentWidth;
+        });
     }
 
     // DOMContentLoaded bağlama

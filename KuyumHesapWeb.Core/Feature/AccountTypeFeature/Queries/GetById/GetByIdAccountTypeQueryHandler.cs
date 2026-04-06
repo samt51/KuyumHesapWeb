@@ -15,7 +15,7 @@ namespace KuyumHesapWeb.Core.Feature.AccountTypeFeature.Queries.GetById
         {
             var data = await _apiService.GetAsync<GetByIdAccountTypeQueryResponse>($"AccountType/GetById/{request.Id}");
 
-            return new ResponseDto<GetByIdAccountTypeQueryResponse>().Success(data.data);
+            return data;
         }
     }
 }

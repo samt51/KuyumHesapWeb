@@ -8,6 +8,25 @@ window.fetchLatestCure = function (...args) {
     console.warn('fetchLatestCure called before initialization — returning Promise.resolve(null).', args);
     return Promise.resolve(null);
 };
+    // Yardımcı: verilen HareketTipID'nin karşısındaki (ters) HareketTipID'yi döndürür
+    // Örneğin: Nakit Giriş (1) -> Nakit Çıkış (2), Virman Giriş (7) -> Virman Çıkış (8) vb.
+    const getOppositeHareketTipID = (id) => {
+        if (id === null || id === undefined) return null;
+        const n = Number(id);
+        const map = {
+            1: 2,  // NAKIT_GIRIS -> NAKIT_CIKIS
+            2: 1,  // NAKIT_CIKIS -> NAKIT_GIRIS
+            3: 4,  // URUN_GIRIS -> URUN_CIKIS
+            4: 3,  // URUN_CIKIS -> URUN_GIRIS
+            5: 6,  // ALACAK_ISKONTO -> BORC_ISKONTO
+            6: 5,  // BORC_ISKONTO -> ALACAK_ISKONTO
+            7: 8,  // VIRMAN_GIRIS -> VIRMAN_CIKIS
+            8: 7,  // VIRMAN_CIKIS -> VIRMAN_GIRIS
+            9: 10, // CEVIRME_GIRIS -> CEVIRME_CIKIS
+            10: 9  // CEVIRME_CIKIS -> CEVIRME_GIRIS
+        };
+        return map[n] || null;
+    };
 window.__realUpdateRateForCurrency = null;
 window.updateRateForCurrency = function (...args) {
     if (window.__realUpdateRateForCurrency) return window.__realUpdateRateForCurrency(...args);
@@ -172,17 +191,37 @@ window.switchMobileTab = function (tabName) {
 };
 
 window.openMobileModal = function (titleText) {
-    if (window.innerWidth >= 1024) return;
+    console.log("[openMobileModal] titleText:", titleText, "innerWidth:", window.innerWidth);
+    
+    // lg breakpoint (1024px) check
+    if (window.innerWidth >= 1024) {
+        console.log("[openMobileModal] Desktop view, skipping modal.");
+        return;
+    }
+    
     const wrapper = document.getElementById('mobile-modal-wrapper');
     const backdrop = document.getElementById('mobile-form-backdrop');
     const title = document.getElementById('mobile-modal-title');
     const panel = document.getElementById('middle-panel');
+    
+    console.log("[openMobileModal] Elements found:", { 
+        wrapper: !!wrapper, 
+        backdrop: !!backdrop, 
+        title: !!title, 
+        panel: !!panel 
+    });
+
     if (wrapper && backdrop) {
-        if (titleText) title.textContent = titleText;
+        if (titleText && title) title.textContent = titleText;
         wrapper.classList.remove('hidden');
         wrapper.classList.add('flex');
         backdrop.classList.remove('hidden');
-        setTimeout(() => panel.classList.remove('translate-y-full'), 10);
+        
+        if (panel) {
+            setTimeout(() => panel.classList.remove('translate-y-full'), 10);
+        }
+    } else {
+        console.error("[openMobileModal] ERROR: wrapper or backdrop not found!");
     }
 };
 
@@ -919,9 +958,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!hesapId) {
             tableHTML += `<tr><td colspan="5" class="text-center py-4 text-gray-500">Lütfen bir hesap seçin.</td></tr>`;
         } else {
+            const activeItems = state.receiptItems.filter(i => !i.isDeleted);
             const allCurrencies = new Set([
                 ...Object.keys(cariDevirBakiyeler),
-                ...state.receiptItems.map(item => item.equivalentCurrency)
+                ...activeItems.map(item => item.equivalentCurrency)
             ]);
 
             let hasData = false;
@@ -930,11 +970,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 const devir = cariDevirBakiyeler[currency] || 0;
 
-                const giren = state.receiptItems
+                const giren = activeItems
                     .filter(i => i.isIncome && i.equivalentCurrency === currency)
                     .reduce((sum, i) => sum + i.equivalentTotal, 0);
 
-                const cikan = state.receiptItems
+                const cikan = activeItems
                     .filter(i => !i.isIncome && i.equivalentCurrency === currency)
                     .reduce((sum, i) => sum + i.equivalentTotal, 0);
 
@@ -1080,7 +1120,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return `<div class="receipt-item text-xs p-2 rounded-md transition-colors cursor-pointer hover:bg-gray-50 ${selectedClass}" data-index="${originalIndex}">${itemHTML}</div>`;
         };
 
-        const groupedItems = state.receiptItems.reduce((acc, item) => { /* ... (Gruplama - Değişiklik yok) ... */
+        const groupedItems = state.receiptItems.filter(i => !i.isDeleted).reduce((acc, item) => {
             let groupKey;
             if (item.itemClass === 'product') {
                 const direction = item.isIncome ? 'GİRİŞLER' : 'ÇIKIŞLAR';
@@ -1119,11 +1159,12 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     const updateTotals = () => {
         // Tüm işlemleri dahil ederek toplam hesaplama
-        const giren = state.receiptItems
+        const activeItems = state.receiptItems.filter(i => !i.isDeleted);
+        const giren = activeItems
             .filter(i => i.isIncome)  // isIncome true olanlar
             .reduce((sum, i) => sum + i.equivalentTotal, 0);
 
-        const cikan = state.receiptItems
+        const cikan = activeItems
             .filter(i => !i.isIncome)  // isIncome false olanlar
             .reduce((sum, i) => sum + i.equivalentTotal, 0);
 
@@ -4837,7 +4878,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     const reconstructReceiptItems = (fisData) => {
         const items = [];
-        const processedHareketIDs = new Set();
+        const processedMovementIDs = new Set();
         const allMovements = fisData.hareketler;
 
         console.log("=== FİŞ YÜKLEME BAŞLIYOR ===");
@@ -4871,12 +4912,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const hareketPairs = [];
 
         for (const hareket of allMovements) {
-            if (processedHareketIDs.has(hareket.hareketID)) continue;
+            if (processedMovementIDs.has(hareket.movementId)) continue;
 
-            const karsiHareket = allMovements.find(h => h.hareketID === hareket.karsiHareketID);
+            const karsiHareket = allMovements.find(h => h.movementId === hareket.counterMovementId);
 
             if (!karsiHareket) {
-                console.warn("⚠️ Karşı hareket bulunamadı:", hareket.hareketID);
+                console.warn("⚠️ Karşı hareket bulunamadı:", hareket.movementId);
                 continue;
             }
 
@@ -4885,8 +4926,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
             hareketPairs.push({ musteriHareketi, karsiTaraf });
 
-            processedHareketIDs.add(hareket.hareketID);
-            processedHareketIDs.add(karsiHareket.hareketID);
+            processedMovementIDs.add(hareket.movementId);
+            processedMovementIDs.add(karsiHareket.movementId);
         }
 
         console.log("İşlenecek Hareket Çifti Sayısı:", hareketPairs.length);
@@ -4896,7 +4937,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const isProduct = musteriHareketi.stokID != null;
             const hareketTipID = musteriHareketi.hareketTipID;
 
-            console.log(`--> İşleniyor: HareketID=${musteriHareketi.hareketID}, Tip=${hareketTipID}, girisMi=${musteriHareketi.girisMi}`);
+            console.log(`--> İşleniyor: MovementId=${musteriHareketi.movementId}, Tip=${hareketTipID}, girisMi=${musteriHareketi.girisMi}`);
 
             if (isProduct) {
                 // ===== ÜRÜN HAREKETİ (10, 11) =====
@@ -4923,8 +4964,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     description: musteriHareketi.aciklama || stok.stokAdi || 'Bilinmeyen Ürün',
                     currency: 'HAS',
                     equivalentCurrency: 'HAS',
-                    movementId: musteriHareketi.hareketID,
-                    counterMovementId: karsiTaraf.hareketID,
+                    movementId: musteriHareketi.movementId,
+                    counterMovementId: karsiTaraf.movementId,
                     details: {
                         stokId: stok.stokID,
                         stok: stok,
@@ -4974,8 +5015,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     equivalentCurrency: musteriHareketi.birim,  // ✅ Aynı birim
                     miktarKuru: musteriHareketi.kur,
                     hesapKuru: musteriHareketi.kur,
-                    movementId: musteriHareketi.hareketID,
-                    counterMovementId: karsiTaraf.hareketID,
+                    movementId: musteriHareketi.movementId,
+                    counterMovementId: karsiTaraf.movementId,
                     details: {
                         karsiHesapId: karsiTaraf.hesapID,
                         karsiHesapAdi: karsiHesap?.hesapAdi || 'Bilinmeyen Hesap',
@@ -5002,8 +5043,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     equivalentCurrency: musteriHareketi.birim,
                     miktarKuru: musteriHareketi.kur,
                     hesapKuru: musteriHareketi.kur,
-                    movementId: musteriHareketi.hareketID,
-                    counterMovementId: karsiTaraf.hareketID,
+                    movementId: musteriHareketi.movementId,
+                    counterMovementId: karsiTaraf.movementId,
                     details: {
                         accountId: karsiTaraf.hesapID,
                         accountName: iskontoHesap?.hesapAdi || 'İskonto Hesabı',
@@ -5027,8 +5068,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     equivalentCurrency: karsiTaraf.birim,
                     miktarKuru: musteriHareketi.kur,
                     hesapKuru: karsiTaraf.kur,
-                    movementId: musteriHareketi.hareketID,
-                    counterMovementId: karsiTaraf.hareketID,
+                    movementId: musteriHareketi.movementId,
+                    counterMovementId: karsiTaraf.movementId,
                     details: {
                         ceviriTipi: musteriHareketi.girisMi ? 'borcundaki' : 'alacagindaki',
                         kaynakBirim: musteriHareketi.birim,
@@ -5058,8 +5099,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     miktarKuru: musteriHareketi.kur,
                     hesapKuru: musteriHareketi.karsilikKuru || musteriHareketi.kur,
                     equivalentCurrencyId: allCurrencies.find(c => c.dovizKodu === (musteriHareketi.karsilikBirim || musteriHareketi.birim))?.id,
-                    movementId: musteriHareketi.hareketID,
-                    counterMovementId: karsiTaraf.hareketID,
+                    movementId: musteriHareketi.movementId,
+                    counterMovementId: karsiTaraf.movementId,
                     details: {
                         accountId: karsiTaraf.hesapID,
                         accountName: finansalHesap?.hesapAdi || 'Bilinmeyen Hesap',
@@ -5170,7 +5211,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const counterCurrencyCode = resolveCurrencyCode(rawCounterCode);
 
                 return {
-                    hareketID: id,
+                    movementId: id,
                     fisID: m.receiptId ?? m.fisID ?? m.receiptId,
                     hareketTipID: m.transactionTypeId ?? m.hareketTipID ?? m.TransactionTypeId,
                     islemKodu: m.transactionCode ?? m.transactionCode ?? m.transactionCode,
@@ -5187,7 +5228,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     karsilikBirim: counterCurrencyCode, // artık döviz kodu
                     karsilikKuru: Number(m.counterExchangeRate ?? m.karsilikKuru ?? 0),
                     baseCurrencyAmount: Number(m.baseCurrencyAmount ?? m.BaseCurrencyAmount ?? 0),
-                    karsiHareketID: counterId,
+                    counterMovementId: counterId,
                     kur2: Number(m.counterExchangeRate ?? m.karsilikKuru ?? 0),
                     girisMi: inferredGiris
                 };
@@ -5240,10 +5281,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (isEditMode) {
                 fisListModal.classList.add('hidden');
+                // Mobilde, fiş yüklendiğinde ekrana boş işlem paneli (modal) gelmesin; direk fiş tabı görünsün.
+                // Masaüstünde (>= 1024px) ise her zamanki gibi paneli açmaya devam edelim.
+                if (window.innerWidth >= 1024 && window.openMobileModal) {
+                    window.openMobileModal(isCari ? 'Cari Fiş Düzenle' : 'Satış Fiş Düzenle');
+                }
             } else {
                 document.querySelectorAll('.fis-list-item').forEach(r => r.classList.remove('selected-row'));
                 document.querySelector(`.fis-list-item[data-fis-id='${fisId}']`)?.classList.add('selected-row');
             }
+            if (window.switchMobileTab) window.switchMobileTab('fis');
         } catch (error) {
             showToast(error.message, 'error');
             console.error('loadFisToScreen error:', error);
@@ -5547,16 +5594,23 @@ document.addEventListener('DOMContentLoaded', () => {
     const performDelete = async (fisId) => {
         showLoadingOverlay();
         try {
-            const response = await fetch(`${API_BASE_URL}/Fisler/${fisId}`, {
+            const response = await fetch(`${API_BASE_URL}/Receipt/${fisId}`, {
                 method: 'DELETE',
                 headers: getAuthHeaders()
             });
+
             if (!response.ok) {
                 const errorText = await response.text();
                 throw new Error(`Sunucu hatası: ${response.status} - ${errorText}`);
             }
-            showToast(`Fiş ID ${fisId} başarıyla silindi.`, 'success');
-            resetTransaction();
+
+            const result = await response.json();
+            if (result.isSuccess) {
+                showToast(`Fiş ID ${fisId} başarıyla silindi.`, 'success');
+                resetTransaction();
+            } else {
+                showToast(`Hata: ${result.message || 'Silme işlemi başarısız.'}`, 'danger');
+            }
         } catch (error) {
             showToast(`Silme işlemi sırasında bir hata oluştu: ${error.message}`, 'danger');
         } finally {
@@ -5583,15 +5637,21 @@ document.addEventListener('DOMContentLoaded', () => {
         let currencyCode = null;
 
         if (state.operationType === 'satis') {
-            const acikItems = state.receiptItems.filter(item => item.itemClass === 'acik-hesap');
-            if (acikItems.length > 0) {
+            const allAcikItems = state.receiptItems.filter(item => item.itemClass === 'acik-hesap');
+            const activeAcikItems = allAcikItems.filter(item => !item.isDeleted);
+
+            if (activeAcikItems.length > 0) {
                 // Alacak (Giriş) +, Borç (Çıkış) - olarak toplanır
-                openBalanceAmount = acikItems.reduce((acc, it) => {
+                openBalanceAmount = activeAcikItems.reduce((acc, it) => {
                     const val = Number(it.total) || 0;
                     return acc + (it.isIncome ? val : -val);
                 }, 0);
                 // Para birimi ilk açık hesap kaleminden alınır (varsa)
-                currencyCode = acikItems[0].currency || state.activeCurrency;
+                currencyCode = activeAcikItems[0].currency || state.activeCurrency;
+            } else if (allAcikItems.length > 0) {
+                // Açık hesap kalemleri vardı ama hepsi silindi -> 0 gönder
+                openBalanceAmount = 0;
+                currencyCode = allAcikItems[0].currency || state.activeCurrency;
             }
         } else {
             // Cari modda para birimi boş bırakılabilir; backend gerektiğinde yorumlar
@@ -5633,6 +5693,7 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         // State'teki kalemleri dolaş ve DTO'ları oluştur
+        // Silinmiş kalemleri de dahil ediyoruz ki IsDeleted: true olarak gitsinler
         for (const item of state.receiptItems.filter(i => i.itemClass !== 'acik-hesap')) {
             if (item.itemClass === 'cash') {
                 // Ana müşteri hareketi
@@ -5646,6 +5707,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 // müşteri hareketi
                 pushDTO({
                     MovementId: item.movementId || 0,
+                    IsDeleted: !!item.isDeleted,
                     TransactionTypeId: customerTransactionType,
                     AccountId: parseInt(selectedCustomerId, 10),
                     StockId: null,
@@ -5674,6 +5736,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 // karşı finansal hesap hareketi
                 pushDTO({
                     MovementId: item.counterMovementId || 0,
+                    IsDeleted: !!item.isDeleted,
                     TransactionTypeId: financialTransactionType,
                     AccountId: parseInt(item.details.accountId, 10),
                     StockId: null,
@@ -5710,6 +5773,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 pushDTO({
                     MovementId: item.movementId || 0,
+                    IsDeleted: !!item.isDeleted,
                     TransactionTypeId: musteriType,
                     AccountId: parseInt(selectedCustomerId, 10),
                     StockId: null,
@@ -5737,6 +5801,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 pushDTO({
                     MovementId: item.counterMovementId || 0,
+                    IsDeleted: !!item.isDeleted,
                     TransactionTypeId: iskontoType,
                     AccountId: parseInt(item.details.accountId, 10),
                     StockId: null,
@@ -5776,6 +5841,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 pushDTO({
                     MovementId: item.movementId || 0,
+                    IsDeleted: !!item.isDeleted,
                     TransactionTypeId: musteriType,
                     AccountId: parseInt(selectedCustomerId, 10),
                     StockId: null,
@@ -5803,6 +5869,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 pushDTO({
                     MovementId: item.counterMovementId || 0,
+                    IsDeleted: !!item.isDeleted,
                     TransactionTypeId: karsiType,
                     AccountId: parseInt(item.details.karsiHesapId, 10),
                     StockId: null,
@@ -5842,6 +5909,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 pushDTO({
                     MovementId: item.movementId || 0,
+                    IsDeleted: !!item.isDeleted,
                     TransactionTypeId: musteriType,
                     AccountId: parseInt(selectedCustomerId, 10),
                     StockId: parseInt(stokId, 10),
@@ -5885,6 +5953,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 pushDTO({
                     MovementId: item.counterMovementId || 0,
+                    IsDeleted: !!item.isDeleted,
                     TransactionTypeId: stokType,
                     AccountId: parseInt(dynamicStokHesapId, 10),
                     StockId: parseInt(stokId, 10),
@@ -5917,6 +5986,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 pushDTO({
                     MovementId: item.movementId || 0,
+                    IsDeleted: !!item.isDeleted,
                     TransactionTypeId: musteriType,
                     AccountId: parseInt(selectedCustomerId, 10),
                     StockId: null,
@@ -5944,6 +6014,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 pushDTO({
                     MovementId: item.counterMovementId || 0,
+                    IsDeleted: !!item.isDeleted,
                     TransactionTypeId: karsiType,
                     AccountId: parseInt(selectedCustomerId, 10), // karşı taraf genellikle yine cari içinde ters kayıt
                     StockId: null,
@@ -6730,6 +6801,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
                 renderReceipt();
+
+                // Mobil görünümde ise modalı aç
+                if (window.openMobileModal) {
+                    const typeLabel = itemToEdit.type || 'İşlem Detayı';
+                    window.openMobileModal(typeLabel.charAt(0).toUpperCase() + typeLabel.slice(1).replace('-', ' '));
+                }
             };
 
             if (state.selectedItemIndex > -1 && isFormDirty) {
@@ -6745,13 +6822,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
         deleteButton.addEventListener('click', () => {
             if (state.selectedItemIndex > -1) {
-                // 1. Kalemi listeden sil
-                state.receiptItems.splice(state.selectedItemIndex, 1);
+                const item = state.receiptItems[state.selectedItemIndex];
+                // Eğer kalem veritabanından yüklenmişse (movementId varsa) silindi olarak işaretle, yoksa splice ile at
+                if (item.movementId && item.movementId > 0) {
+                    item.isDeleted = true;
+                } else {
+                    state.receiptItems.splice(state.selectedItemIndex, 1);
+                }
 
-                // 2. Fişi ve toplamları GÜNCEL LİSTEYE göre yeniden çiz
+                // Seçimi temizle ve yeniden çiz
+                state.selectedItemIndex = -1;
                 renderReceipt();
 
-                // 3. Orta paneli temizle ve başlangıç durumuna getir
+                // Orta paneli temizle ve başlangıç durumuna getir
                 showDefaultMessage();
                 if (window.switchMobileTab) window.switchMobileTab('fis');
             }

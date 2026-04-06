@@ -106,6 +106,11 @@ app.UseRouting();
 
 app.UseAuthentication();   // ? önce
 app.UseAuthorization();    // ? sonra
+app.MapControllerRoute(
+    name: "areas",
+    pattern: "{area:exists}/{controller=Home}/{action=Index}/{id?}");
+
+// Enable attribute routing for controllers (supports [HttpGet("...")] etc.)
 
 
 app.MapControllerRoute(

@@ -1,0 +1,20 @@
+﻿/* stokgrubu_index.css - StokGrubu\Index.cshtml */
+
+.form-group .form-label {
+    position: absolute;
+    top: 0.65rem;
+    left: 0.75rem;
+    color: #6b7280;
+    pointer-events: none;
+    transition: all 0.2s ease-in-out;
+    background-color: white;
+    padding: 0 0.25rem;
+}
+
+.form-group .form-input:focus + .form-label,
+.form-group .form-input:not(:placeholder-shown) + .form-label {
+    top: -0.7rem;
+    left: 0.5rem;
+    font-size: 0.75rem;
+    color: #1f2937;
+}

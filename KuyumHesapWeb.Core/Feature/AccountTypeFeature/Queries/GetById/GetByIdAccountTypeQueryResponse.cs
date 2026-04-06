@@ -3,6 +3,10 @@
     public class GetByIdAccountTypeQueryResponse
     {
         /// <summary>
+        /// Entitylerdeki Ortak Id alanı
+        /// </summary>
+        public int Id { get; set; }
+        /// <summary>
         /// Hesap tipi adı
         /// </summary>
         public string AccountTypeName { get; set; } = null!;
@@ -21,9 +25,6 @@
         /// Hesap tipinin aktiflik durumu
         /// </summary>
         public bool IsActive { get; set; }
-        /// <summary>
-        /// Entitylerdeki Ortak Id alanı
-        /// </summary>
-        public int Id { get; set; }
+
     }
 }

@@ -1,8 +1,9 @@
-﻿using KuyumHesapWeb.Core.Commond.Abstract.Mapper;
+using KuyumHesapWeb.Core.Commond.Abstract.Mapper;
+using KuyumHesapWeb.Core.Commond.Models;
 using KuyumHesapWeb.Core.Feature.CurrencyFeature.Commands.Create;
 using KuyumHesapWeb.Core.Feature.CurrencyFeature.Queries.GetAll;
 using KuyumHesapWeb.Core.Feature.CurrencyFeature.Queries.GetById;
-using KuyumHesapWeb.Core.Feature.ExchangeFeature.Commands.Update;
+using KuyumHesapWeb.Core.Feature.CurrencyFeature.Commands.Update;
 using KuyumHesapWeb.UI.Controllers.BaseCont;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
@@ -21,19 +22,19 @@ namespace KuyumHesapWeb.UI.Controllers
 
         public async Task<IActionResult> Index()
         {
-            var data = await _mediator.Send(new GetAllCurrencyQueryRequest());
-            return View(data);
+            return View();
         }
+
         public IActionResult Create()
         {
             return View();
         }
         [HttpPost]
-        public async Task<IActionResult> Create(CreateCurrencyCommandRequest request)
+        public async Task<ResponseDto<CreateCurrencyCommandResponse>> Create([FromBody] CreateCurrencyCommandRequest request)
         {
             var data = await _mediator.Send(request);
 
-            return RedirectToAction("Index");
+            return data;
         }
         public async Task<IActionResult> Update(int id)
         {
@@ -41,17 +42,22 @@ namespace KuyumHesapWeb.UI.Controllers
 
             return View(data.data);
         }
-        [HttpPut]
-        public async Task<IActionResult> Update(UpdateExchangeCommandRequest request)
+        [HttpPut("Update")]
+        public async Task<ResponseDto<UpdateCurrencyCommandResponse>> Update([FromBody] UpdateCurrencyCommandRequest request)
         {
             var data = await _mediator.Send(request);
-            return RedirectToAction("Index");
+            return data;
         }
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
             var data = await _mediator.Send(new GetAllCurrencyQueryRequest());
             return Ok(data);
+        }
+        [HttpGet("GetById/{id}")]
+        public async Task<ResponseDto<GetByIdCurrencyQueryResponse>> GetById(int id)
+        {
+            return await _mediator.Send(new GetByIdCurrencyQueryRequest(id));
         }
     }
 }

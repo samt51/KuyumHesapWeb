@@ -1450,3 +1450,40 @@ textarea.float-label-input {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
 }
+/* Mobil Responsive Ýyileþtirmeleri */
+@media (max-width: 640px) {
+    #header-box {
+        padding: 0.5rem !important;
+    }
+    .toggle-container {
+        transform: scale(0.9);
+        transform-origin: left center;
+    }
+    #currency-select {
+        width: 65px !important;
+        font-size: 12px !important;
+    }
+    .form-select, .ss-main .ss-single-selected {
+        height: 34px !important;
+        font-size: 12px !important;
+    }
+    #main-save-button, #main-reset-button, #main-delete-button {
+        padding: 0.5rem 0.75rem !important;
+        font-size: 11px !important;
+    }
+}
+
+@media (max-width: 380px) {
+    .toggle-container {
+        width: 100px;
+    }
+    #customer-select + .ss-main .ss-single-selected {
+        font-size: 11px !important;
+        padding: 4px 8px !important;
+    }
+    #header-box button {
+        padding: 4px 6px !important;
+        min-width: 32px !important;
+        height: 32px !important;
+    }
+}

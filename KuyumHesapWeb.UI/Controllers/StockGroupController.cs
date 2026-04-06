@@ -1,4 +1,5 @@
-﻿using KuyumHesapWeb.Core.Commond.Abstract.Mapper;
+using KuyumHesapWeb.Core.Commond.Abstract.Mapper;
+using KuyumHesapWeb.Core.Commond.Models;
 using KuyumHesapWeb.Core.Feature.StockGroupFeature.Commands.Create;
 using KuyumHesapWeb.Core.Feature.StockGroupFeature.Commands.Update;
 using KuyumHesapWeb.Core.Feature.StockGroupFeature.Queries.GetAll;
@@ -19,33 +20,35 @@ namespace KuyumHesapWeb.UI.Controllers
         }
         public async Task<IActionResult> Index()
         {
-            var data = await _mediator.Send(new GetAllStockGroupQueryRequest());
-            return View(data.data);
+            return View();
         }
         [HttpGet]
         public IActionResult Create()
         {
             return View();
         }
-        [HttpPost]
-        public async Task<IActionResult> Create(CreateStockGroupCommandRequest request)
+        [HttpGet]
+        public async Task<ResponseDto<List<GetAllStockGroupQueryResponse>>> GetAll()
         {
-            var data = await _mediator.Send(request);
-            return RedirectToAction("Index");
-        }
-        public async Task<IActionResult> Update(int id)
-        {
-            var data = await _mediator.Send(new GetByIdStockGroupQueryRequest(id));
-
-            var map = _mapper.Map<UpdateStockGroupCommandRequest, GetByIdStockGroupQueryResponse>(data.data);
-            return View(map);
+            return await _mediator.Send(new GetAllStockGroupQueryRequest());
         }
         [HttpPost]
-        public async Task<IActionResult> Update(UpdateStockGroupCommandRequest request)
+        public async Task<ResponseDto<CreateStockGroupCommandResponse>> Create([FromBody] CreateStockGroupCommandRequest request)
         {
             var data = await _mediator.Send(request);
+            return data;
+        }
+        [HttpPut("Update")]
+        public async Task<ResponseDto<UpdateStockGroupCommandResponse>> Update([FromBody] UpdateStockGroupCommandRequest request)
+        {
+            var data = await _mediator.Send(request);
+            return data;
+        }
 
-            return RedirectToAction("Index");
+        [HttpGet("GetById/{id}")]
+        public async Task<ResponseDto<GetByIdStockGroupQueryResponse>> GetById(int id)
+        {
+            return await _mediator.Send(new GetByIdStockGroupQueryRequest(id));
         }
     }
 }

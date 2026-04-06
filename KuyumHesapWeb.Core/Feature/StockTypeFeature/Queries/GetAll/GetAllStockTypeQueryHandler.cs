@@ -14,7 +14,7 @@ namespace KuyumHesapWeb.Core.Feature.StockTypeFeature.Queries.GetAll
         {
             var data = await _apiService.GetAsync<List<GetAllStockTypeQueryResponse>>("StockType/GetAll");
 
-            return new ResponseDto<List<GetAllStockTypeQueryResponse>>().Success(data.data);
+            return data;
         }
     }
 }

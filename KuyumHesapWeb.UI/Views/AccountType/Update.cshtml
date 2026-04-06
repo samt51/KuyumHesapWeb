@@ -1,8 +1,9 @@
-﻿@using KuyumHesapWeb.Core.Feature.AccountTypeFeature.Queries.GetById
+@using KuyumHesapWeb.Core.Feature.AccountTypeFeature.Queries.GetById
 @model GetByIdAccountTypeQueryResponse
 @{
     ViewData["Title"] = "Update";
-    Layout = "~/Views/Shared/_Layout.cshtml";
+    var noLayout = Context.Request.Query["noLayout"] == "1";
+    Layout = noLayout ? null : "~/Views/Shared/_Layout.cshtml";
 }
 
 

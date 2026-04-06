@@ -1,4 +1,5 @@
-﻿using KuyumHesapWeb.Core.Commond.Abstract.Mapper;
+using KuyumHesapWeb.Core.Commond.Abstract.Mapper;
+using KuyumHesapWeb.Core.Commond.Models;
 using KuyumHesapWeb.Core.Feature.CurrencyFeature.Queries.GetAll;
 using KuyumHesapWeb.Core.Feature.StockFeature.Commands.Create;
 using KuyumHesapWeb.Core.Feature.StockFeature.Commands.Dtos;
@@ -25,8 +26,7 @@ namespace KuyumHesapWeb.UI.Controllers
 
         public async Task<IActionResult> Index()
         {
-            var data = await _mediator.Send(new GetAllStockQueryRequest());
-            return View(data.data);
+            return View();
         }
         public async Task<IActionResult> Create()
         {
@@ -39,12 +39,23 @@ namespace KuyumHesapWeb.UI.Controllers
                 CurrencyQueryResponses = currency.data
             });
         }
-        [HttpPost]
-        public async Task<IActionResult> Create(StockForGetStockTypeResponseDto request)
+        [HttpGet("GetAll")]
+        public async Task<ResponseDto<List<GetAllStockQueryResponse>>> GetAll()
         {
-            await _mediator.Send(request.CreateStockCommandRequest);
+            return await _mediator.Send(new GetAllStockQueryRequest());
+        }
 
-            return RedirectToAction("Index");
+        [HttpGet("GetById/{id}")]
+        public async Task<ResponseDto<GetByIdStockQueryResponse>> GetById(int id)
+        {
+            return await _mediator.Send(new GetByIdStockQueryRequest(id));
+        }
+
+        [HttpPost("Create")]
+        public async Task<ResponseDto<CreateStockCommandResponse>> Create([FromBody] CreateStockCommandRequest request)
+        {
+            var data = await _mediator.Send(request);
+            return data;
         }
         public async Task<IActionResult> Update(int id)
         {
@@ -57,17 +68,11 @@ namespace KuyumHesapWeb.UI.Controllers
                 UpdateStockCommandRequest = map
             });
         }
-        [HttpPost]
-        public async Task<IActionResult> Update(UpdateStockCommandRequest request)
+        [HttpPut("Update")]
+        public async Task<ResponseDto<UpdateStockCommandResponse>> Update([FromBody] UpdateStockCommandRequest request)
         {
-            await _mediator.Send(request);
-            return RedirectToAction("Index");
-        }
-        [HttpGet]
-        public async Task<IActionResult> GetAll()
-        {
-            var data = await _mediator.Send(new GetAllStockQueryRequest());
-            return Ok(data);
+            var data = await _mediator.Send(request);
+            return data;
         }
 
     }

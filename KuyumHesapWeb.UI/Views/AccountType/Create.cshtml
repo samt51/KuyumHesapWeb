@@ -1,6 +1,7 @@
-﻿@{
+@{
     ViewData["Title"] = "Create";
-    Layout = "~/Views/Shared/_Layout.cshtml";
+    var noLayout = Context.Request.Query["noLayout"] == "1";
+    Layout = noLayout ? null : "~/Views/Shared/_Layout.cshtml";
 }
 
 

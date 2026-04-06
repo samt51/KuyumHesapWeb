@@ -1,4 +1,5 @@
-﻿using KuyumHesapWeb.Core.Commond.Abstract.Mapper;
+using KuyumHesapWeb.Core.Commond.Abstract.Mapper;
+using KuyumHesapWeb.Core.Commond.Models;
 using KuyumHesapWeb.Core.Feature.ProductTypeFeature.Commands.Create;
 using KuyumHesapWeb.Core.Feature.ProductTypeFeature.Commands.Update;
 using KuyumHesapWeb.Core.Feature.ProductTypeFeature.Queries.GetAll;
@@ -22,8 +23,12 @@ namespace KuyumHesapWeb.UI.Controllers
 
         public async Task<IActionResult> Index()
         {
-            var data = await _mediator.Send(new GetAllProductTypeQueryRequest());
-            return View(data.data);
+            return View();
+        }
+        [HttpGet]
+        public async Task<ResponseDto<List<GetAllProductTypeQueryResponse>>> GetAll()
+        {
+            return await _mediator.Send(new GetAllProductTypeQueryRequest());
         }
         public IActionResult Create()
         {

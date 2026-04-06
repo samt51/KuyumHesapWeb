@@ -15,7 +15,7 @@ namespace KuyumHesapWeb.Core.Feature.StockGroupFeature.Queries.GetAll
         {
             var data = await _apiService.GetAsync<List<GetAllStockGroupQueryResponse>>("StockGroup/GetAll");
 
-            return new ResponseDto<List<GetAllStockGroupQueryResponse>>().Success(data.data);
+            return data;
         }
     }
 }

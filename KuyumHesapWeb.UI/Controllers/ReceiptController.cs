@@ -15,9 +15,12 @@ using Microsoft.AspNetCore.Http;
 using KuyumHesapWeb.UI.Controllers.BaseCont;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using KuyumHesapWeb.Core.Feature.ReceiptFeature.Commands.Delete;
 
 namespace KuyumHesapWeb.UI.Controllers
 {
+  
+    [Route("[controller]")]
     public class ReceiptController : BaseController
     {
         private readonly IMediator _mediator;
@@ -27,22 +30,24 @@ namespace KuyumHesapWeb.UI.Controllers
             _mediator = mediator;
             _mapper = mapper;
         }
-        [HttpPost]
+        [HttpPost("GetAll")]
         public async Task<IActionResult> GetAll([FromBody] GetAllReceiptQueryRequest request)
         {
             var data = await _mediator.Send(request);
 
             return Ok(data);
         }
+        [HttpGet("[action]")]
         public IActionResult Index()
         {
             return View();
         }
+        [HttpGet("[action]")]
         public IActionResult Create()
         {
             return View();
         }
-        [HttpPost]
+        [HttpPost("Create")]
         public async Task<ResponseDto<CreateReceiptCommandResponse>> Create([FromBody] CreateReceiptCommandRequest request)
         {
             if (request == null)
@@ -56,25 +61,26 @@ namespace KuyumHesapWeb.UI.Controllers
             var data = await _mediator.Send(request);
             return data;
         }
-        [HttpPost]
+        [HttpPost("Update")]
         public async Task<ResponseDto<UpdateReceiptCommandResponse>> Update([FromBody] UpdateReceiptCommandRequest request)
         {
             var data = await _mediator.Send(request);
             return data;
         }
-        [HttpGet]
+        [HttpGet("GetById")]
         public async Task<IActionResult> GetById(int id)
         {
             var data = await _mediator.Send(new GetByIdReceiptQueryRequest(id));
             return Ok(data);
         }
-        [HttpPost]
+
+        [HttpPost("GetEkstreByCustomerIdAndDate")]
         public async Task<IActionResult> GetEkstreByCustomerIdAndDate([FromBody] GetEkstreByCustomerQueryRequest request)
         {
             var data = await _mediator.Send(request);
             return Ok(data.data);
         }
-        [HttpPost]
+        [HttpPost("GetReceiptByCustomerIdAndDate")]
         public async Task<IActionResult> GetReceiptByCustomerIdAndDate([FromBody] GetReceiptByCustomerIdAndDatesRequest request)
         {
             var data = await _mediator.Send(request);
@@ -82,11 +88,16 @@ namespace KuyumHesapWeb.UI.Controllers
         }
 
         [HttpGet("GetMovementByReceiptId/{receiptId}")]
-        [HttpGet("Receipt/GetMovementByReceiptId/{receiptId}")]
         public async Task<IActionResult> GetMovementByReceiptId(int receiptId)
         {
             var data = await _mediator.Send(new GetMovementByReceiptIdRequest(receiptId));
             return Ok(data);
+        }
+
+        [HttpDelete("{receiptId}")]
+        public async Task<ResponseDto<DeleteReceiptCommandResponse>> DeleteAsync(int receiptId, CancellationToken token)
+        {
+            return await _mediator.Send(new DeleteReceiptCommandRequest(receiptId), token);
         }
     }
 }

@@ -2,7 +2,7 @@ namespace KuyumHesapWeb.Core.Commond.Models.Dtos
 {
     public class CreateMovementReceiptRequestDto
     {
-        public int MovementId { get; set; } 
+        public int MovementId { get; set; }
         /// <summary>
         /// Hareket tipi kimliği (Foreign Key -> TransactionTypes)
         /// </summary>
@@ -116,5 +116,6 @@ namespace KuyumHesapWeb.Core.Commond.Models.Dtos
         /// Toplam işçilik tutarı
         /// </summary>
         public decimal? TotalLaborCost { get; set; }
+        public bool IsDeleted { get; set; }
     }
 }
