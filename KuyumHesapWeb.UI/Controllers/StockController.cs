@@ -13,6 +13,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace KuyumHesapWeb.UI.Controllers
 {
+    [Route("[controller]")]
     public class StockController : BaseController
     {
         private readonly IMediator _mediator;
@@ -24,10 +25,12 @@ namespace KuyumHesapWeb.UI.Controllers
             _mediator = mediator;
         }
 
+        [HttpGet("[action]")]
         public async Task<IActionResult> Index()
         {
             return View();
         }
+        [HttpGet("[action]")]
         public async Task<IActionResult> Create()
         {
             var stockTypes = await _mediator.Send(new GetAllStockTypeQueryRequest());
@@ -45,7 +48,7 @@ namespace KuyumHesapWeb.UI.Controllers
             return await _mediator.Send(new GetAllStockQueryRequest());
         }
 
-        [HttpGet("GetById/{id}")]
+        [HttpGet("GetById")]
         public async Task<ResponseDto<GetByIdStockQueryResponse>> GetById(int id)
         {
             return await _mediator.Send(new GetByIdStockQueryRequest(id));
@@ -57,6 +60,7 @@ namespace KuyumHesapWeb.UI.Controllers
             var data = await _mediator.Send(request);
             return data;
         }
+        [HttpGet("[action]")]
         public async Task<IActionResult> Update(int id)
         {
             var data = await _mediator.Send(new GetByIdStockQueryRequest(id));

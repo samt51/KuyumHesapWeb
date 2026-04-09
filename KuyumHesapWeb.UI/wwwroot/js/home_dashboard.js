@@ -28,7 +28,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         try {
             // Başlık metni tam olarak 'Kasalar' olan H1..H6 etiketlerini hedefle
             document.querySelectorAll('h1,h2,h3,h4,h5,h6').forEach(h => {
-                if (h.textContent && h.textContent.trim() === 'Kasalar' && !h.closest('#kasalar-card')) {
+                const text = (h.textContent || '').trim();
+                // Sadece Dashboard kartı DIŞINDAKİ 'Kasalar' başlıklarını hedefle
+                if (text === 'Kasalar' && !h.closest('#kasalar-card')) {
                     // Başlığı gizle
                     h.style.display = 'none';
                     // Eğer başlığın hemen altında Nakit Toplam veya Detaylar için tıklayın gibi öğeler varsa onları da gizle
@@ -48,12 +50,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
             });
 
-            // Ek güvenlik: tek başına "Detaylar için tıklayın" içeren p/span/div'leri gizle
+            // Ek güvenlik: sadece hiçbir ana karta ait OLMAYAN "Detaylar için tıklayın" yazılarını gizle
             document.querySelectorAll('p,div,span').forEach(el => {
                 const txt = (el.textContent || '').trim();
                 if (txt.startsWith('Detaylar için tıklayın')) {
-                    // Ama bu element #kasalar-card içinde ise dokunma
-                    if (!el.closest('#kasalar-card')) el.style.display = 'none';
+                    const isMainCard = el.closest('#kasalar-card') || el.closest('#bankalar-card') || el.closest('#poslar-card');
+                    if (!isMainCard) {
+                        el.style.display = 'none';
+                    }
                 }
             });
         } catch (e) {
@@ -232,162 +236,221 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     };
 
+    let kasaDetaylar = [];
+    let bankaDetaylar = [];
+    let posDetaylar = [];
+
     // ─── Kasalar - HAS Toplamı ───────────────────────────────────────────────
-    const fetchKasalar = async () => {
+    const fetchKasalar = async (initialPayload = null) => {
         const ozet = document.getElementById('kasalar-ozet');
         if (!ozet) return;
-
-        const kullanilanKurlar = window.kurlar || [];
-
         try {
-            const apiBaseRaw = (window.API_BASE_URL || '').toString();
-            const apiBase = apiBaseRaw ? apiBaseRaw.replace(/\/+$/, '') : '';
-            const url = apiBase ? `${apiBase}/Report/GetCashReport` : '/Report/GetCashReport';
-
-            console.log('[home_dashboard] Fetch GetCashReport ->', url);
-
-            const resEkstre = await fetch(url, {
-                method: 'GET',
-                headers: getAuthHeaders(),
-                mode: 'cors',
-                credentials: 'same-origin'
-            });
-
-            console.log('[home_dashboard] GetCashReport status:', resEkstre.status);
-
-            if (!resEkstre.ok) {
-                console.warn('GetCashReport response not ok:', resEkstre.status, await resEkstre.text().catch(() => ''));
-                ozet.innerHTML = '<span class="text-xs text-red-400">Yüklenemedi</span>';
-                return;
+            let payload = initialPayload;
+            if (!payload) {
+                const apiBaseRaw = (window.API_BASE_URL || '').toString();
+                const apiBase = apiBaseRaw ? apiBaseRaw.replace(/\/+$/, '') : '';
+                const url = apiBase ? `${apiBase}/Report/GetCashReport` : '/Report/GetCashReport';
+                const res = await fetch(url, { method: 'GET', headers: getAuthHeaders(), credentials: 'same-origin' });
+                if (!res.ok) { ozet.innerHTML = '<span class="text-xs text-red-400">Yüklenemedi</span>'; return; }
+                payload = await res.json();
             }
-
-            const payload = await resEkstre.json();
-            const data = (payload && payload.data) ? payload.data : payload;
-
-            const kasaBakiyeler = {};
-
-            if (Array.isArray(data.devredenBakiyeler)) {
-                data.devredenBakiyeler.forEach(b => {
-                    const code = b.dovizKodu ?? b.currencyCode ?? b.birim ?? 'UNKNOWN';
-                    const bakiye = Number(b.bakiye ?? b.amount ?? 0) || 0;
-                    kasaBakiyeler[code] = (kasaBakiyeler[code] || 0) + bakiye;
-                });
-            }
-
-            if (Array.isArray(data.hareketler)) {
-                data.hareketler.forEach(h => {
-                    const birim = h.balanceCurrency ?? h.unit ?? h.counterUnit ?? h.birim ?? h.karsilikBirim ?? 'UNKNOWN';
-                    const sonBakiye = Number(
-                        h.finalBalance ??
-                        h.baseCurrencyAmount ??
-                        h.counterQuantity ??
-                        h.balanceEffectAmount ??
-                        h.quantity ??
-                        0
-                    ) || 0;
-                    kasaBakiyeler[birim] = sonBakiye;
-                });
-            }
-
-            let toplamHas = 0;
+            
+            const dataObj = (payload && (payload.data !== undefined || payload.Data !== undefined)) ? (payload.data ?? payload.Data) : payload;
+            const accounts = (dataObj && Array.isArray(dataObj.items ?? dataObj.Items)) ? (dataObj.items ?? dataObj.Items) : [];
+            const overallTotalHas = Number((dataObj && (dataObj.totalHas ?? dataObj.TotalHas)) ?? 0);
             kasaDetaylar = [];
-            const kasaBakiyeListesi = [];
-
-            for (const [birim, miktar] of Object.entries(kasaBakiyeler)) {
-                if (!miktar || miktar === 0) continue;
-                toplamHas += 0; // HAS hesaplama şimdilik pasif
-                kasaBakiyeListesi.push({ birim, miktar });
-            }
-
-            kasaDetaylar.push({
-                ad: 'Kasalar',
-                bakiyeler: kasaBakiyeListesi,
-                hasToplamı: data.totalHas
+            accounts.forEach(acc => {
+                const accountName = acc.accountName || acc.AccountName || acc.hesapAdi || acc.HesapAdi || 'Bilinmeyen Kasa';
+                const accountTotalHas = Number(acc.totalHas ?? acc.TotalHas ?? acc.hasToplami ?? 0) || 0;
+                const currentBalances = {};
+                const devreden = acc.devredenBakiyeler ?? acc.DevredenBakiyeler;
+                if (Array.isArray(devreden)) {
+                    devreden.forEach(b => {
+                        const code = b.dovizKodu ?? b.DovizKodu ?? b.currencyCode ?? b.CurrencyCode ?? b.birim ?? b.Birim ?? 'UNKNOWN';
+                        currentBalances[code] = Number(b.bakiye ?? b.Bakiye ?? b.amount ?? b.Amount ?? 0) || 0;
+                    });
+                }
+                const hareketler = acc.hareketler ?? acc.Hareketler;
+                if (Array.isArray(hareketler)) {
+                    hareketler.forEach(h => {
+                        const birim = h.balanceCurrency ?? h.BalanceCurrency ?? h.unit ?? h.Unit ?? h.counterUnit ?? h.CounterUnit ?? h.birim ?? h.Birim ?? h.karsilikBirim ?? 'UNKNOWN';
+                        currentBalances[birim] = Number(h.finalBalance ?? h.FinalBalance ?? currentBalances[birim] ?? 0);
+                    });
+                }
+                const bakiyeListesi = Object.entries(currentBalances).filter(([_, m])=>m!==0).map(([birim, miktar])=>({ birim, miktar }));
+                kasaDetaylar.push({ ad: accountName, bakiyeler: bakiyeListesi, hasToplamı: accountTotalHas });
             });
-
             const fmt = v => v.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-            const renk = data.totalHas >= 0 ? 'text-green-600' : 'text-red-600';
-            ozet.innerHTML = `
-            <span class="text-2xl font-extrabold font-mono ${renk}">${fmt(data.totalHas)}</span>
-            <span class="text-sm font-semibold text-gray-400 mb-0.5">HAS</span>
-        `;
-        } catch (e) {
-            console.error('Kasalar yüklenemedi (fetch):', e);
-            if (ozet) ozet.innerHTML = '<span class="text-xs text-red-400">Yüklenemedi</span>';
-        }
+            const renk = overallTotalHas >= 0 ? 'text-green-600' : 'text-red-600';
+            ozet.innerHTML = `<span class="text-2xl font-extrabold font-mono ${renk}">${fmt(overallTotalHas)}</span><span class="text-sm font-semibold text-gray-400 mb-0.5">HAS</span>`;
+        } catch (e) { ozet.innerHTML = '<span class="text-xs text-red-400">Yüklenemedi</span>'; }
     };
 
-    // ─── Kasalar Modal ──────────────────────────────────────────────────────
-    const kasalarModal = document.getElementById('kasalar-modal');
-    const kasalarModalBody = document.getElementById('kasalar-modal-body');
-    const kasalarCard = document.getElementById('kasalar-card');
-    const kasalarModalClose = document.getElementById('kasalar-modal-close');
-    const kasalarModalBg = document.getElementById('kasalar-modal-bg');
+    // ─── Bankalar ────────────────────────────────────────────────────────────
+    const fetchBankalar = async (initialPayload = null) => {
+        const ozet = document.getElementById('bankalar-ozet');
+        if (!ozet) return;
+        try {
+            let payload = initialPayload;
+            if (!payload) {
+                const apiBaseRaw = (window.API_BASE_URL || '').toString();
+                const apiBase = apiBaseRaw ? apiBaseRaw.replace(/\/+$/, '') : '';
+                const url = apiBase ? `${apiBase}/Report/GetBankReport` : '/Report/GetBankReport';
+                const res = await fetch(url, { method: 'GET', headers: getAuthHeaders(), credentials: 'same-origin' });
+                if (!res.ok) { ozet.innerHTML = '<span class="text-xs text-red-400">Yüklenemedi</span>'; return; }
+                payload = await res.json();
+            }
 
-    // Ensure modal starts hidden (robust against missing/overriding CSS)
-    if (kasalarModal) {
-        kasalarModal.classList.remove('flex'); // remove any accidental flex
-        kasalarModal.classList.add('hidden');
-        kasalarModal.style.display = 'none';
-    }
+            const dataObj = (payload && (payload.data !== undefined || payload.Data !== undefined)) ? (payload.data ?? payload.Data) : payload;
+            const accounts = (dataObj && Array.isArray(dataObj.items ?? dataObj.Items)) ? (dataObj.items ?? dataObj.Items) : [];
+            const overallTotalHas = Number((dataObj && (dataObj.totalHas ?? dataObj.TotalHas)) ?? 0);
+            bankaDetaylar = [];
+            accounts.forEach(acc => {
+                const accountName = acc.accountName || acc.AccountName || acc.hesapAdi || acc.HesapAdi || 'Bilinmeyen Banka';
+                const accountTotalHas = Number(acc.totalHas ?? acc.TotalHas ?? acc.hasToplami ?? 0) || 0;
+                const currentBalances = {};
+                const devreden = acc.devredenBakiyeler ?? acc.DevredenBakiyeler;
+                if (Array.isArray(devreden)) {
+                    devreden.forEach(b => {
+                        const code = b.dovizKodu ?? b.DovizKodu ?? b.currencyCode ?? b.CurrencyCode ?? b.birim ?? b.Birim ?? 'UNKNOWN';
+                        currentBalances[code] = Number(b.bakiye ?? b.Bakiye ?? b.amount ?? b.Amount ?? 0) || 0;
+                    });
+                }
+                const hareketler = acc.hareketler ?? acc.Hareketler;
+                if (Array.isArray(hareketler)) {
+                    hareketler.forEach(h => {
+                        const birim = h.balanceCurrency ?? h.BalanceCurrency ?? h.unit ?? h.Unit ?? h.counterUnit ?? h.CounterUnit ?? h.birim ?? h.Birim ?? h.karsilikBirim ?? 'UNKNOWN';
+                        currentBalances[birim] = Number(h.finalBalance ?? h.FinalBalance ?? currentBalances[birim] ?? 0);
+                    });
+                }
+                const bakiyeListesi = Object.entries(currentBalances).filter(([_, m])=>m!==0).map(([birim, miktar])=>({ birim, miktar }));
+                bankaDetaylar.push({ ad: accountName, bakiyeler: bakiyeListesi, hasToplamı: accountTotalHas });
+            });
+            const fmt = v => v.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            const renk = overallTotalHas >= 0 ? 'text-green-600' : 'text-red-600';
+            ozet.innerHTML = `<span class="text-2xl font-extrabold font-mono ${renk}">${fmt(overallTotalHas)}</span><span class="text-sm font-semibold text-gray-400 mb-0.5">HAS</span>`;
+        } catch (e) { ozet.innerHTML = '<span class="text-xs text-red-400">Yüklenemedi</span>'; }
+    };
 
-    const openKasalarModal = () => {
-        if (!kasalarModal) return;
+    // ─── Poslar ─────────────────────────────────────────────────────────────
+    const fetchPoslar = async (initialPayload = null) => {
+        const ozet = document.getElementById('poslar-ozet');
+        if (!ozet) return;
+        try {
+            let payload = initialPayload;
+            if (!payload) {
+                const apiBaseRaw = (window.API_BASE_URL || '').toString();
+                const apiBase = apiBaseRaw ? apiBaseRaw.replace(/\/+$/, '') : '';
+                const url = apiBase ? `${apiBase}/Report/GetPosReport` : '/Report/GetPosReport';
+                const res = await fetch(url, { method: 'GET', headers: getAuthHeaders(), credentials: 'same-origin' });
+                if (!res.ok) { ozet.innerHTML = '<span class="text-xs text-red-400">Yüklenemedi</span>'; return; }
+                payload = await res.json();
+            }
+
+            const dataObj = (payload && (payload.data !== undefined || payload.Data !== undefined)) ? (payload.data ?? payload.Data) : payload;
+            const accounts = (dataObj && Array.isArray(dataObj.items ?? dataObj.Items)) ? (dataObj.items ?? dataObj.Items) : [];
+            const overallTotalHas = Number((dataObj && (dataObj.totalHas ?? dataObj.TotalHas)) ?? 0);
+            posDetaylar = [];
+            accounts.forEach(acc => {
+                const accountName = acc.accountName || acc.AccountName || acc.hesapAdi || acc.HesapAdi || 'Bilinmeyen Pos';
+                const accountTotalHas = Number(acc.totalHas ?? acc.TotalHas ?? acc.hasToplami ?? 0) || 0;
+                const currentBalances = {};
+                const devreden = acc.devredenBakiyeler ?? acc.DevredenBakiyeler;
+                if (Array.isArray(devreden)) {
+                    devreden.forEach(b => {
+                        const code = b.dovizKodu ?? b.DovizKodu ?? b.currencyCode ?? b.CurrencyCode ?? b.birim ?? b.Birim ?? 'UNKNOWN';
+                        currentBalances[code] = Number(b.bakiye ?? b.Bakiye ?? b.amount ?? b.Amount ?? 0) || 0;
+                    });
+                }
+                const hareketler = acc.hareketler ?? acc.Hareketler;
+                if (Array.isArray(hareketler)) {
+                    hareketler.forEach(h => {
+                        const birim = h.balanceCurrency ?? h.BalanceCurrency ?? h.unit ?? h.Unit ?? h.counterUnit ?? h.CounterUnit ?? h.birim ?? h.Birim ?? h.karsilikBirim ?? 'UNKNOWN';
+                        currentBalances[birim] = Number(h.finalBalance ?? h.FinalBalance ?? currentBalances[birim] ?? 0);
+                    });
+                }
+                const bakiyeListesi = Object.entries(currentBalances).filter(([_, m])=>m!==0).map(([birim, miktar])=>({ birim, miktar }));
+                posDetaylar.push({ ad: accountName, bakiyeler: bakiyeListesi, hasToplamı: accountTotalHas });
+            });
+            const fmt = v => v.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            const renk = overallTotalHas >= 0 ? 'text-green-600' : 'text-red-600';
+            ozet.innerHTML = `<span class="text-2xl font-extrabold font-mono ${renk}">${fmt(overallTotalHas)}</span><span class="text-sm font-semibold text-gray-400 mb-0.5">HAS</span>`;
+        } catch (e) { ozet.innerHTML = '<span class="text-xs text-red-400">Yüklenemedi</span>'; }
+    };
+
+    // ─── Modals Logic ───────────────────────────────────────────────────────
+    const setupModal = (cardId, modalId, detailsArray) => {
+        const card = document.getElementById(cardId);
+        const modal = document.getElementById(modalId);
+        const body = document.getElementById(`${modalId}-body`);
+        const close = document.getElementById(`${modalId}-close`);
+        const bg = document.getElementById(`${modalId}-bg`);
+
+        if (!card || !modal || !body) return;
+
         const fmt = (v, d = 2) => v.toLocaleString('tr-TR', { minimumFractionDigits: d, maximumFractionDigits: d });
 
-        if (kasaDetaylar.length === 0) {
-            kasalarModalBody.innerHTML = '<p class="text-sm text-gray-400 text-center py-6">Veri yüklenmedi. Lütfen bekleyin.</p>';
-        } else {
-            let html = '';
-            for (const kasa of kasaDetaylar) {
-                const renk = kasa.hasToplamı >= 0 ? 'text-green-600' : 'text-red-600';
-                html += `
-                    <div class="bg-gray-50 rounded-xl p-4 border border-gray-100">
-                        <div class="flex items-center justify-between mb-2">
-                            <span class="font-bold text-gray-700 text-sm">${kasa.ad}</span>
-                            <span class="font-extrabold font-mono text-sm ${renk}">${fmt(kasa.hasToplamı, 2)} HAS</span>
+        card.addEventListener('click', () => {
+            if (detailsArray.length === 0) {
+                body.innerHTML = '<p class="text-sm text-gray-400 text-center py-6">Veri bulunamadı.</p>';
+            } else {
+                let html = '';
+                detailsArray.forEach(k => {
+                    const renk = k.hasToplamı >= 0 ? 'text-green-600' : 'text-red-600';
+                    html += `
+                        <div class="bg-gray-50 rounded-xl p-4 border border-gray-100">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="font-bold text-gray-700 text-sm">${k.ad}</span>
+                                <span class="font-extrabold font-mono text-sm ${renk}">${fmt(k.hasToplamı, 2)} HAS</span>
+                            </div>
+                            <div class="space-y-1">
+                                ${k.bakiyeler.map(b => {
+                                    const r = b.miktar >= 0 ? 'text-green-600' : 'text-red-600';
+                                    return `<div class="flex justify-between text-xs text-gray-500">
+                                                <span>${b.birim}</span>
+                                                <span class="font-mono font-semibold ${r}">${fmt(b.miktar, 2)}</span>
+                                            </div>`;
+                                }).join('')}
+                                ${k.bakiyeler.length === 0 ? '<span class="text-xs text-gray-400">İşlem yok</span>' : ''}
+                            </div>
                         </div>
-                        <div class="space-y-1">
-                            ${kasa.bakiyeler.map(b => {
-                    const r = b.miktar >= 0 ? 'text-green-600' : 'text-red-600';
-                    return `<div class="flex justify-between text-xs text-gray-500">
-                                    <span>${b.birim}</span>
-                                    <span class="font-mono font-semibold ${r}">${fmt(b.miktar, 2)}</span>
-                                </div>`;
-                }).join('')}
-                            ${kasa.bakiyeler.length === 0 ? '<span class="text-xs text-gray-400">İşlem yok</span>' : ''}
-                        </div>
-                    </div>
-                `;
+                    `;
+                });
+                body.innerHTML = html;
             }
-            kasalarModalBody.innerHTML = html;
-        }
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            modal.style.display = 'flex';
+        });
 
-        // show modal (both class + inline style to be robust)
-        kasalarModal.classList.remove('hidden');
-        kasalarModal.classList.add('flex');
-        kasalarModal.style.display = 'flex';
+        const closeModal = () => {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            modal.style.display = 'none';
+        };
+
+        if (close) close.addEventListener('click', closeModal);
+        if (bg) bg.addEventListener('click', closeModal);
     };
-
-    const closeKasalarModal = () => {
-        if (kasalarModal) {
-            kasalarModal.classList.add('hidden');
-            kasalarModal.classList.remove('flex');
-            kasalarModal.style.display = 'none';
-        }
-    };
-
-    if (kasalarCard) kasalarCard.addEventListener('click', openKasalarModal);
-    if (kasalarModalClose) kasalarModalClose.addEventListener('click', closeKasalarModal);
-    if (kasalarModalBg) kasalarModalBg.addEventListener('click', closeKasalarModal);
 
     // ─── İlk yükleme ─────────────────────────────────────────────────────────
     renderWelcome();
-
-    // gizlenmesi istenen tekrar eden statik/arka plan 'Kasalar' bölümünü temizle
     removeDuplicateKasalarSection();
 
     await updateRatesAndTicker(false);
-    await fetchKasalar();
+    
+    // Fetch all report data — use initial data if available
+    const initial = window.dashboardInitialData || {};
+    
+    await Promise.all([
+        fetchKasalar(initial.cashReport),
+        fetchBankalar(initial.bankReport),
+        fetchPoslar(initial.posReport)
+    ]);
+
+    // Setup all modals
+    setupModal('kasalar-card', 'kasalar-modal', kasaDetaylar);
+    setupModal('bankalar-card', 'bankalar-modal', bankaDetaylar);
+    setupModal('poslar-card', 'poslar-modal', posDetaylar);
 
 });

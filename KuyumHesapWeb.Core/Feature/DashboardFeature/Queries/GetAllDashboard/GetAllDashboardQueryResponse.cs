@@ -1,18 +1,20 @@
 ﻿using KuyumHesapWeb.Core.Commond.Models.Dtos.MyTaskItemDtos;
+using KuyumHesapWeb.Core.Feature.ReportFeature.Queries.GetBankReport;
 using KuyumHesapWeb.Core.Feature.ReportFeature.Queries.GetCashReport;
+using KuyumHesapWeb.Core.Feature.ReportFeature.Queries.GetPosReport;
 
 namespace KuyumHesapWeb.Core.Feature.DashboardFeature.Queries.GetAllDashboard
 {
-    
+
     public class GetAllDashboardQueryResponse
     {
 
         public GetAllDashboardQueryResponse()
         {
-            PastMissions =new List<GetAllMyTaskQueryResponseDto>();
+            PastMissions = new List<GetAllMyTaskQueryResponseDto>();
             CurrentMissions = new List<GetAllMyTaskQueryResponseDto>();
             FutureMissions = new List<GetAllMyTaskQueryResponseDto>();
-            CashReport = new GetCashReportQueryResponse();
+            CashReport = new();
         }
         /// <summary>
         /// Geçmiş Görevler 
@@ -27,19 +29,12 @@ namespace KuyumHesapWeb.Core.Feature.DashboardFeature.Queries.GetAllDashboard
         /// </summary>
         public List<GetAllMyTaskQueryResponseDto> FutureMissions { get; set; }
 
-        public GetCashReportQueryResponse CashReport{ get; set; }
+        public GetCashReportQueryResponse CashReport { get; set; }
+        public GetPosReportQueryResponse PosReport { get; set; }
+        public GetBankReportQueryResponse BankReport { get; set; }
         public decimal BankBalanceTotal { get; set; }
         public decimal PosBalanceTotal { get; set; }
 
 
-    }
-    public class KasaDetayViewModel
-    {
-        public string DovizKodu { get; set; } = "";
-        public decimal Devreden { get; set; }
-        public decimal GunlukGiris { get; set; }
-        public decimal GunlukCikis { get; set; }
-        public decimal Bakiye { get; set; }
-        public decimal HasKarsiligi { get; set; }
     }
 }

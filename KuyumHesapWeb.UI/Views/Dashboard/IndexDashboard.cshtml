@@ -29,10 +29,46 @@
                 <p class="text-xs text-gray-400 mt-3">Detaylar için tıklayın →</p>
             </div>
         </div>
+        <div id="bankalar-card"
+             class="bg-white rounded-xl shadow-md border-t-4 border-green-500 cursor-pointer hover:shadow-lg transition-shadow"
+             style="width: 320px;">
+            <div class="flex items-center justify-between px-5 pt-4 pb-2">
+                <div>
+                    <h2 class="text-sm font-bold text-gray-700 uppercase tracking-wide">Bankalar</h2>
+                    <p class="text-xs text-gray-400 mt-0.5">Nakit Toplam (HAS)</p>
+                </div>
+                <i class="fas fa-wallet text-xl text-green-500"></i>
+            </div>
+            <div class="px-5 pb-4">
+                <div id="bankalar-ozet" class="flex items-end gap-2 mt-1">
+                    <i class="fas fa-spinner fa-spin text-gray-300 text-xl"></i>
+                </div>
+                <p class="text-xs text-gray-400 mt-3">Detaylar için tıklayın →</p>
+            </div>
+        </div>
+        <div id="poslar-card"
+             class="bg-white rounded-xl shadow-md border-t-4 border-green-500 cursor-pointer hover:shadow-lg transition-shadow"
+             style="width: 320px;">
+            <div class="flex items-center justify-between px-5 pt-4 pb-2">
+                <div>
+                    <h2 class="text-sm font-bold text-gray-700 uppercase tracking-wide">Poslar</h2>
+                    <p class="text-xs text-gray-400 mt-0.5">Nakit Toplam (HAS)</p>
+                </div>
+                <i class="fas fa-wallet text-xl text-green-500"></i>
+            </div>
+            <div class="px-5 pb-4">
+                <div id="poslar-ozet" class="flex items-end gap-2 mt-1">
+                    <i class="fas fa-spinner fa-spin text-gray-300 text-xl"></i>
+                </div>
+                <p class="text-xs text-gray-400 mt-3">Detaylar için tıklayın →</p>
+            </div>
+        </div>
     </div>
+    
 </div>
 
 <!-- Modal ve toastlar (aynı) -->
+<!-- Kasalar Modal -->
 <div id="kasalar-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center">
     <div class="absolute inset-0 bg-black bg-opacity-50" id="kasalar-modal-bg"></div>
     <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 z-10 overflow-hidden">
@@ -44,6 +80,44 @@
             <button id="kasalar-modal-close" class="text-gray-400 hover:text-gray-700 text-2xl leading-none">&times;</button>
         </div>
         <div id="kasalar-modal-body" class="p-6 space-y-3 max-h-96 overflow-y-auto">
+            <div class="flex items-center justify-center py-8">
+                <i class="fas fa-spinner fa-spin text-gray-300 text-3xl"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bankalar Modal -->
+<div id="bankalar-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center">
+    <div class="absolute inset-0 bg-black bg-opacity-50" id="bankalar-modal-bg"></div>
+    <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 z-10 overflow-hidden">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+            <div class="flex items-center gap-3">
+                <i class="fas fa-university text-green-500 text-xl"></i>
+                <h3 class="font-bold text-gray-800 text-lg">Banka Detayları</h3>
+            </div>
+            <button id="bankalar-modal-close" class="text-gray-400 hover:text-gray-700 text-2xl leading-none">&times;</button>
+        </div>
+        <div id="bankalar-modal-body" class="p-6 space-y-3 max-h-96 overflow-y-auto">
+            <div class="flex items-center justify-center py-8">
+                <i class="fas fa-spinner fa-spin text-gray-300 text-3xl"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Poslar Modal -->
+<div id="poslar-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center">
+    <div class="absolute inset-0 bg-black bg-opacity-50" id="poslar-modal-bg"></div>
+    <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 z-10 overflow-hidden">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+            <div class="flex items-center gap-3">
+                <i class="fas fa-credit-card text-green-500 text-xl"></i>
+                <h3 class="font-bold text-gray-800 text-lg">Pos Detayları</h3>
+            </div>
+            <button id="poslar-modal-close" class="text-gray-400 hover:text-gray-700 text-2xl leading-none">&times;</button>
+        </div>
+        <div id="poslar-modal-body" class="p-6 space-y-3 max-h-96 overflow-y-auto">
             <div class="flex items-center justify-center py-8">
                 <i class="fas fa-spinner fa-spin text-gray-300 text-3xl"></i>
             </div>
@@ -67,6 +141,11 @@
 @section Scripts {
     <script>
         window.CURE_GET_LATEST_URL = '@Url.Action("GetLatestCure", "Cure")';
+        window.dashboardInitialData = {
+            cashReport: @Html.Raw(Model?.CashReport != null ? System.Text.Json.JsonSerializer.Serialize(Model.CashReport) : "null"),
+            bankReport: @Html.Raw(Model?.BankReport != null ? System.Text.Json.JsonSerializer.Serialize(Model.BankReport) : "null"),
+            posReport: @Html.Raw(Model?.PosReport != null ? System.Text.Json.JsonSerializer.Serialize(Model.PosReport) : "null")
+        };
     </script>
 
     <script src="~/js/home_dashboard.js" asp-append-version="true"></script>

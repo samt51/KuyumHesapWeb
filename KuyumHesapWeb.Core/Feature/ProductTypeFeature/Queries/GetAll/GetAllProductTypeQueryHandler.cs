@@ -13,7 +13,7 @@ namespace KuyumHesapWeb.Core.Feature.ProductTypeFeature.Queries.GetAll
 
         public async Task<ResponseDto<List<GetAllProductTypeQueryResponse>>> Handle(GetAllProductTypeQueryRequest request, CancellationToken cancellationToken)
         {
-            var data = await _apiService.GetAsync<List<GetAllProductTypeQueryResponse>>("Barcode/GetProductType");
+            var data = await _apiService.GetAsync<List<GetAllProductTypeQueryResponse>>("ProductType/GetAll");
             return data;
         }
     }

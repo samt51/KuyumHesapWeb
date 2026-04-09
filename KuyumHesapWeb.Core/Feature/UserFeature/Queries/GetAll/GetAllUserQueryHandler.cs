@@ -15,7 +15,7 @@ namespace KuyumHesapWeb.Core.Feature.UserFeature.Queries.GetAll
         {
             var data = await _apiService.GetAsync<List<GetAllUserQueryResponse>>("Users/GetAll");
 
-            return new ResponseDto<List<GetAllUserQueryResponse>>().Success(data.data);
+            return data;
         }
     }
 }

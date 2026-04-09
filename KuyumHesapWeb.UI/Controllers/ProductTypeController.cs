@@ -30,30 +30,25 @@ namespace KuyumHesapWeb.UI.Controllers
         {
             return await _mediator.Send(new GetAllProductTypeQueryRequest());
         }
+        [HttpGet]
+        public async Task<ResponseDto<GetByIdProductTypeQueryResponse>> GetById(int id)
+        {
+            return await _mediator.Send(new GetByIdProductTypeQueryRequest(id));
+        }
         public IActionResult Create()
         {
             return View();
         }
         [HttpPost]
-        public async Task<IActionResult> Create(CreateProductTypeCommandRequest request)
+        public async Task<ResponseDto<CreateProductTypeCommandResponse>> Create([FromBody] CreateProductTypeCommandRequest request)
         {
-            await _mediator.Send(request);
-
-            return RedirectToAction("Index");
+            return await _mediator.Send(request);
         }
-        public async Task<IActionResult> Update(int id)
-        {
-            var data = await _mediator.Send(new GetByIdProductTypeQueryRequest(id));
 
-            var map = _mapper.Map<UpdateProductTypeCommandRequest, GetByIdProductTypeQueryResponse>(data.data);
-            return View(map);
-        }
-        [HttpPut]
-        public async Task<IActionResult> Update(UpdateProductTypeCommandRequest request)
+        [HttpPost]
+        public async Task<ResponseDto<UpdateProductTypeCommandResponse>> Update([FromBody] UpdateProductTypeCommandRequest request)
         {
-            await _mediator.Send(request);
-
-            return RedirectToAction("Index");
+            return await _mediator.Send(request);
         }
     }
 }

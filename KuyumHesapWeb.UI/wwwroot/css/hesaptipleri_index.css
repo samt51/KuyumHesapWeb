@@ -1,26 +1,82 @@
-﻿/* hesaptipleri_index.css - HesapTipleri\Index.cshtml */
+/* hesaptipleri_index.css - HesapTipleri\Index.cshtml */
 
+:root {
+    --rolex-green: #4C9779;
+    --success-green: #22c55e;
+    --danger-red: #ef4444;
+}
+
+/* Custom Scrollbar Styles */
+.custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #e2e8f0;
+    border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #cbd5e1;
+}
+
+/* Form Styles */
 .form-group .form-label {
     position: absolute;
-    top: 0.5rem;
-    left: 0.6rem;
-    color: #6b7280;
+    top: 1rem;
+    left: 0.85rem;
+    color: #94a3b8;
     pointer-events: none;
-    transition: all 0.2s ease-in-out;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     background-color: white;
-    padding: 0 0.25rem;
+    padding: 0 0.4rem;
     font-size: 0.875rem;
+    z-index: 10;
 }
 
 .form-group .form-input:focus + .form-label,
 .form-group .form-input:not(:placeholder-shown) + .form-label,
 .form-group .form-input.has-value + .form-label {
-    top: -0.6rem;
-    left: 0.5rem;
+    top: -0.65rem;
+    left: 0.75rem;
     font-size: 0.75rem;
-    color: #1f2937;
+    font-weight: 700;
+    color: var(--rolex-green);
+    background-color: white;
 }
 
-.form-input:required:invalid {
-    color: #6b7280;
+/* Rolex Green Utilities (Fallback for older Tailwind environments) */
+.text-rolex-green { color: var(--rolex-green); }
+.bg-rolex-green { background-color: var(--rolex-green); }
+.bg-rolex-green\/10 { background-color: rgba(76, 151, 121, 0.1); }
+.border-rolex-green { border-color: var(--rolex-green); }
+.border-rolex-green\/30 { border-color: rgba(76, 151, 121, 0.3); }
+.focus\:border-rolex-green:focus { border-color: var(--rolex-green); }
+.focus\:ring-rolex-green\/10:focus { --tw-ring-color: rgba(76, 151, 121, 0.1); }
+.bg-danger { background-color: var(--danger-red); }
+.bg-success { background-color: var(--success-green); }
+
+/* Animation */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.panel {
+    animation: fadeIn 0.4s ease-out forwards;
+}
+
+/* Table Item Hover */
+#item-list > div {
+    transition: all 0.2s ease;
+}
+
+#item-list > div:hover {
+    background-color: #f8fafc;
+    transform: translateX(4px);
+    border-left: 3px solid var(--rolex-green);
 }

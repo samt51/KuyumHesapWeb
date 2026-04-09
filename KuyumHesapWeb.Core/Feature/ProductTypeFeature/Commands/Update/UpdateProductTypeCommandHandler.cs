@@ -15,7 +15,7 @@ namespace KuyumHesapWeb.Core.Feature.ProductTypeFeature.Commands.Update
         {
             var data = await _apiService.PostAsync<UpdateProductTypeCommandRequest, UpdateProductTypeCommandResponse>("ProductType/Update", request);
 
-            return new ResponseDto<UpdateProductTypeCommandResponse>().Success();
+            return data;
         }
     }
 }

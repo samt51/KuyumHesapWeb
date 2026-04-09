@@ -15,7 +15,7 @@ namespace KuyumHesapWeb.Core.Feature.ProductTypeFeature.Queries.GetById
         {
             var data = await _apiService.GetAsync<GetByIdProductTypeQueryResponse>($"ProductType/GetById/{request.Id}");
 
-            return new ResponseDto<GetByIdProductTypeQueryResponse>().Success(data.data);
+            return data;
         }
     }
 }

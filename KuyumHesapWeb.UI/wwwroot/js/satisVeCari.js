@@ -437,13 +437,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 const contentHTML = hareketler.map(h => createEkstreSatiri(h, balancesHistory.get(tryKeys(h, ['MovementId', 'movementId', 'hareketID', 'hareketId'])))).join('');
                 ekstreContent.innerHTML = `<div class="ekstre-list-container">${contentHTML}</div>`;
                 setTimeout(() => {
-                    const firstRow = ekstreContent.querySelector('.ekstre-item');
-                    if (firstRow) {
+                    const items = ekstreContent.querySelectorAll('.ekstre-item');
+                    const lastRow = items[items.length - 1];
+                    if (lastRow) {
                         const prev = ekstreContent.querySelector('.selected-ekstre-row');
-                        if (prev && prev !== firstRow) prev.classList.remove('selected-ekstre-row');
-                        firstRow.classList.add('selected-ekstre-row');
+                        if (prev && prev !== lastRow) prev.classList.remove('selected-ekstre-row');
+                        lastRow.classList.add('selected-ekstre-row');
+                        
+                        // Scroll top into view safely
+                        lastRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
                         try {
-                            const balances = JSON.parse(firstRow.dataset.balances || '{}');
+                            const balances = JSON.parse(lastRow.dataset.balances || '{}');
                             renderBakiyeOzeti(balances);
                         } catch (e) {
                             renderBakiyeOzeti(lastFetchedEkstreFinalBalance);
@@ -919,10 +924,15 @@ document.addEventListener('DOMContentLoaded', () => {
             const response = await fetch(url, { headers: getAuthHeaders() });
             if (!response.ok) throw new Error(`Veri alınamadı: ${response.statusText}`);
             let data = await response.json();
+            // Handle ResponseDto wrapper
+            if (data && !Array.isArray(data) && Array.isArray(data.data)) {
+                data = data.data;
+            }
             if (!Array.isArray(data)) {
                 console.error(`Beklenmeyen veri formatı alındı. URL: ${url}. Alınan veri:`, data);
                 data = [];
             }
+
             if (filter) data = data.filter(filter);
             selectElement.innerHTML = placeholder ? `<option value="">${placeholder}</option>` : '';
             data.forEach(item => {
@@ -3146,7 +3156,128 @@ document.addEventListener('DOMContentLoaded', () => {
             calculateAltinTotals();
         }
 
-        function handleStokSelection(stokId) { selectedStok = allStoklar.find(s => s.stokID == stokId); if (!selectedStok) return; stokAramaInput.value = selectedStok.stokAdi; stokAramaInput.disabled = true; stokAramaInput.classList.add('bg-gray-100'); stokHiyerarsiInput.value = `${selectedStok.stokGrupAdi} / ${selectedStok.stokTipAdi}`; stokKartiListesiDiv.classList.add('hidden'); initialPrompt.classList.add('opacity-0'); setTimeout(() => initialPrompt.classList.add('hidden'), 300);[defaultLayout, altinLayout, hurdaLayout].forEach(l => l.classList.add('hidden', 'opacity-0')); if (selectedStok.stokGrupAdi === 'MADEN GRUBU' && (selectedStok.stokTipAdi === 'ALTIN' || selectedStok.stokTipAdi === 'SARRAFİYE')) { altinLayout.classList.remove('hidden'); setTimeout(() => altinLayout.classList.remove('opacity-0'), 50); iscilikDahilToggle.checked = false; iscilikDahilDegerInput.classList.add('hidden'); iscilikDahilDegerInput.value = formatCurrency(0, 3); altinBirimIscilikInput.readOnly = false; altinBirimIscilikInput.value = formatCurrency(0, 3); gramAdetContainer.style.opacity = '1'; gramAdetContainer.style.pointerEvents = 'auto'; setIscilikMode(false); altinMilyemInput.value = formatCurrency(selectedStok.milyem, 3); altinBirimInput.value = selectedStok.iscilikBirimiKodu || 'N/A'; calculateAltinTotals(); } else if (selectedStok.stokGrupAdi === 'HURDA GRUBU') { hurdaLayout.classList.remove('hidden'); setTimeout(() => hurdaLayout.classList.remove('opacity-0'), 50); hurdaMilyemInput.value = formatCurrency(selectedStok.milyem, 3); calculateHurdaTotals(); } else { defaultLayout.classList.remove('hidden'); setTimeout(() => defaultLayout.classList.remove('opacity-0'), 50); digerMiktarLabel.textContent = `Miktar (${selectedStok.birim || ''})`; digerBirimFiyatLabel.textContent = `Birim Fiyatı (${selectedStok.iscilikBirimiKodu || 'TRY'})`; digerTutarBirimiInput.value = selectedStok.iscilikBirimiKodu || 'TRY'; calculateDefaultTotals(); } }
+        function handleStokSelection(stokId) { selectedStok = allStoklar.find(s => s.stokID == stokId); if (!selectedStok) return; stokAramaInput.value = selectedStok.stokAdi; stokHiyerarsiInput.value = `${selectedStok.stokGrupAdi} / ${selectedStok.stokTipAdi}`; stokKartiListesiDiv.classList.add('hidden'); initialPrompt.classList.add('opacity-0'); setTimeout(() => initialPrompt.classList.add('hidden'), 300);[defaultLayout, altinLayout, hurdaLayout].forEach(l => l.classList.add('hidden', 'opacity-0')); if (selectedStok.stokGrupAdi === 'MADEN GRUBU' && (selectedStok.stokTipAdi === 'ALTIN' || selectedStok.stokTipAdi === 'SARRAFİYE')) { altinLayout.classList.remove('hidden'); setTimeout(() => altinLayout.classList.remove('opacity-0'), 50); iscilikDahilToggle.checked = false; iscilikDahilDegerInput.classList.add('hidden'); iscilikDahilDegerInput.value = formatCurrency(0, 3); altinBirimIscilikInput.readOnly = false; altinBirimIscilikInput.value = formatCurrency(0, 3); gramAdetContainer.style.opacity = '1'; gramAdetContainer.style.pointerEvents = 'auto'; setIscilikMode(false); altinMilyemInput.value = formatCurrency(selectedStok.milyem, 3); altinBirimInput.value = selectedStok.iscilikBirimiKodu || 'N/A'; calculateAltinTotals(); } else if (selectedStok.stokGrupAdi === 'HURDA GRUBU') { hurdaLayout.classList.remove('hidden'); setTimeout(() => hurdaLayout.classList.remove('opacity-0'), 50); hurdaMilyemInput.value = formatCurrency(selectedStok.milyem, 3); calculateHurdaTotals(); } else { defaultLayout.classList.remove('hidden'); setTimeout(() => defaultLayout.classList.remove('opacity-0'), 50); digerMiktarLabel.textContent = `Miktar (${selectedStok.birim || ''})`; digerBirimFiyatLabel.textContent = `Birim Fiyatı (${selectedStok.iscilikBirimiKodu || 'TRY'})`; digerTutarBirimiInput.value = selectedStok.iscilikBirimiKodu || 'TRY'; calculateDefaultTotals(); } }
+
+        stokAramaInput.addEventListener('input', () => { const searchTerm = stokAramaInput.value.toLowerCase(); renderStokListesi(allStoklar.filter(stok => stok.stokAdi.toLowerCase().includes(searchTerm))); stokKartiListesiDiv.classList.remove('hidden'); });
+        stokAramaInput.addEventListener('focus', () => { renderStokListesi(allStoklar); stokKartiListesiDiv.classList.remove('hidden'); });
+        document.addEventListener('click', (e) => { if (!aramaKonteyneri.contains(e.target)) stokKartiListesiDiv.classList.add('hidden'); });
+        stokKartiListesiDiv.addEventListener('click', (e) => { if (e.target.dataset.id) handleStokSelection(e.target.dataset.id); });
+        gramBtn.addEventListener('click', () => setIscilikMode(false));
+        adetBtn.addEventListener('click', () => setIscilikMode(true));
+        iscilikDahilToggle.addEventListener('change', (event) => { const isChecked = event.target.checked; iscilikDahilDegerInput.classList.toggle('hidden', !isChecked); altinBirimIscilikInput.readOnly = isChecked; gramAdetContainer.style.opacity = isChecked ? '0.5' : '1'; gramAdetContainer.style.pointerEvents = isChecked ? 'none' : 'auto'; if (isChecked) { setIscilikMode(false); iscilikDahilDegerInput.value = formatCurrency(0, 3); } else { altinBirimIscilikInput.value = formatCurrency(0, 3); } calculateAltinTotals(); });
+
+        if (iscilikDahilWrapper) {
+            iscilikDahilWrapper.addEventListener('click', (event) => {
+                if (iscilikDahilToggle.disabled) {
+                    event.preventDefault();
+                    showToast('Adet işçilikte "İşçilik Dahil" özelliğini kullanamazsınız.', 'warning');
+                }
+            });
+        }
+
+        iscilikDahilDegerInput.addEventListener('blur', (event) => { const input = event.target; let value = input.value; if (!value) return; let number = 0; if (!value.includes(',') && !value.includes('.')) { number = parseInt(value, 10); if (!isNaN(number) && number > 0) number /= 1000.0; } else { number = parseFormattedNumber(value); } input.value = formatCurrency(number, 3); const milyem = parseFormattedNumber(altinMilyemInput.value); const birimIscilik = number - milyem; altinBirimIscilikInput.value = formatCurrency(Math.max(0, birimIscilik), 3); calculateAltinTotals(); });
+        [digerMiktarInput, digerBirimFiyatInput].forEach(el => el.addEventListener('input', calculateDefaultTotals));
+        [altinMiktarInput, altinBirimIscilikInput, altinAdetInput].forEach(el => el.addEventListener('input', calculateAltinTotals));
+        [hurdaMiktarInput, hurdaMilyemInput].forEach(el => el.addEventListener('input', calculateHurdaTotals));
+        altinBirimIscilikInput.addEventListener('blur', (event) => { const input = event.target; let value = input.value; if (!value) return; if (isAdetMode) { input.value = formatCurrency(parseFormattedNumber(value), 2); } else { if (!value.includes(',') && !value.includes('.')) { let number = parseInt(value, 10); if (!isNaN(number)) { input.value = formatCurrency(number / 1000.0, 3); } } else { input.value = formatCurrency(parseFormattedNumber(value), 3); } } calculateAltinTotals(); });
+        hurdaMilyemInput.addEventListener('blur', (event) => { const input = event.target; let value = input.value; if (!value) return; if (!value.includes(',') && !value.includes('.')) { let number = parseInt(value, 10); if (!isNaN(number) && number > 0) input.value = formatCurrency(number / 1000.0, 3); } else { input.value = formatCurrency(parseFormattedNumber(value), 3); } calculateHurdaTotals(); });
+        return {
+            selectedStok: () => selectedStok,
+            getValues: () => { if (!selectedStok) return null; const visibleLayout = [defaultLayout, altinLayout, hurdaLayout].find(l => !l.classList.contains('hidden')); const descriptionInput = visibleLayout ? visibleLayout.querySelector('.product-description-input') : null; const description = descriptionInput ? descriptionInput.value.trim() : ''; if (selectedStok.stokGrupAdi === 'MADEN GRUBU' && (selectedStok.stokTipAdi === 'ALTIN' || selectedStok.stokTipAdi === 'SARRAFİYE')) { return { stok: selectedStok, miktar: parseFormattedNumber(altinMiktarInput.value), milyem: parseFormattedNumber(altinMilyemInput.value), birim: selectedStok.birim, toplamHas: parseFormattedNumber(altinToplamHasInput.value), currency: 'HAS', type: 'altin', birimIscilik: parseFormattedNumber(altinBirimIscilikInput.value), iscilikTipi: isAdetMode ? 'Adet' : 'Gram', toplamIscilik: parseFormattedNumber(altinIscilikTutariInput.value), iscilikBirimi: altinBirimInput.value, adet: isAdetMode ? (parseInt(altinAdetInput.value) || 0) : 0, iscilikDahil: iscilikDahilToggle.checked, description: description }; } else if (selectedStok.stokGrupAdi === 'HURDA GRUBU') { return { stok: selectedStok, miktar: parseFormattedNumber(hurdaMiktarInput.value), birim: 'GR', toplamHas: parseFormattedNumber(hurdaToplamHasInput.value), currency: 'HAS', type: 'hurda', milyem: parseFormattedNumber(hurdaMilyemInput.value), birimIscilik: 0, iscilikTipi: 'Gram', toplamIscilik: 0, iscilikBirimi: 'HAS', adet: null, iscilikDahil: false, description: description }; } else { return { stok: selectedStok, miktar: parseFormattedNumber(digerMiktarInput.value), birim: selectedStok.birim, toplamTutar: parseFormattedNumber(digerToplamTutarInput.value), currency: digerTutarBirimiInput.value, type: 'diger', description: description }; } },
+            setValues: (details) => { if (!details || !details.stokId) return; handleStokSelection(details.stokId); const visibleLayout = [defaultLayout, altinLayout, hurdaLayout].find(l => !l.classList.contains('hidden')); if (visibleLayout) { const descriptionInput = visibleLayout.querySelector('.product-description-input'); if (descriptionInput) descriptionInput.value = details.description || ''; } if (altinLayout.classList.contains('hidden') === false) { altinMiktarInput.value = formatCurrency(details.miktar); const isAdet = details.iscilikTipi === 'Adet'; if (isAdet) { altinAdetInput.value = details.adet || 1; } setIscilikMode(isAdet); altinBirimIscilikInput.value = formatCurrency(details.birimIscilik, isAdet ? 2 : 3); iscilikDahilToggle.checked = details.iscilikDahil; iscilikDahilToggle.dispatchEvent(new Event('change')); calculateAltinTotals(); } else if (hurdaLayout.classList.contains('hidden') === false) { hurdaMiktarInput.value = formatCurrency(details.miktar); hurdaMilyemInput.value = formatCurrency(details.milyem, 3); calculateHurdaTotals(); } },
+            reset: resetProductForm
+        };
+    };
+
+    /**
+     * Satış Modu için ayrı Ürün Form Mantığı.
+     * Bu fonksiyon Cari modunu bozmadan Satış moduna özel geliştirmeler yapılmasına imkan sağlar.
+     */
+    const initializeSalesProductFormLogic = (formRoot, isGiris) => {
+        const stokHiyerarsiInput = formRoot.querySelector('#stokHiyerarsi');
+        const stokAramaInput = formRoot.querySelector('#stokArama');
+        const stokKartiListesiDiv = formRoot.querySelector('#stokKartiListesi');
+        const aramaKonteyneri = formRoot.querySelector('#aramaKonteyneri');
+        const initialPrompt = formRoot.querySelector('#initial-prompt');
+        const defaultLayout = formRoot.querySelector('#defaultLayout');
+        const altinLayout = formRoot.querySelector('#altinLayout');
+        const hurdaLayout = formRoot.querySelector('#hurdaLayout');
+        const digerMiktarInput = formRoot.querySelector('#diger-miktar');
+        const digerBirimFiyatInput = formRoot.querySelector('#diger-birim-fiyat');
+        const digerToplamTutarInput = formRoot.querySelector('#diger-toplam-tutar');
+        const digerTutarBirimiInput = formRoot.querySelector('#diger-tutar-birimi');
+        const digerMiktarLabel = formRoot.querySelector('#diger-miktar-label');
+        const digerBirimFiyatLabel = formRoot.querySelector('#diger-birim-fiyat-label');
+        const altinMiktarInput = formRoot.querySelector('#altin-miktar');
+        const altinMilyemInput = formRoot.querySelector('#altin-milyem');
+        const altinHasInput = formRoot.querySelector('#altin-has');
+        const iscilikDahilToggle = formRoot.querySelector('#iscilik-dahil-toggle');
+        const iscilikDahilWrapper = iscilikDahilToggle.closest('.flex');
+        const iscilikDahilDegerInput = formRoot.querySelector('#iscilik-dahil-deger');
+        const altinBirimIscilikInput = formRoot.querySelector('#altin-birim-iscilik');
+        const altinBirimInput = formRoot.querySelector('#altin-birim');
+        const altinIscilikTutariInput = formRoot.querySelector('#altin-iscilik-tutari');
+        const altinToplamHasInput = formRoot.querySelector('#altin-toplam-has');
+        const altinAdetInput = formRoot.querySelector('#altin-adet');
+        const gramBtn = formRoot.querySelector('#gram-btn');
+        const adetBtn = formRoot.querySelector('#adet-btn');
+        const gramAdetContainer = formRoot.querySelector('#gram-adet-container');
+
+        const hurdaMiktarInput = formRoot.querySelector('#hurda-miktar');
+        const hurdaMilyemInput = formRoot.querySelector('#hurda-milyem');
+        const hurdaToplamHasInput = formRoot.querySelector('#hurda-toplam-has');
+
+        let selectedStok = null;
+        let isAdetMode = false;
+        const numericProductInputs = [
+            digerMiktarInput,
+            digerBirimFiyatInput,
+            altinMiktarInput,
+            altinBirimIscilikInput,
+            altinAdetInput,
+            iscilikDahilDegerInput,
+            hurdaMiktarInput,
+            hurdaMilyemInput
+        ];
+        numericProductInputs.forEach(enforceNumericInput);
+
+        function calculateDefaultTotals() { const miktar = parseFormattedNumber(digerMiktarInput.value); const birimFiyat = parseFormattedNumber(digerBirimFiyatInput.value); digerToplamTutarInput.value = formatCurrency(miktar * birimFiyat, 2); }
+        function calculateAltinTotals() { const miktar = parseFormattedNumber(altinMiktarInput.value); const milyem = parseFormattedNumber(altinMilyemInput.value); const birimIscilik = parseFormattedNumber(altinBirimIscilikInput.value); const has = miktar * milyem; let iscilikTutari = 0; if (isAdetMode) { const adet = parseInt(altinAdetInput.value) || 0; iscilikTutari = adet * birimIscilik; } else { iscilikTutari = miktar * birimIscilik; } const toplamHas = has + iscilikTutari; altinHasInput.value = formatCurrency(has, 2); altinIscilikTutariInput.value = formatCurrency(iscilikTutari, 2); altinToplamHasInput.value = formatCurrency(toplamHas, 2); }
+        function calculateHurdaTotals() { const miktar = parseFormattedNumber(hurdaMiktarInput.value); const milyem = parseFormattedNumber(hurdaMilyemInput.value); const toplamHas = miktar * milyem; hurdaToplamHasInput.value = formatCurrency(toplamHas, 2); }
+        function renderStokListesi(stoklar) { stokKartiListesiDiv.innerHTML = ''; stoklar.forEach(stok => { const item = document.createElement('div'); item.className = 'p-2 hover:bg-gray-100 cursor-pointer'; item.textContent = stok.stokAdi; item.dataset.id = stok.stokID; stokKartiListesiDiv.appendChild(item); }); }
+        function resetProductForm() { selectedStok = null; stokAramaInput.value = ''; stokAramaInput.disabled = false; stokAramaInput.classList.remove('bg-gray-100'); stokHiyerarsiInput.value = ''; stokHiyerarsiInput.placeholder = 'Stok Kartı Seçiniz';[altinLayout, defaultLayout, hurdaLayout].forEach(l => l.classList.add('hidden', 'opacity-0')); initialPrompt.classList.remove('hidden', 'opacity-0');[digerMiktarInput, digerBirimFiyatInput, altinMiktarInput, hurdaMiktarInput].forEach(el => el.value = formatCurrency(0, 2));[altinBirimIscilikInput, hurdaMilyemInput].forEach(el => el.value = formatCurrency(0, 3)); altinAdetInput.value = '1'; digerTutarBirimiInput.value = ''; digerMiktarLabel.textContent = 'Miktar'; digerBirimFiyatLabel.textContent = 'Birim Fiyatı'; iscilikDahilToggle.checked = false; iscilikDahilToggle.disabled = false; iscilikDahilWrapper.classList.remove('opacity-50', 'cursor-not-allowed'); iscilikDahilDegerInput.classList.add('hidden'); altinBirimIscilikInput.readOnly = false; gramAdetContainer.style.opacity = '1'; gramAdetContainer.style.pointerEvents = 'auto'; setIscilikMode(false); calculateDefaultTotals(); calculateAltinTotals(); calculateHurdaTotals(); }
+
+        function setIscilikMode(isAdet) {
+            if (gramAdetContainer.style.pointerEvents === 'none') return;
+            isAdetMode = isAdet;
+            const currentValue = parseFormattedNumber(altinBirimIscilikInput.value);
+            if (isAdet) {
+                altinAdetInput.classList.remove('hidden');
+                adetBtn.classList.add('toggle-btn-active');
+                adetBtn.classList.remove('toggle-btn-inactive');
+                gramBtn.classList.remove('toggle-btn-active');
+                gramBtn.classList.add('toggle-btn-inactive');
+                altinBirimIscilikInput.value = formatCurrency(currentValue, 2);
+                if (iscilikDahilToggle.checked) {
+                    iscilikDahilToggle.checked = false;
+                    iscilikDahilToggle.dispatchEvent(new Event('change'));
+                }
+                iscilikDahilToggle.disabled = true;
+                iscilikDahilWrapper.classList.add('opacity-50', 'cursor-not-allowed');
+            } else {
+                altinAdetInput.classList.add('hidden');
+                gramBtn.classList.add('toggle-btn-active');
+                gramBtn.classList.remove('toggle-btn-inactive');
+                adetBtn.classList.remove('toggle-btn-active');
+                adetBtn.classList.add('toggle-btn-inactive');
+                altinBirimIscilikInput.value = formatCurrency(currentValue, 3);
+                iscilikDahilToggle.disabled = false;
+                iscilikDahilWrapper.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+            calculateAltinTotals();
+        }
+
+        function handleStokSelection(stokId) { selectedStok = allStoklar.find(s => s.stokID == stokId); if (!selectedStok) return; stokAramaInput.value = selectedStok.stokAdi; stokHiyerarsiInput.value = `${selectedStok.stokGrupAdi} / ${selectedStok.stokTipAdi}`; stokKartiListesiDiv.classList.add('hidden'); initialPrompt.classList.add('opacity-0'); setTimeout(() => initialPrompt.classList.add('hidden'), 300);[defaultLayout, altinLayout, hurdaLayout].forEach(l => l.classList.add('hidden', 'opacity-0')); if (selectedStok.stokGrupAdi === 'MADEN GRUBU' && (selectedStok.stokTipAdi === 'ALTIN' || selectedStok.stokTipAdi === 'SARRAFİYE')) { altinLayout.classList.remove('hidden'); setTimeout(() => altinLayout.classList.remove('opacity-0'), 50); iscilikDahilToggle.checked = false; iscilikDahilDegerInput.classList.add('hidden'); iscilikDahilDegerInput.value = formatCurrency(0, 3); altinBirimIscilikInput.readOnly = false; altinBirimIscilikInput.value = formatCurrency(0, 3); gramAdetContainer.style.opacity = '1'; gramAdetContainer.style.pointerEvents = 'auto'; setIscilikMode(false); altinMilyemInput.value = formatCurrency(selectedStok.milyem, 3); altinBirimInput.value = selectedStok.iscilikBirimiKodu || 'N/A'; calculateAltinTotals(); } else if (selectedStok.stokGrupAdi === 'HURDA GRUBU') { hurdaLayout.classList.remove('hidden'); setTimeout(() => hurdaLayout.classList.remove('opacity-0'), 50); hurdaMilyemInput.value = formatCurrency(selectedStok.milyem, 3); calculateHurdaTotals(); } else { defaultLayout.classList.remove('hidden'); setTimeout(() => defaultLayout.classList.remove('opacity-0'), 50); digerMiktarLabel.textContent = `Miktar (${selectedStok.birim || ''})`; digerBirimFiyatLabel.textContent = `Birim Fiyatı (${selectedStok.iscilikBirimiKodu || 'TRY'})`; digerTutarBirimiInput.value = selectedStok.iscilikBirimiKodu || 'TRY'; calculateDefaultTotals(); } }
 
         stokAramaInput.addEventListener('input', () => { const searchTerm = stokAramaInput.value.toLowerCase(); renderStokListesi(allStoklar.filter(stok => stok.stokAdi.toLowerCase().includes(searchTerm))); stokKartiListesiDiv.classList.remove('hidden'); });
         stokAramaInput.addEventListener('focus', () => { renderStokListesi(allStoklar); stokKartiListesiDiv.classList.remove('hidden'); });
@@ -3214,18 +3345,23 @@ document.addEventListener('DOMContentLoaded', () => {
         middlePanel.classList.remove('hat-green', 'hat-red');
         middlePanel.classList.add(isGiris ? 'hat-green' : 'hat-red');
 
-        const productFormTemplate = document.getElementById('product-form-template');
+        const isSatis = state.operationType === 'satis';
+        const templateId = isSatis ? 'sales-product-form-template' : 'product-form-template';
+        const initLogic = isSatis ? initializeSalesProductFormLogic : initializeProductFormLogic;
+
+        const productFormTemplate = document.getElementById(templateId);
         const clone = productFormTemplate.content.cloneNode(true);
         dynamicContentArea.innerHTML = '';
         dynamicContentArea.appendChild(clone);
 
-        const productForm = initializeProductFormLogic(dynamicContentArea, isGiris);
+        const productForm = initLogic(dynamicContentArea, isGiris);
         productForm.reset();
 
         const isEditing = itemToEdit !== null;
 
         if (isEditing) {
-            dynamicContentArea.querySelector('#product-form-title').textContent = isGiris ? 'Ürün Giriş Düzenle' : 'Ürün Çıkış Düzenle';
+            const title = state.operationType === 'cari' ? (isGiris ? 'Ürün Giriş Düzenle' : 'Ürün Çıkış Düzenle') : (isGiris ? 'Ürün Alış Düzenle' : 'Ürün Satış Düzenle');
+            dynamicContentArea.querySelector('#product-form-title').textContent = title;
             productForm.setValues(itemToEdit.details);
 
             addButton.innerHTML = '<i class="fas fa-sync-alt mr-1.5"></i>Güncelle';
@@ -3239,16 +3375,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 deleteButton.classList.add('hidden');
             }
         } else {
-            dynamicContentArea.querySelector('#product-form-title').textContent = isGiris ? 'Ürün Giriş' : 'Ürün Çıkış';
+            const title = state.operationType === 'cari' ? (isGiris ? 'Ürün Giriş' : 'Ürün Çıkış') : (isGiris ? 'Ürün Alış' : 'Ürün Satış');
+            dynamicContentArea.querySelector('#product-form-title').textContent = title;
             addButton.innerHTML = '<i class="fas fa-check mr-1.5"></i>Ekle';
             addButton.onclick = () => {
                 const values = productForm.getValues();
                 if (!values) { showToast('Lütfen bir stok kartı seçip bilgileri doldurun.', 'warning'); return; }
                 if (values.miktar <= 0) { showToast('Lütfen geçerli bir miktar girin.', 'warning'); return; }
 
+                const newItemType = state.operationType === 'cari' ? (isGiris ? 'urun-giris' : 'urun-cikis') : (isGiris ? 'urun-alis' : 'urun-satis');
                 const newItem = {
                     itemClass: 'product',
-                    type: isGiris ? 'urun-giris' : 'urun-cikis',
+                    type: newItemType,
                     total: values.toplamHas || values.toplamTutar,
                     equivalentTotal: values.toplamHas || values.toplamTutar,
                     isIncome: isGiris,
@@ -6745,12 +6883,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const performAction = () => {
                     isFormDirty = false;
                     if (panelType.startsWith('urun-')) {
-                        if (state.operationType === 'cari') {
-                            handleProductPanelChange(panelType === 'urun-alis');
-                        } else {
-                            showToast('Bu özellik henüz hazırlanıyor.', 'info');
-                            return;
-                        }
+                        handleProductPanelChange(panelType === 'urun-alis' || panelType === 'urun-giris');
                     } else {
                         handlePanelChange(panelType);
                     }

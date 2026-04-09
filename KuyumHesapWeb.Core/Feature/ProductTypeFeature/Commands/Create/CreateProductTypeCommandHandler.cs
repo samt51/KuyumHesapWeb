@@ -15,7 +15,7 @@ namespace KuyumHesapWeb.Core.Feature.ProductTypeFeature.Commands.Create
         {
             var data = await _apiService.PostAsync<CreateProductTypeCommandRequest, CreateProductTypeCommandResponse>("ProductType/Create", request);
 
-            return new ResponseDto<CreateProductTypeCommandResponse>().Success();
+            return data;
         }
     }
 }

@@ -1,43 +1,17 @@
 /* hesaptipleri_index.js - HesapTipleri\Index.cshtml */
-const Front_BASE_URL = (window.API_BASE_URL);
-tailwind.config = {
-    theme: {
-        extend: {
-            colors: {
-                'rolex-green': '#4C9779',
-                'list-item-bg': '#F0FAFA',
-                'success': '#22c55e',
-                'danger': '#ef4444',
-                'secondary': '#6b7280',
-            },
-            keyframes: {
-                'fade-in-out': {
-                    '0%': { opacity: '0', transform: 'translateY(10px)' },
-                    '10%': { opacity: '1', transform: 'translateY(0)' },
-                    '90%': { opacity: '1', transform: 'translateY(0)' },
-                    '100%': { opacity: '0', transform: 'translateY(10px)' },
-                },
-            },
-            animation: {
-                'fade-in-out': 'fade-in-out 3s ease-in-out forwards',
-            },
-        }
-    }
-}
-
-/* ---- */
 
 document.addEventListener('DOMContentLoaded', async () => {
 
     const token = localStorage.getItem('jwt_token');
     const loginUrl = '/Auth/Login';
-    const API_BASE_URL = Front_BASE_URL;
     let currentMode = 'add';
     let itemToDeleteId = null;
     let allItems = [];
 
     // Form ve liste elemanları
     const itemListEl = document.getElementById('item-list');
+    const listCountEl = document.getElementById('list-count');
+    const listSearchEl = document.getElementById('list-search');
     const form = document.getElementById('item-form');
     const addModeButtons = document.getElementById('add-mode-buttons');
     const editModeButtons = document.getElementById('edit-mode-buttons');
@@ -51,7 +25,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const modalItemName = document.getElementById('modal-item-name');
 
     // Form inputları
-    const hesapTipiIDInput = document.getElementById('hesapTipiID');
+    const idInput = document.getElementById('hesapTipiID');
     const hesapTipiAdiInput = document.getElementById('hesapTipiAdi');
     const bilancoSirasiInput = document.getElementById('bilancoSirasi');
     const bilancoAltiHesaplamaInput = document.getElementById('bilancoAltiHesaplama');
@@ -62,11 +36,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     const mapApiToItem = (it) => {
         if (!it) return null;
         return {
-            hesapTipiID: it.id ?? it.Id ?? 0,
-            hesapTipiAdi: it.accountTypeName ?? it.AccountTypeName ?? 'Bilinmeyen',
-            bilancoSirasi: it.balanceOrder ?? it.BalanceOrder ?? 0,
-            bilancoAltiHesaplama: it.isSubBalanceCalculated ?? it.IsSubBalanceCalculated ?? false,
-            aktif: it.isActive ?? it.IsActive ?? true,
+            id: it.id ?? it.Id ?? it.hesapTipiID ?? 0,
+            hesapTipiAdi: it.hesapTipiAdi ?? it.accountTypeName ?? it.AccountTypeName ?? 'Bilinmeyen',
+            bilancoSirasi: it.bilancoSirasi ?? it.balanceOrder ?? it.BalanceOrder ?? 0,
+            bilancoAltiHesaplama: it.bilancoAltiHesaplama ?? it.isSubBalanceCalculated ?? it.IsSubBalanceCalculated ?? false,
+            aktif: it.aktif ?? it.isActive ?? it.IsActive ?? false
         };
     };
 
@@ -82,7 +56,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         if (!json) throw new Error('Sunucudan boş cevap alındı.');
 
-        // Eğer response bir ResponseDto formatındaysa (isSuccess içeriyorsa)
         if (Object.prototype.hasOwnProperty.call(json, 'isSuccess')) {
             if (json.isSuccess === false) {
                 const msg = (json.errors && json.errors.length) ? json.errors.join('\n') : 'İşleminiz gerçekleşemiyor.';
@@ -94,12 +67,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             return json.data;
         }
 
-        // Değilse direkt datadır (MVC Controller'dan dönen JsonResult gibi)
         return json;
     };
 
     const showErrorModal = (message) => {
-        // if modal already exists, update text
         let existing = document.getElementById('api-error-modal');
         if (existing) {
             existing.querySelector('.modal-body').textContent = message;
@@ -108,13 +79,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
         const overlay = document.createElement('div');
         overlay.id = 'api-error-modal';
-        overlay.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50';
+        overlay.className = 'fixed inset-0 z-[120] flex items-center justify-center bg-black/60 backdrop-blur-sm';
         overlay.innerHTML = `
-            <div class="bg-white rounded-lg shadow-lg max-w-md w-full p-4 mx-4">
-                <div class="font-semibold text-lg mb-2">Hata</div>
-                <div class="modal-body text-sm text-gray-700 mb-4">${message}</div>
+            <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 mx-4 border border-gray-100 transform transition-all scale-100">
+                <div class="flex items-center gap-3 mb-4 text-red-600">
+                    <i class="fas fa-exclamation-circle text-2xl"></i>
+                    <div class="font-bold text-xl">Hata Bildirimi</div>
+                </div>
+                <div class="modal-body text-sm text-gray-600 mb-6 leading-relaxed">${message}</div>
                 <div class="text-right">
-                    <button id="api-error-ok" class="px-4 py-2 bg-rolex-green text-white rounded">Tamam</button>
+                    <button id="api-error-ok" class="px-6 py-2 bg-rolex-green text-white font-bold rounded-lg hover:shadow-lg transition-all active:scale-95">Anladım</button>
                 </div>
             </div>`;
         document.body.appendChild(overlay);
@@ -123,10 +97,17 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const showToast = (message, type = 'success') => {
         const toast = document.createElement('div');
-        toast.className = `p-3 rounded-md text-white text-sm shadow-lg animate-fade-in-out ${type === 'success' ? 'bg-rolex-green' : 'bg-danger'}`;
-        toast.textContent = message;
+        const icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
+        // Yeni tasarıma uygun toast renkleri
+        const bgClass = type === 'success' ? 'bg-success' : 'bg-danger';
+        toast.className = `p-4 rounded-xl text-white text-sm font-semibold shadow-2xl animate-fade-in-out flex items-center gap-3 min-w-[300px] border border-white/20 backdrop-blur-md ${bgClass}`;
+        toast.innerHTML = `<i class="fas ${icon} text-lg"></i> <span>${message}</span>`;
         toastContainer.appendChild(toast);
-        setTimeout(() => toast.remove(), 4000);
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateY(20px)';
+            setTimeout(() => toast.remove(), 500);
+        }, 3500);
     };
 
     const fetchItems = async () => {
@@ -135,6 +116,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const data = await parseApiResponse(response);
             allItems = (data || []).map(mapApiToItem);
             renderItemList(allItems);
+            if (listCountEl) listCountEl.textContent = `${allItems.length} Kayıt`;
         } catch (error) {
             if (!error.isModalShown) showToast(error.message, 'danger');
         }
@@ -142,22 +124,26 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const renderItemList = (items) => {
         itemListEl.innerHTML = !items || items.length === 0
-            ? '<p class="text-center text-gray-500 p-4 text-xs">Kayıt bulunamadı.</p>'
+            ? '<div class="flex flex-col items-center justify-center p-12 text-gray-400"><i class="fas fa-folder-open text-4xl mb-3 opacity-20"></i><p class="text-sm font-medium">Kayıt bulunamadı.</p></div>'
             : items.map((item, index) => `
-                        <div class="grid grid-cols-5 items-center p-2 rounded cursor-pointer hover:bg-gray-200 ${index % 2 !== 0 ? 'bg-list-item-bg' : 'bg-white'}" data-id="${item.hesapTipiID}">
-                            <div class="col-span-2">
-                                <span class="font-medium text-gray-700 text-sm">${item.hesapTipiAdi}</span>
-                            </div>
-                            <div class="text-center text-xs text-gray-600">${item.bilancoSirasi}</div>
-                            <div class="flex justify-center">
-                                <div class="w-9 h-5 ${item.aktif ? 'bg-rolex-green' : 'bg-gray-300'} rounded-full relative transition-colors">
-                                    <div class="w-4 h-4 bg-white rounded-full absolute top-[2px] ${item.aktif ? 'right-[2px]' : 'left-[2px]'} transition-all"></div>
+                        <div class="grid grid-cols-5 items-center px-6 py-4 cursor-pointer transition-all border-b border-gray-50 bg-white hover:bg-slate-50 group" data-id="${item.id}">
+                            <div class="col-span-2 flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-lg bg-gray-50 group-hover:bg-rolex-green/10 flex items-center justify-center text-gray-400 group-hover:text-rolex-green transition-all">
+                                    <i class="fas fa-tag text-[10px]"></i>
                                 </div>
+                                <span class="font-bold text-gray-700 text-sm group-hover:text-rolex-green transition-colors">${item.hesapTipiAdi}</span>
                             </div>
-                            <div class="flex justify-center">
-                                <div class="w-9 h-5 ${item.bilancoAltiHesaplama ? 'bg-rolex-green' : 'bg-gray-300'} rounded-full relative transition-colors">
-                                    <div class="w-4 h-4 bg-white rounded-full absolute top-[2px] ${item.bilancoAltiHesaplama ? 'right-[2px]' : 'left-[2px]'} transition-all"></div>
-                                </div>
+                            <div class="text-center">
+                                <span class="bg-gray-100 text-gray-600 px-2 py-0.5 rounded text-[10px] font-bold">${item.bilancoSirasi}</span>
+                            </div>
+                            <div class="text-right">
+                                <span class="inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-[10px] font-bold ${item.aktif ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}">
+                                    <span class="w-1.5 h-1.5 rounded-full ${item.aktif ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'}"></span>
+                                    ${item.aktif ? 'AKTİF' : 'PASİF'}
+                                </span>
+                            </div>
+                            <div class="text-right">
+                                <i class="fas ${item.bilancoAltiHesaplama ? 'fa-check text-emerald-500' : 'fa-times text-gray-300'} text-[10px]"></i>
                             </div>
                         </div>`).join('');
     };
@@ -181,29 +167,24 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const populateForm = (item) => {
         form.reset();
-        hesapTipiIDInput.value = item.hesapTipiID;
+        idInput.value = item.id;
         hesapTipiAdiInput.value = item.hesapTipiAdi;
         bilancoSirasiInput.value = item.bilancoSirasi;
         bilancoAltiHesaplamaInput.checked = item.bilancoAltiHesaplama;
         aktifInput.checked = item.aktif;
 
-        [hesapTipiAdiInput, bilancoSirasiInput].forEach(input => {
-            input.dispatchEvent(new Event('input'));
-            input.classList.toggle('has-value', !!input.value);
-        });
+        // Triggers for floating labels
+        [hesapTipiAdiInput, bilancoSirasiInput].forEach(inp => inp.dispatchEvent(new Event('input', { bubbles: true })));
 
         setMode('edit');
     };
 
     const resetForm = () => {
         form.reset();
-        hesapTipiIDInput.value = '';
-        aktifInput.checked = true;
-        bilancoAltiHesaplamaInput.checked = false;
-        const allInputs = form.querySelectorAll('.form-input');
+        idInput.value = '';
+        const allInputs = form.querySelectorAll('input[type="text"], input[type="number"]');
         allInputs.forEach(input => {
-            input.classList.remove('has-value');
-            input.dispatchEvent(new Event('input'));
+            input.dispatchEvent(new Event('input', { bubbles: true }));
         });
         setMode('add');
     };
@@ -221,33 +202,23 @@ document.addEventListener('DOMContentLoaded', async () => {
             AccountTypeName: hesapTipiAdiInput.value,
             BalanceOrder: parseInt(bilancoSirasiInput.value),
             IsSubBalanceCalculated: bilancoAltiHesaplamaInput.checked,
-            IsActive: aktifInput.checked,
+            IsActive: aktifInput.checked
         };
- 
+
         if (currentMode === 'edit') {
-            payload.Id = parseInt(hesapTipiIDInput.value);
+            payload.Id = parseInt(idInput.value);
         }
 
-        const method = 'POST';
         const url = currentMode === 'add' ? '/AccountType/Create' : '/AccountType/Update';
 
         try {
             const response = await fetch(url, {
-                method: method,
+                method: 'POST',
                 headers: getAuthHeaders(),
                 body: JSON.stringify(payload)
             });
-            if (!response.ok) {
-                // try to get error message from body
-                const txt = await response.text().catch(() => 'İşlem başarısız.');
-                throw new Error(txt || 'İşlem başarısız.');
-            }
-            // Check wrapped response if present
-            const resJson = await response.json().catch(() => null);
-            if (resJson && resJson.isSuccess === false) {
-                const msg = (resJson.errors && resJson.errors.length) ? resJson.errors.join('\n') : 'İşleminiz gerçekleşemiyor.';
-                throw new Error(msg);
-            }
+            
+            const resData = await parseApiResponse(response);
 
             showToast(`Hesap tipi başarıyla ${currentMode === 'add' ? 'eklendi' : 'güncellendi'}.`);
             await fetchItems();
@@ -257,20 +228,29 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
 
+    listSearchEl.addEventListener('input', (e) => {
+        const term = e.target.value.toLowerCase();
+        const filtered = allItems.filter(x => 
+            x.hesapTipiAdi.toLowerCase().includes(term) || 
+            x.bilancoSirasi.toString().includes(term)
+        );
+        renderItemList(filtered);
+    });
+
     const showDeleteModal = (id, name) => {
         itemToDeleteId = id;
         modalItemName.textContent = `'${name}'`;
         deleteModal.classList.remove('hidden');
-        setTimeout(() => deleteModal.querySelector('div').classList.remove('scale-95'), 10);
+        setTimeout(() => deleteModal.children[0].classList.replace('scale-95', 'scale-100'), 10);
     };
 
     const hideDeleteModal = () => {
-        deleteModal.querySelector('div').classList.add('scale-95');
-        setTimeout(() => deleteModal.classList.add('hidden'), 300);
+        deleteModal.children[0].classList.replace('scale-100', 'scale-95');
+        setTimeout(() => deleteModal.classList.add('hidden'), 200);
     };
 
     deleteButton.addEventListener('click', () => {
-        if (hesapTipiIDInput.value) showDeleteModal(hesapTipiIDInput.value, hesapTipiAdiInput.value);
+        if (idInput.value) showDeleteModal(idInput.value, hesapTipiAdiInput.value);
     });
 
     cancelDeleteBtn.addEventListener('click', hideDeleteModal);
@@ -278,24 +258,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     confirmDeleteBtn.addEventListener('click', async () => {
         if (!itemToDeleteId) return;
         try {
-            const response = await fetch(`${API_BASE_URL}/AccountType/${itemToDeleteId}`, { method: 'DELETE', headers: getAuthHeaders() });
-            if (!response.ok) {
-                const txt = await response.text().catch(() => 'Silme işlemi başarısız.');
-                throw new Error(txt || 'Silme işlemi başarısız.');
-            }
-            const resJson = await response.json().catch(() => null);
-            if (resJson && resJson.isSuccess === false) {
-                const msg = (resJson.errors && resJson.errors.length) ? resJson.errors.join('\n') : 'İşleminiz gerçekleşemiyor.';
-                throw new Error(msg);
-            }
-
-            showToast('Kayıt başarıyla silindi.');
+            // Updated to match backend local proxy
+            const response = await fetch(`/AccountType/Delete/${itemToDeleteId}`, {
+                method: 'DELETE', // Local controller might use POST if [HttpDelete] is not set up correctly with [FromBody]
+                headers: getAuthHeaders()
+            });
+            await parseApiResponse(response);
+            showToast('Hesap tipi başarıyla silindi.');
             await fetchItems();
             resetForm();
+            hideDeleteModal();
         } catch (error) {
             if (!error.isModalShown) showToast(error.message, 'danger');
-        } finally {
-            hideDeleteModal();
         }
     });
 

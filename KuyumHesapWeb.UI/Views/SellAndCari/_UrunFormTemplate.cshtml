@@ -1,4 +1,4 @@
-﻿@* Urun form template (JS tarafindan runtime kullanilir) *@
+@* Urun form template (JS tarafindan runtime kullanilir) *@
 
 <template id="product-form-template">
     <h1 id="product-form-title" class="text-xl font-bold text-gray-800 mb-4">Ürün Giriş</h1>
@@ -140,3 +140,146 @@
 
     </div>
 </template>
+
+@* Satış Modu Ürün Formu (Ayrı Şablon) *@
+<template id="sales-product-form-template">
+    <h1 id="product-form-title" class="text-xl font-bold text-gray-800 mb-4">Ürün Alış</h1>
+
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <input type="text" id="stokHiyerarsi" class="w-full p-2 bg-gray-100 border border-gray-200 rounded-md text-gray-600 text-sm mb-2" placeholder="Stok Kartı Seçiniz" disabled>
+            <div class="relative" id="aramaKonteyneri">
+                <input type="text" id="stokArama" class="w-full px-3 py-2 text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Stok ara veya seç...">
+                <div id="stokKartiListesi" class="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto hidden">
+                </div>
+            </div>
+        </div>
+
+        <div id="dinamik-alanlar-wrapper" class="relative" style="min-height: 280px;">
+            <div id="initial-prompt" class="absolute inset-0 flex flex-col items-center justify-center text-gray-400 transition-opacity duration-300">
+                <i class="fas fa-hand-point-up fa-3x mb-3"></i>
+                <p class="font-semibold">Lütfen bir stok kartı seçiniz.</p>
+            </div>
+
+            <div id="defaultLayout" class="hidden space-y-4 opacity-0 transition-opacity duration-300">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="float-label-container w-full m-0">
+                        <input type="text" id="diger-miktar" class="float-label-input text-right font-mono" placeholder=" ">
+                        <label for="diger-miktar" id="diger-miktar-label" class="float-label">Miktar</label>
+                    </div>
+                    <div class="float-label-container w-full m-0">
+                        <input type="text" id="diger-birim-fiyat" class="float-label-input text-right font-mono" placeholder=" ">
+                        <label for="diger-birim-fiyat" id="diger-birim-fiyat-label" class="float-label">Birim Fiyatı</label>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 border-t border-gray-100 pt-4">
+                    <div class="float-label-container w-full m-0">
+                        <input type="text" id="diger-toplam-tutar" class="float-label-input text-right font-mono bg-gray-50" readonly placeholder=" ">
+                        <label for="diger-toplam-tutar" class="float-label">Tutar</label>
+                    </div>
+                    <div class="float-label-container w-full m-0">
+                        <input type="text" id="diger-tutar-birimi" class="float-label-input text-center font-mono bg-gray-50" readonly placeholder=" ">
+                        <label for="diger-tutar-birimi" class="float-label">Tutar Birimi</label>
+                    </div>
+                </div>
+                <div class="float-label-container w-full border-t border-gray-100 pt-4 mt-4">
+                    <textarea id="product-description-default" class="float-label-input pt-4 product-description-input w-full" rows="2" placeholder=" "></textarea>
+                    <label for="product-description-default" class="float-label">Açıklama</label>
+                </div>
+            </div>
+
+            <div id="altinLayout" class="hidden space-y-4 opacity-0 transition-opacity duration-300">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div class="float-label-container w-full m-0">
+                        <input type="text" id="altin-miktar" class="float-label-input text-right font-mono" placeholder=" ">
+                        <label for="altin-miktar" class="float-label">Miktar</label>
+                    </div>
+                    <div class="float-label-container w-full m-0">
+                        <input type="text" id="altin-milyem" class="float-label-input text-right font-mono bg-gray-50" readonly placeholder=" ">
+                        <label for="altin-milyem" class="float-label">Milyem</label>
+                    </div>
+                    <div class="float-label-container w-full m-0">
+                        <input type="text" id="altin-has" class="float-label-input text-right font-mono bg-gray-50" readonly placeholder=" ">
+                        <label for="altin-has" class="float-label">HAS</label>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 items-center py-2">
+                    <div class="flex items-center space-x-2 w-full pt-2">
+                        <div class="karsilik-toggle-container">
+                            <input type="checkbox" id="iscilik-dahil-toggle" class="karsilik-toggle" />
+                            <label for="iscilik-dahil-toggle" class="karsilik-toggle-label"></label>
+                        </div>
+                        <label for="iscilik-dahil-toggle" class="text-sm font-medium text-gray-700 cursor-pointer">İşçilik Dahil</label>
+                    </div>
+                    <div class="w-full">
+                        <input type="text" id="iscilik-dahil-deger" class="w-full px-3 py-2 text-right font-mono border rounded-md hidden placeholder-gray-400" placeholder="İşç. Dahil Değer">
+                    </div>
+                    <div class="hidden sm:block"></div>
+                </div>
+
+                <div class="border-t border-gray-100 pt-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div class="float-label-container w-full m-0">
+                            <input type="text" id="altin-birim-iscilik" class="float-label-input text-right font-mono" placeholder=" ">
+                            <label for="altin-birim-iscilik" class="float-label">Birim İşçilik</label>
+                        </div>
+                        <div class="float-label-container w-full m-0">
+                            <input type="text" id="altin-birim" class="float-label-input text-center font-mono bg-gray-50" readonly placeholder=" ">
+                            <label for="altin-birim" class="float-label">Birim</label>
+                        </div>
+                        <div class="float-label-container w-full m-0">
+                            <input type="text" id="altin-iscilik-tutari" class="float-label-input text-right font-mono bg-gray-50" readonly placeholder=" ">
+                            <label for="altin-iscilik-tutari" class="float-label">İşçilik Tutarı</label>
+                        </div>
+
+                        <div id="gram-adet-container" class="flex items-center justify-start w-full mt-2 sm:mt-0">
+                            <div class="flex items-center border border-blue-500 rounded-md p-0.5 text-sm w-full">
+                                <button id="gram-btn" class="flex-1 px-3 py-1.5 rounded-md toggle-btn-active">Gram</button>
+                                <button id="adet-btn" class="flex-1 px-3 py-1.5 rounded-md toggle-btn-inactive">Adet</button>
+                            </div>
+                        </div>
+                        <div class="w-full">
+                            <input type="text" id="altin-adet" class="w-full px-3 py-2 text-right font-mono border rounded-md hidden" placeholder="Adet" value="1">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="float-label-container w-full border-t border-gray-100 pt-4 mt-4">
+                    <input type="text" id="altin-toplam-has" class="float-label-input text-right font-mono bg-gray-50 font-bold" readonly placeholder=" ">
+                    <label for="altin-toplam-has" class="float-label">Toplam HAS Değeri</label>
+                </div>
+
+                <div class="float-label-container w-full mt-2">
+                    <textarea id="product-description-altin" class="float-label-input pt-4 product-description-input w-full" rows="2" placeholder=" "></textarea>
+                    <label for="product-description-altin" class="float-label">Açıklama</label>
+                </div>
+            </div>
+
+            <div id="hurdaLayout" class="hidden space-y-4 opacity-0 transition-opacity duration-300">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="float-label-container w-full m-0">
+                        <input type="text" id="hurda-miktar" class="float-label-input text-right font-mono" placeholder=" ">
+                        <label for="hurda-miktar" class="float-label">Miktar</label>
+                    </div>
+                    <div class="float-label-container w-full m-0">
+                        <input type="text" id="hurda-milyem" class="float-label-input text-right font-mono" placeholder=" ">
+                        <label for="hurda-milyem" class="float-label">Milyem</label>
+                    </div>
+                </div>
+
+                <div class="float-label-container w-full border-t border-gray-100 pt-4 mt-4">
+                    <input type="text" id="hurda-toplam-has" class="float-label-input text-right font-mono bg-gray-50 font-bold" readonly placeholder=" ">
+                    <label for="hurda-toplam-has" class="float-label">Toplam HAS Değeri</label>
+                </div>
+
+                <div class="float-label-container w-full mt-2">
+                    <textarea id="product-description-hurda" class="float-label-input pt-4 product-description-input w-full" rows="2" placeholder=" "></textarea>
+                    <label for="product-description-hurda" class="float-label">Açıklama</label>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</template>
+

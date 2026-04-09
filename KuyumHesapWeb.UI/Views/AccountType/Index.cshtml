@@ -1,259 +1,174 @@
 @using KuyumHesapWeb.Core.Feature.AccountTypeFeature.Queries.GetAll
 @model List<GetAllAccountTypeQueryResponse>
 @{
-    ViewData["Title"] = "Index";
+    ViewData["Title"] = "Hesap Tipi Tanımlama";
     var noLayout = Context.Request.Query["noLayout"] == "1";
-    Layout = noLayout ? null : "~/Views/Shared/_Layout.cshtml";
+    Layout = noLayout ? "~/Views/Shared/_IframeLayout.cshtml" : "~/Views/Shared/_Layout.cshtml";
 }
 
 @section Styles {
     <link rel="stylesheet" href="~/css/hesaptipleri_index.css" />
 }
- 
 
-    <div class="flex flex-col md:flex-row gap-4 w-full h-[calc(100vh-1.5rem)]">
+<div class="h-screen flex flex-col bg-slate-50 overflow-hidden font-sans">
+    <!-- Top Header Bar -->
+    <div class="flex-shrink-0 bg-white border-b border-gray-200 px-6 py-3 flex justify-between items-center shadow-sm relative z-20">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-rolex-green/10 rounded-xl flex items-center justify-center text-rolex-green">
+                <i class="fas fa-tags text-xl"></i>
+            </div>
+            <div class="hidden sm:block">
+                <h1 class="text-lg font-bold text-gray-800 leading-tight">Hesap Tipi Tanımlama</h1>
+                <p class="text-[10px] text-gray-500 font-medium uppercase tracking-wider">Tanımlamalar / Hesap Yönetimi</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-2">
+            <span id="list-count" class="bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-[11px] font-bold border border-gray-200">0 Kayıt</span>
+        </div>
+    </div>
 
-        <!-- SOL TARAF: FORM PANELİ -->
-        <div class="flex flex-col flex-[3]">
-            <div class="panel bg-white rounded-lg shadow-sm border border-rolex-green p-4 flex flex-col flex-grow min-h-0">
-                <h2 class="text-lg font-semibold text-gray-800 mb-4 pb-2 border-b border-rolex-green flex-shrink-0">Hesap Tipi Tanımlama</h2>
-                <div class="flex-grow overflow-y-auto pr-3 -mr-3">
-                    <form id="item-form" class="space-y-4 mt-2">
-                        <input type="hidden" id="hesapTipiID">
+    <!-- Main Content Area: Forced Flex Row -->
+    <div class="flex-1 flex flex-row gap-3 sm:gap-4 p-3 sm:p-4 overflow-hidden min-h-0">
+        
+        <!-- Left: Form Section -->
+        <div class="w-1/2 min-w-[280px] bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm flex flex-col">
+            <div class="p-5 sm:p-8 flex-1 overflow-y-auto custom-scrollbar">
+                <div class="mb-6">
+                    <h3 class="text-sm font-bold text-gray-900 mb-1">Hesap Tipi Bilgileri</h3>
+                    <p class="text-[10px] sm:text-xs text-gray-500">Yeni hesap tipi ekleyin veya düzenleyin.</p>
+                </div>
 
-                        <div class="relative form-group">
-                            <input type="text" id="hesapTipiAdi" required class="form-input text-sm mt-1 block w-full p-2 border border-rolex-green rounded-md shadow-sm focus:border-black focus:ring-0 peer" placeholder=" ">
-                            <label for="hesapTipiAdi" class="form-label">Hesap Tipi Adı</label>
+                <form id="item-form" class="space-y-6">
+                    <input type="hidden" id="hesapTipiID">
+                    
+                    <div class="grid grid-cols-1 gap-6">
+                        <div class="relative form-group group">
+                            <input type="text" id="hesapTipiAdi" required class="form-input block w-full px-4 py-4 bg-gray-50 border-2 border-transparent rounded-xl text-sm text-gray-900 font-medium transition-all focus:bg-white focus:border-rolex-green focus:ring-4 focus:ring-rolex-green/5 outline-none peer appearance-none" placeholder=" ">
+                            <label for="hesapTipiAdi" class="form-label group-focus-within:text-rolex-green group-focus-within:font-bold">Hesap Tipi Adı</label>
                         </div>
-
-                        <div class="relative form-group">
-                            <input type="number" id="bilancoSirasi" required class="form-input text-sm mt-1 block w-full p-2 border border-rolex-green rounded-md shadow-sm focus:border-black focus:ring-0 peer" placeholder=" ">
-                            <label for="bilancoSirasi" class="form-label">Bilanço Sırası</label>
+                        <div class="relative form-group group">
+                            <input type="number" id="bilancoSirasi" required class="form-input block w-full px-4 py-4 bg-gray-50 border-2 border-transparent rounded-xl text-sm text-gray-900 font-medium transition-all focus:bg-white focus:border-rolex-green focus:ring-4 focus:ring-rolex-green/5 outline-none peer appearance-none" placeholder=" ">
+                            <label for="bilancoSirasi" class="form-label group-focus-within:text-rolex-green group-focus-within:font-bold">Bilanço Sırası</label>
                         </div>
+                    </div>
 
-                        <div class="border border-rolex-green rounded-md p-2 flex items-center justify-between">
-                            <span class="text-xs font-medium text-gray-700">Bilanço Altı Hesaplama</span>
+                    <div class="grid grid-cols-1 gap-4">
+                        <div class="bg-gray-50 border border-gray-100 rounded-2xl p-4 flex items-center justify-between hover:bg-white hover:border-rolex-green/30 transition-all group">
+                            <div class="flex items-center gap-3">
+                                <div class="w-9 h-9 rounded-xl bg-white flex items-center justify-center text-gray-400 group-hover:text-rolex-green transition-colors shadow-sm">
+                                    <i class="fas fa-calculator text-xs"></i>
+                                </div>
+                                <span class="text-xs font-bold text-gray-700">Bilanço Altı</span>
+                            </div>
                             <label class="relative inline-flex items-center cursor-pointer">
                                 <input type="checkbox" id="bilancoAltiHesaplama" class="sr-only peer">
-                                <div class="w-9 h-5 bg-gray-200 rounded-full peer peer-focus:ring-2 peer-focus:ring-rolex-green peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-rolex-green"></div>
+                                <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-focus:ring-4 peer-focus:ring-rolex-green/20 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-rolex-green"></div>
                             </label>
                         </div>
 
-                        <div class="border border-rolex-green rounded-md p-2 flex items-center justify-between">
-                            <span class="text-xs font-medium text-gray-700">Aktif</span>
+                        <div class="bg-gray-50 border border-gray-100 rounded-2xl p-4 flex items-center justify-between hover:bg-white hover:border-rolex-green/30 transition-all group">
+                            <div class="flex items-center gap-3">
+                                <div class="w-9 h-9 rounded-xl bg-white flex items-center justify-center text-gray-400 group-hover:text-rolex-green transition-colors shadow-sm">
+                                    <i class="fas fa-check-circle text-xs"></i>
+                                </div>
+                                <span class="text-xs font-bold text-gray-700">Durum (Aktif)</span>
+                            </div>
                             <label class="relative inline-flex items-center cursor-pointer">
                                 <input type="checkbox" id="aktif" class="sr-only peer" checked>
-                                <div class="w-9 h-5 bg-gray-200 rounded-full peer peer-focus:ring-2 peer-focus:ring-rolex-green peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-rolex-green"></div>
+                                <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-focus:ring-4 peer-focus:ring-rolex-green/20 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-rolex-green"></div>
                             </label>
                         </div>
+                    </div>
+                </form>
+            </div>
 
-                    </form>
+            <!-- Bottom Actions -->
+            <div class="p-4 sm:p-6 border-t border-gray-100 bg-gray-50/50 rounded-b-2xl">
+                <div id="add-mode-buttons" class="flex justify-end gap-2">
+                    <button type="button" id="vazgec-btn" class="px-4 sm:px-8 py-2.5 bg-white border border-gray-200 text-gray-600 text-xs font-bold rounded-xl hover:bg-gray-100 transition-all active:scale-[0.98]">
+                        VAZGEÇ
+                    </button>
+                    <button type="submit" form="item-form" class="px-6 sm:px-10 py-2.5 bg-rolex-green text-white text-xs font-bold rounded-xl hover:bg-opacity-90 hover:shadow-lg hover:shadow-rolex-green/20 transition-all active:scale-[0.98] flex items-center justify-center gap-2">
+                        <i class="fas fa-plus-circle"></i>
+                        <span>EKLE</span>
+                    </button>
                 </div>
-                <div class="flex justify-end gap-3 pt-4 mt-auto border-t border-gray-200 flex-shrink-0">
-                    <div id="add-mode-buttons" class="flex gap-x-3">
-                        <button type="button" id="vazgec-btn" class="px-6 py-1.5 bg-secondary text-white text-sm font-semibold rounded-md hover:bg-opacity-90 shadow-sm">VAZGEÇ</button>
-                        <button type="submit" form="item-form" class="px-6 py-1.5 bg-success text-white text-sm font-semibold rounded-md hover:bg-opacity-90 shadow-sm">EKLE</button>
-                    </div>
-                    <div id="edit-mode-buttons" class="hidden flex gap-x-3">
-                        <button type="button" id="sil-btn" class="px-6 py-1.5 bg-danger text-white text-sm font-semibold rounded-md hover:bg-opacity-90 shadow-sm">SİL</button>
-                        <button type="button" id="vazgec-guncelle-btn" class="px-6 py-1.5 bg-secondary text-white text-sm font-semibold rounded-md hover:bg-opacity-90 shadow-sm">VAZGEÇ</button>
-                        <button type="submit" form="item-form" class="px-6 py-1.5 bg-rolex-green text-white text-sm font-semibold rounded-md hover:bg-opacity-90 shadow-sm">GÜNCELLE</button>
-                    </div>
+
+                <div id="edit-mode-buttons" class="hidden flex justify-end gap-2">
+                    <button type="button" id="sil-btn" class="px-4 py-2.5 bg-red-50 text-red-600 text-xs font-bold rounded-xl hover:bg-red-100 transition-all active:scale-[0.98] flex items-center justify-center gap-2">
+                        <i class="fas fa-trash-alt"></i>
+                        <span class="hidden sm:inline">SİL</span>
+                    </button>
+                    <button type="button" id="vazgec-guncelle-btn" class="px-4 py-2.5 bg-white border border-gray-200 text-gray-600 text-xs font-bold rounded-xl hover:bg-gray-100 transition-all active:scale-[0.98]">
+                        VAZGEÇ
+                    </button>
+                    <button type="submit" form="item-form" class="px-6 sm:px-10 py-2.5 bg-rolex-green text-white text-xs font-bold rounded-xl hover:bg-opacity-90 hover:shadow-lg hover:shadow-rolex-green/20 transition-all active:scale-[0.98] flex items-center justify-center gap-2">
+                        <i class="fas fa-save text-sm"></i>
+                        <span>GÜNCELLE</span>
+                    </button>
                 </div>
             </div>
         </div>
 
-        <!-- SAĞ TARAF: LİSTE PANELİ -->
-        <div class="flex flex-col flex-[2]">
-            <div class="panel bg-white rounded-lg shadow-sm border border-rolex-green p-3 flex flex-col flex-grow min-h-0">
-                <h2 class="text-lg font-semibold text-gray-800 mb-3 pb-2 border-b border-rolex-green">Hesap Tipi Listesi</h2>
-                <div class="flex-grow overflow-y-auto">
-                    <div class="grid grid-cols-5 items-center text-xs font-semibold text-gray-500 px-2 py-1.5 border-b sticky top-0 bg-white z-10">
-                        <span class="col-span-2">Hesap Tipi Adı</span>
-                        <span class="text-center">Bilanço Sırası</span>
-                        <span class="text-center">Durum</span>
-                        <span class="text-center">B.A. Hesap</span>
+        <!-- Right: List Section -->
+        <div class="flex-1 bg-white border border-gray-200 rounded-2xl flex flex-col min-w-0 shadow-sm relative overflow-hidden">
+            <!-- List Header -->
+            <div class="p-4 sm:p-6 border-b border-gray-100">
+                <div class="flex flex-col gap-4">
+                    <h3 class="text-sm font-bold text-gray-900">Hesap Tipleri Listesi</h3>
+                    <div class="relative w-full">
+                        <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
+                        <input type="text" id="list-search" placeholder="Listede ara..." class="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:ring-2 focus:ring-rolex-green/10 focus:border-rolex-green outline-none transition-all">
                     </div>
-                    <div id="item-list" class="space-y-1"></div>
+                </div>
+            </div>
+
+            <!-- Table Header -->
+            <div class="px-4 sm:px-6 py-3 bg-gray-50/50 border-b border-gray-100">
+                <div class="grid grid-cols-5 items-center px-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                    <span class="col-span-2">Ad</span>
+                    <span class="text-center">Sıra</span>
+                    <span class="text-right">Durum</span>
+                    <span class="text-right">B.A.H.</span>
+                </div>
+            </div>
+            
+            <!-- Items Container -->
+            <div id="item-list" class="flex-1 overflow-y-auto custom-scrollbar divide-y divide-gray-50">
+                <!-- JS will populate here -->
+                <div class="flex flex-col items-center justify-center p-20 text-gray-300">
+                    <div class="animate-pulse flex flex-col items-center">
+                        <i class="fas fa-circle-notch fa-spin text-3xl mb-4"></i>
+                        <span class="text-xs font-semibold">Yükleniyor...</span>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
+</div>
 
-    <!-- Silme Onay Modalı -->
-    <div id="delete-modal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center hidden z-50 transition-opacity duration-300">
-        <div class="bg-white rounded-lg shadow-xl p-4 w-full max-w-xs transform transition-all duration-300 scale-95">
-            <h3 class="text-base font-semibold text-gray-800">Kaydı Sil</h3>
-            <p class="mt-2 text-xs text-gray-600">Bu kaydı silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.</p>
-            <div id="modal-item-name" class="mt-2 font-bold text-rolex-green text-sm"></div>
-            <div class="mt-4 flex justify-end gap-3">
-                <button id="cancel-delete-btn" class="px-4 py-1.5 bg-secondary text-white text-sm font-semibold rounded-md hover:bg-opacity-90 shadow-sm">İptal</button>
-                <button id="confirm-delete-btn" class="px-4 py-1.5 bg-danger text-white text-sm font-semibold rounded-md hover:bg-opacity-90 shadow-sm">Sil</button>
-            </div>
+<!-- Silme Onay Modalı -->
+<div id="delete-modal" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center hidden z-50 transition-all duration-300">
+    <div class="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm transform transition-all duration-300 scale-95 border border-gray-100">
+        <div class="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
+            <i class="fas fa-exclamation-triangle text-2xl"></i>
+        </div>
+        <h3 class="text-xl font-bold text-gray-800 text-center">Kaydı Sil</h3>
+        <p class="mt-3 text-sm text-gray-500 text-center leading-relaxed">Bu kaydı silmek istediğinizden emin misiniz? Bu işlem <span class="font-bold text-red-600">geri alınamaz</span>.</p>
+        <div id="modal-item-name" class="mt-4 p-3 bg-gray-50 rounded-lg font-bold text-rolex-green text-center text-sm border border-gray-100"></div>
+        <div class="mt-8 flex justify-center gap-3">
+            <button id="cancel-delete-btn" class="flex-1 px-4 py-2.5 bg-gray-100 text-gray-600 text-sm font-bold rounded-xl hover:bg-gray-200 transition-colors shadow-sm">VAZGEÇ</button>
+            <button id="confirm-delete-btn" class="flex-1 px-4 py-2.5 bg-danger text-white text-sm font-bold rounded-xl hover:bg-opacity-90 transition-all shadow-md">SİL</button>
         </div>
     </div>
+</div>
 
-    <div id="toast-container" class="fixed bottom-4 right-4 z-50"></div>
+<div id="toast-container" class="fixed bottom-6 right-6 z-50 flex flex-col gap-2"></div>
+
 @section Scripts {
     <script>
         window.CURE_GET_LATEST_URL = '@Url.Action("GetLatestCure", "Cure")';
     </script>
-
     <script src="~/js/hesaptipleri_index.js" asp-append-version="true"></script>
 }
- 
 
-
-
-
-
-@* <!DOCTYPE html>
-<html lang="tr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hesap Tipi Tanımlama</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        'rolex-green': '#4C9779',
-                        'list-item-bg': '#F0FAFA',
-                        'success': '#22c55e',
-                        'danger': '#ef4444',
-                        'secondary': '#6b7280',
-                    },
-                    keyframes: {
-                        'fade-in-out': {
-                            '0%': { opacity: '0', transform: 'translateY(10px)' },
-                            '10%': { opacity: '1', transform: 'translateY(0)' },
-                            '90%': { opacity: '1', transform: 'translateY(0)' },
-                            '100%': { opacity: '0', transform: 'translateY(10px)' },
-                        },
-                    },
-                    animation: {
-                        'fade-in-out': 'fade-in-out 3s ease-in-out forwards',
-                    },
-                }
-            }
-        }
-    </script>
-    <style>
-        .form-group .form-label {
-            position: absolute;
-            top: 0.5rem;
-            left: 0.6rem;
-            color: #6b7280;
-            pointer-events: none;
-            transition: all 0.2s ease-in-out;
-            background-color: white;
-            padding: 0 0.25rem;
-            font-size: 0.875rem;
-        }
-
-        .form-group .form-input:focus + .form-label,
-        .form-group .form-input:not(:placeholder-shown) + .form-label,
-        .form-group .form-input.has-value + .form-label {
-            top: -0.6rem;
-            left: 0.5rem;
-            font-size: 0.75rem;
-            color: #1f2937;
-        }
-
-        .form-input:required:invalid {
-            color: #6b7280;
-        }
-    </style>
-</head>
-<body class="bg-gray-100 p-3 overflow-hidden">
-
-    <div class="flex flex-col md:flex-row gap-4 w-full h-[calc(100vh-1.5rem)]">
-
-        <!-- SOL TARAF: FORM PANELİ -->
-        <div class="flex flex-col flex-[3]">
-            <div class="panel bg-white rounded-lg shadow-sm border border-rolex-green p-3 flex flex-col flex-grow min-h-0">
-                <div class="flex justify-between items-center mb-3 pb-2 border-b border-rolex-green">
-                    <div class="flex items-center gap-2">
-                        <div class="relative">
-                            <a asp-controller="AccountType" asp-action="Create" class="px-6 py-1.5 bg-success text-white text-sm font-semibold rounded-md hover:bg-opacity-90 shadow-sm">EKLE</a>
-                        </div>
-
-                    </div>
-                </div>
-                <h2 class="text-lg font-semibold text-gray-800 mb-3 pb-2 border-b border-rolex-green">Hesap Tipi Listesi</h2>
-                <div class="flex-grow overflow-y-auto">
-
-                    <div class="grid grid-cols-6 items-center text-xs font-semibold text-gray-500 px-2 py-1.5 border-b sticky top-0 bg-white z-10">
-                        <span class="col-span-2">Hesap Tipi Adı</span>
-                        <span class="text-center">Bilanço Sırası</span>
-                        <span class="text-center">Durum</span>
-                        <span class="text-center">B.A. Hesap</span>
-                        <span class="text-center">İşlem</span>
-                    </div>
-
-                    <div id="item-list" class="space-y-1">
-                        @foreach (var item in Model)
-                        {
-                            <div class="grid grid-cols-6 items-center p-2 rounded cursor-pointer hover:bg-gray-200 bg-white"
-                                 data-id="@item.Id">
-
-                                <div class="col-span-2">
-                                    <span class="font-medium text-gray-700 text-sm">@item.AccountTypeName</span>
-                                </div>
-
-                                <div class="text-center text-xs text-gray-600">@item.BalanceOrder</div>
-
-                                <!-- DURUM (IsActive) -->
-                                <div class="flex justify-center">
-                                    <div class="w-9 h-5 @(item.IsActive ? "bg-rolex-green" : "bg-gray-300") rounded-full relative transition-colors">
-                                        <div class="w-4 h-4 bg-white rounded-full absolute top-[2px] @(item.IsActive ? "right-[2px]" : "left-[2px]") transition-all"></div>
-                                    </div>
-                                </div>
-
-                                <!-- B.A. HESAP -->
-                                <div class="flex justify-center">
-                                    <div class="w-9 h-5 @(item.IsSubBalanceCalculated ? "bg-rolex-green" : "bg-gray-300") rounded-full relative transition-colors">
-                                        <div class="w-4 h-4 bg-white rounded-full absolute top-[2px] @(item.IsSubBalanceCalculated ? "right-[2px]" : "left-[2px]") transition-all"></div>
-                                    </div>
-                                </div>
-
-                                <!-- İŞLEM -->
-                                <div class="flex justify-center gap-2">
-                                    <a href="/AccountType/Update/@item.Id"
-                                       class="w-8 h-8 inline-flex items-center justify-center rounded-md border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 shadow-sm"
-                                       title="Güncelle">
-                                        <i class="fas fa-pen text-xs"></i>
-                                    </a>
-
-                                    <button type="button"
-                                            class="w-8 h-8 inline-flex items-center justify-center rounded-md border border-red-200 bg-red-50 hover:bg-red-100 text-red-700 shadow-sm"
-                                            title="Sil"
-                                            data-action="delete"
-                                            data-id="@item.Id">
-                                        <i class="fas fa-trash text-xs"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        }
-                    </div>
-
-                </div>
-            </div>
-
-        </div>
- 
-
-    </div>
-
- 
-
-    <div id="toast-container" class="fixed bottom-4 right-4 z-50"></div>
-
-    <script>
- 
-    </script>
-</body>
-</html>
- *@

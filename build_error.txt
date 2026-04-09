@@ -1,0 +1,16 @@
+  Geri y??klenecek projeler belirleniyor...
+C:\Users\Administrator\Documents\Projects\KuyumHesapWeb\KuyumHesapWeb.Core\KuyumHesapWeb.Core.csproj : warning NU1903: 'AutoMapper' 12.0.0 paketinde ??nem derecesi y??ksek olan bilinen bir https://github.com/advisories/GHSA-rvv3-g6hj-g44x g??venlik a???????? var
+  Geri y??kleme i??in t??m projeler g??ncel.
+C:\Users\Administrator\Documents\Projects\KuyumHesapWeb\KuyumHesapWeb.Core\KuyumHesapWeb.Core.csproj : warning NU1903: 'AutoMapper' 12.0.0 paketinde ??nem derecesi y??ksek olan bilinen bir https://github.com/advisories/GHSA-rvv3-g6hj-g44x g??venlik a???????? var
+  KuyumHesapWeb.Core -> C:\Users\Administrator\Documents\Projects\KuyumHesapWeb\KuyumHesapWeb.Core\bin\Debug\net8.0\KuyumHesapWeb.Core.dll
+
+Olu??turma ba??ar??l?? oldu.
+
+C:\Users\Administrator\Documents\Projects\KuyumHesapWeb\KuyumHesapWeb.Core\KuyumHesapWeb.Core.csproj : warning NU1903: 'AutoMapper' 12.0.0 paketinde ??nem derecesi y??ksek olan bilinen bir https://github.com/advisories/GHSA-rvv3-g6hj-g44x g??venlik a???????? var
+C:\Users\Administrator\Documents\Projects\KuyumHesapWeb\KuyumHesapWeb.Core\KuyumHesapWeb.Core.csproj : warning NU1903: 'AutoMapper' 12.0.0 paketinde ??nem derecesi y??ksek olan bilinen bir https://github.com/advisories/GHSA-rvv3-g6hj-g44x g??venlik a???????? var
+    2 Uyar??
+    0 Hata
+
+Ge??en S??re 00:00:01.11
+
+???? y??k?? g??ncelle??tirmeleri var. Daha fazla bilgi i??in `dotnet workload list` ??al????t??r??n.

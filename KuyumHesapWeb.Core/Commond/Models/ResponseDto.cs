@@ -1,8 +1,8 @@
-﻿namespace KuyumHesapWeb.Core.Commond.Models
+namespace KuyumHesapWeb.Core.Commond.Models
 {
     public class ResponseDto<T>
     {
-        public T data { get; set; }
+        public T data { get; set; } = default!;
         public int statusCode { get; set; }
         public bool isSuccess { get; set; }
         public List<string> errors { get; set; } = new List<string>();

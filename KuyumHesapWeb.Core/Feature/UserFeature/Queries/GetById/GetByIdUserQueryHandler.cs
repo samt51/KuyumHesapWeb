@@ -14,7 +14,7 @@ namespace KuyumHesapWeb.Core.Feature.UserFeature.Queries.GetById
         {
             var data = await _apiService.GetAsync<GetByIdUserQueryResponse>($"Users/GetById/{request.Id}");
 
-            return new ResponseDto<GetByIdUserQueryResponse>().Success(data.data);
+            return data;
         }
     }
 }

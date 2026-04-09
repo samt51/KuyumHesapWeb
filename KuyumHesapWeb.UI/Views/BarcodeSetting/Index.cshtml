@@ -5,31 +5,8 @@
     Layout = noLayout ? "~/Views/Shared/_IframeLayout.cshtml" : "~/Views/Shared/_Layout.cshtml";
 }
 
-<!DOCTYPE html>
-<html lang="tr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Barkod Ayarı</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+@section Styles {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        'rolex-green': '#4C9779',
-                        'list-item-bg': '#F0FAFA',
-                        'success': '#22c55e',
-                        'danger': '#ef4444',
-                        'warning': '#f97316',
-                        'info': '#3b82f6',
-                        'secondary': '#6b7280',
-                    }
-                }
-            }
-        }
-    </script>
     <style>
         .draggable-item {
             user-select: none;
@@ -128,8 +105,7 @@
             pointer-events: none;
         }
     </style>
-</head>
-<body class="bg-gray-100 p-3 overflow-hidden">
+}
 
     <div class="w-full h-[calc(100vh-1.5rem)]">
         <div class="panel bg-white rounded-lg shadow-sm border border-rolex-green p-4 flex flex-col h-full">
@@ -333,9 +309,11 @@
     <!-- Toast Bildirimleri -->
     <div id="toast-container" class="fixed top-5 right-5 z-[100] space-y-2"></div>
 
+@section Scripts {
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             console.log('? Sayfa yüklendi!');
+            // ... (All original script logic remains here)
 
             // API Bağlantısı
             const API_URL = 'https://localhost:7055/api/BarkodAyar';
@@ -897,7 +875,6 @@
             console.log('? Sayfa hazır!');
         });
     </script>
-</body>
-</html>
+}
 
 

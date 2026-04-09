@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace KuyumHesapWeb.UI.Controllers
 {
+    [Route("[controller]")]
     public class CurrencyController : BaseController
     {
         private readonly IMediator _mediator;
@@ -20,11 +21,13 @@ namespace KuyumHesapWeb.UI.Controllers
             _mapper = mapper;
         }
 
+        [HttpGet("[action]")]
         public async Task<IActionResult> Index()
         {
             return View();
         }
 
+        [HttpGet("[action]")]
         public IActionResult Create()
         {
             return View();
@@ -36,6 +39,7 @@ namespace KuyumHesapWeb.UI.Controllers
 
             return data;
         }
+        [HttpGet("[action]")]
         public async Task<IActionResult> Update(int id)
         {
             var data = await _mediator.Send(new GetByIdCurrencyQueryRequest(id));
@@ -48,13 +52,13 @@ namespace KuyumHesapWeb.UI.Controllers
             var data = await _mediator.Send(request);
             return data;
         }
-        [HttpGet]
+        [HttpGet("GetAll")]
         public async Task<IActionResult> GetAll()
         {
             var data = await _mediator.Send(new GetAllCurrencyQueryRequest());
             return Ok(data);
         }
-        [HttpGet("GetById/{id}")]
+        [HttpGet("GetById")]
         public async Task<ResponseDto<GetByIdCurrencyQueryResponse>> GetById(int id)
         {
             return await _mediator.Send(new GetByIdCurrencyQueryRequest(id));

@@ -1,0 +1,100 @@
+/* hesaplar_index.css - Account\Index.cshtml */
+
+:root {
+    --rolex-green: #4C9779;
+    --success-green: #059669; /* emerald-600 */
+    --danger-red: #dc2626; /* red-600 */
+}
+
+/* Custom Scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+    width: 5px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #e2e8f0;
+    border-radius: 10px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #cbd5e1;
+}
+
+/* Floating Labels */
+.form-group .form-label {
+    position: absolute;
+    top: 1.15rem;
+    left: 1rem;
+    color: #94a3b8;
+    pointer-events: none;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    background-color: transparent;
+    padding: 0 0.4rem;
+    font-size: 0.85rem;
+    z-index: 10;
+}
+
+.form-group .form-input:focus + .form-label,
+.form-group .form-input:not(:placeholder-shown) + .form-label,
+.form-group .form-input.has-value + .form-label {
+    top: -0.6rem;
+    left: 0.8rem;
+    font-size: 0.7rem;
+    font-weight: 800;
+    color: var(--rolex-green);
+    background-color: white;
+}
+
+/* Tab Style */
+.tab-button.active {
+    border-color: var(--rolex-green);
+    color: var(--rolex-green);
+}
+
+/* Rolex Green Utilities */
+.text-rolex-green { color: var(--rolex-green); }
+.bg-rolex-green { background-color: var(--rolex-green); }
+.bg-rolex-green\/10 { background-color: rgba(76, 151, 121, 0.1); }
+.border-rolex-green { border-color: var(--rolex-green); }
+.focus\:border-rolex-green:focus { border-color: var(--rolex-green); }
+.focus\:ring-rolex-green\/5:focus { --tw-ring-color: rgba(76, 151, 121, 0.05); }
+
+/* Animations */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.tab-content.active {
+    display: block;
+    animation: fadeIn 0.3s ease-out forwards;
+}
+
+.animate-fade-in-out {
+    animation: toastFade 3.5s ease-in-out forwards;
+}
+
+@keyframes toastFade {
+    0% { opacity: 0; transform: translateY(20px); }
+    10% { opacity: 1; transform: translateY(0); }
+    90% { opacity: 1; transform: translateY(0); }
+    100% { opacity: 0; transform: translateY(-20px); }
+}
+
+/* Hover Effects */
+#item-list > div {
+    transition: all 0.2s ease;
+}
+
+#item-list > div:hover {
+    transform: translateX(4px);
+    border-left: 3px solid var(--rolex-green);
+}
+
+/* Form Input Focus */
+.form-input:focus {
+    background-color: white;
+    border-color: var(--rolex-green);
+    box-shadow: 0 0 0 4px rgba(76, 151, 121, 0.05);
+}

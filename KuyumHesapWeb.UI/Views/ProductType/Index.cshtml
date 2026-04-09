@@ -1,12 +1,147 @@
-﻿@using KuyumHesapWeb.Core.Feature.ProductTypeFeature.Queries.GetAll
-@model List<GetAllProductTypeQueryResponse>
+@using KuyumHesapWeb.Core.Feature.ProductTypeFeature.Queries.GetAll
+
 @{
-    ViewData["Title"] = "Index";
+    ViewData["Title"] = "Ürün Tipi Tanımlama";
     var noLayout = Context.Request.Query["noLayout"] == "1";
     Layout = noLayout ? "~/Views/Shared/_IframeLayout.cshtml" : "~/Views/Shared/_Layout.cshtml";
 }
 
-
 @section Styles {
-    <link rel="stylesheet" href="~/css/stoktipleri_index.css" />
+    <link rel="stylesheet" href="~/css/uruntipleri_index.css" asp-append-version="true" />
+}
+
+<div class="h-screen flex flex-col bg-slate-50 overflow-hidden font-sans">
+    <!-- Top Header Bar -->
+    <div class="flex-shrink-0 bg-white border-b border-gray-200 px-6 py-3 flex justify-between items-center shadow-sm relative z-20">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-rolex-green/10 rounded-xl flex items-center justify-center text-rolex-green">
+                <i class="fas fa-gem text-xl"></i>
+            </div>
+            <div class="hidden sm:block">
+                <h1 class="text-lg font-bold text-gray-800 leading-tight">Ürün Tipi Tanımlama</h1>
+                <p class="text-[10px] text-gray-500 font-medium uppercase tracking-wider">Tanımlamalar / Ürün Yönetimi</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-2">
+            <span id="list-count" class="bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-[11px] font-bold border border-gray-200">0 Kayıt</span>
+        </div>
+    </div>
+
+    <!-- Main Content Area: Forced Flex Row -->
+    <div class="flex-1 flex flex-row gap-3 sm:gap-4 p-3 sm:p-4 overflow-hidden min-h-0">
+        
+        <!-- Left: Form Section -->
+        <div class="w-1/2 min-w-[280px] bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm flex flex-col">
+            <div class="p-5 sm:p-8 flex-1 overflow-y-auto custom-scrollbar">
+                <div class="mb-6">
+                    <h3 class="text-sm font-bold text-gray-900 mb-1">Ürün Bilgileri</h3>
+                    <p class="text-[10px] sm:text-xs text-gray-500">Yeni ürün tipi ekleyin veya düzenleyin.</p>
+                </div>
+
+                <form id="item-form" class="space-y-6">
+                    <input type="hidden" id="id">
+                    
+                    <div class="space-y-6">
+                        <div class="relative form-group group">
+                            <input type="text" id="urunTipiAdi" required class="form-input block w-full px-4 py-4 bg-gray-50 border-2 border-transparent rounded-xl text-sm text-gray-900 font-medium transition-all focus:bg-white focus:border-rolex-green focus:ring-4 focus:ring-rolex-green/5 outline-none peer appearance-none" placeholder=" ">
+                            <label for="urunTipiAdi" class="form-label group-focus-within:text-rolex-green group-focus-within:font-bold">Ürün Tipi Adı</label>
+                        </div>
+                    </div>
+                </form>
+
+                <div class="mt-8 p-4 bg-blue-50/50 rounded-xl border border-blue-100/50">
+                    <div class="flex gap-2">
+                        <i class="fas fa-info-circle text-blue-500 mt-0.5 text-xs"></i>
+                        <p class="text-[10px] text-blue-700 leading-relaxed font-medium">
+                            Eklediğiniz her ürün tipi, satış ve stok modüllerinde ürünleri gruplandırmak için kullanılacaktır.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bottom Actions -->
+            <div class="p-4 sm:p-6 border-t border-gray-100 bg-gray-50/50 rounded-b-2xl">
+                <div id="add-mode-buttons" class="flex justify-end gap-2">
+                    <button type="button" id="vazgec-btn" class="px-4 sm:px-8 py-2.5 bg-white border border-gray-200 text-gray-600 text-xs font-bold rounded-xl hover:bg-gray-100 transition-all active:scale-[0.98]">
+                        VAZGEÇ
+                    </button>
+                    <button type="submit" form="item-form" class="px-6 sm:px-10 py-2.5 bg-rolex-green text-white text-xs font-bold rounded-xl hover:bg-opacity-90 hover:shadow-lg hover:shadow-rolex-green/20 transition-all active:scale-[0.98] flex items-center justify-center gap-2">
+                        <i class="fas fa-plus-circle"></i>
+                        <span>EKLE</span>
+                    </button>
+                </div>
+
+                <div id="edit-mode-buttons" class="hidden flex justify-end gap-2">
+                    <button type="button" id="sil-btn" class="px-4 py-2.5 bg-red-50 text-red-600 text-xs font-bold rounded-xl hover:bg-red-100 transition-all active:scale-[0.98] flex items-center justify-center gap-2">
+                        <i class="fas fa-trash-alt"></i>
+                        <span class="hidden sm:inline">SİL</span>
+                    </button>
+                    <button type="button" id="vazgec-guncelle-btn" class="px-4 py-2.5 bg-white border border-gray-200 text-gray-600 text-xs font-bold rounded-xl hover:bg-gray-100 transition-all active:scale-[0.98]">
+                        VAZGEÇ
+                    </button>
+                    <button type="submit" form="item-form" class="px-6 sm:px-10 py-2.5 bg-rolex-green text-white text-xs font-bold rounded-xl hover:bg-opacity-90 hover:shadow-lg hover:shadow-rolex-green/20 transition-all active:scale-[0.98] flex items-center justify-center gap-2">
+                        <i class="fas fa-save text-sm"></i>
+                        <span>GÜNCELLE</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right: List Section -->
+        <div class="flex-1 bg-white border border-gray-200 rounded-2xl flex flex-col min-w-0 shadow-sm relative overflow-hidden">
+            <!-- List Header -->
+            <div class="p-4 sm:p-6 border-b border-gray-100">
+                <div class="flex flex-col gap-4">
+                    <h3 class="text-sm font-bold text-gray-900">Ürün Tipleri Listesi</h3>
+                    <div class="relative w-full">
+                        <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
+                        <input type="text" id="list-search" placeholder="Listede ara..." class="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:ring-2 focus:ring-rolex-green/10 focus:border-rolex-green outline-none transition-all">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Table Header -->
+            <div class="px-4 sm:px-6 py-3 bg-gray-50/50 border-b border-gray-100">
+                <div class="grid grid-cols-1 items-center px-2 sm:px-4">
+                    <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Ürün Tipi Adı</span>
+                </div>
+            </div>
+            
+            <!-- Items Container -->
+            <div id="item-list" class="flex-1 overflow-y-auto custom-scrollbar divide-y divide-gray-50">
+                <!-- JS will populate here -->
+                <div class="flex flex-col items-center justify-center p-20 text-gray-300">
+                    <div class="animate-pulse flex flex-col items-center">
+                        <i class="fas fa-circle-notch fa-spin text-3xl mb-4"></i>
+                        <span class="text-xs font-semibold">Yükleniyor...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modals & Toasts -->
+<div id="toast-container" class="fixed bottom-8 right-8 z-[100] flex flex-col gap-3"></div>
+
+<!-- Custom Delete Modal -->
+<div id="delete-modal" class="fixed inset-0 z-[110] flex items-center justify-center hidden">
+    <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"></div>
+    <div class="bg-white rounded-3xl shadow-2xl max-w-sm w-full p-8 relative z-10 m-4 transform transition-all scale-95 border border-gray-100">
+        <div class="w-16 h-16 bg-red-50 rounded-2xl flex items-center justify-center text-red-500 mb-6 mx-auto">
+            <i class="fas fa-trash-alt text-2xl"></i>
+        </div>
+        <h3 class="text-xl font-bold text-gray-900 text-center mb-2">Emin misiniz?</h3>
+        <p class="text-gray-500 text-center text-sm mb-8 leading-relaxed">
+            <span id="modal-item-name" class="font-bold text-gray-800"></span> kaydını silmek üzeresiniz. Bu işlem geri alınamaz.
+        </p>
+        <div class="flex gap-4">
+            <button id="cancel-delete-btn" class="flex-1 py-4 bg-gray-100 text-gray-600 font-bold rounded-xl hover:bg-gray-200 transition-all active:scale-95">VAZGEÇ</button>
+            <button id="confirm-delete-btn" class="flex-1 py-4 bg-red-600 text-white font-bold rounded-xl hover:bg-red-700 shadow-lg shadow-red-200 transition-all active:scale-95">SİL</button>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/uruntipleri_index.js" asp-append-version="true"></script>
 }
