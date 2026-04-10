@@ -1,8 +1,10 @@
+using KuyumHesapWeb.Core.Commond.Models;
 using KuyumHesapWeb.Core.Commond.Models.Dtos.SettingsDtos;
 using KuyumHesapWeb.Core.Feature.AccountFeature.Queries.GetAll;
 using KuyumHesapWeb.Core.Feature.AccountTypeFeature.Queries.GetAll;
 using KuyumHesapWeb.Core.Feature.CurrencyFeature.Queries.GetAll;
 using KuyumHesapWeb.Core.Feature.SettingsFeature.Commands.Create;
+using KuyumHesapWeb.Core.Feature.SettingsFeature.Commands.DeleteAllSystem;
 using KuyumHesapWeb.Core.Feature.SettingsFeature.Commands.Update;
 using KuyumHesapWeb.Core.Feature.SettingsFeature.Queries.CheckTable;
 using KuyumHesapWeb.Core.Feature.SettingsFeature.Queries.GetAll;
@@ -143,6 +145,20 @@ namespace KuyumHesapWeb.UI.Controllers
                 return RedirectToAction(nameof(General), new { noLayout = Request.Query["noLayout"].ToString() });
             }
             return RedirectToAction(nameof(General));
+        }
+        [HttpGet("Settings/DeleteAllSystem/{code}")]
+        public async Task<ResponseDto<DeleteAllSystemCommandResponse>> DeleteAllSystem(int code)
+        {
+            if (code == 5151)
+            {
+                return await _mediator.Send(new DeleteAllSystemCommandRequest());
+            }
+            return new ResponseDto<DeleteAllSystemCommandResponse>
+            {
+                isSuccess = false,
+                statusCode = 400,
+                errors = new List<string> { "Geçersiz kod" }
+            };
         }
     }
 }

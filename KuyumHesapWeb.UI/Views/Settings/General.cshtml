@@ -241,6 +241,31 @@
             <p class="text-sm text-gray-500 mt-1">Sistem genelinde kullanılan hesap tipleri ve varsayılan değerleri yapılandırın.</p>
         </div>
 
+        <!-- Reset System Section -->
+        <div class="settings-card p-4 border border-red-100 bg-red-50/30 mb-6 flex items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center text-red-600">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <div>
+                    <h3 class="text-sm font-bold text-gray-800">Tüm sistemi sıfırlayınız</h3>
+                    <p class="text-xs text-gray-500">Bu işlem geri alınamaz!</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-3">
+                <div class="flex flex-col">
+                    <div class="flex items-center gap-2">
+                        <label for="resetPassword" class="text-xs font-semibold text-gray-600">şifre:</label>
+                        <input type="password" id="resetPassword" maxlength="4" class="w-20 h-9 border border-gray-300 rounded-lg px-2 text-center text-sm focus:border-red-500 focus:ring-2 focus:ring-red-200 outline-none transition-all" placeholder="****">
+                        <button type="button" id="resetBtn" disabled class="h-9 px-4 bg-red-600 hover:bg-red-700 disabled:bg-gray-300 text-white rounded-lg text-sm font-bold transition-all flex items-center gap-2 shadow-sm">
+                            <i class="fas fa-trash-alt"></i> Sil
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
         @if (TempData["SuccessMessage"] != null)
         {
             <div class="toast-success">
@@ -511,6 +536,53 @@
             });
         } catch (e) {
             console.warn('cleanup kasalar error', e);
+        }
+
+        // --- Reset System Logic ---
+        const passwordInput = document.getElementById('resetPassword');
+        const resetBtn = document.getElementById('resetBtn');
+
+        if (passwordInput && resetBtn) {
+            passwordInput.addEventListener('input', function () {
+                resetBtn.disabled = this.value.length !== 4;
+            });
+
+            resetBtn.addEventListener('click', async function () {
+                const code = passwordInput.value;
+                if (code.length !== 4) return;
+
+                if (!confirm('DİKKAT! Tüm sistemi sıfırlamak istediğinize emin misiniz? Bu işlem geri alınamaz ve tüm verileriniz silinecektir!')) {
+                    return;
+                }
+
+                resetBtn.disabled = true;
+                resetBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Siliniyor...';
+
+                try {
+                    const response = await fetch(`/Settings/DeleteAllSystem/${code}`);
+                    
+                    // Önce text olarak alıp loglayabiliriz veya direkt json decode etmeyi deneyebiliriz.
+                    // Controller ResponseDto dönüyor.
+                    const result = await response.json();
+
+                    if (result.isSuccess) {
+                        alert('Sistem başarıyla sıfırlandı. Sayfa yenileniyor...');
+                        window.location.reload();
+                    } else {
+                        const errorMsg = (result.errors && result.errors.length > 0) 
+                                         ? result.errors.join(', ') 
+                                         : 'İşlem başarısız (Kod yanlış olabilir).';
+                        alert('Hata: ' + errorMsg);
+                        resetBtn.disabled = false;
+                        resetBtn.innerHTML = '<i class="fas fa-trash-alt"></i> Sil';
+                    }
+                } catch (error) {
+                    console.error('Reset error:', error);
+                    alert('İşlem sırasında bir hata oluştu veya bağlantı kesildi.');
+                    resetBtn.disabled = false;
+                    resetBtn.innerHTML = '<i class="fas fa-trash-alt"></i> Sil';
+                }
+            });
         }
     });
 </script>
