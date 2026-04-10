@@ -3934,23 +3934,26 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     const updateMutabakatStatus = async (hareketId, isMutabik) => {
         try {
-            const response = await fetch(`${API_BASE_URL}/Fisler/hareketler/${hareketId}/mutabakat`, {
-                method: 'PUT',
+            const response = await fetch(`${API_BASE_URL}/Movement/MutabakatUpdate`, {
+                method: 'POST',
                 headers: {
                     ...getAuthHeaders(),
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    mutabakat: isMutabik,
-                    kullanici: 'kuyumhesap-ops', // Mevcut kullanıcı
-                    tarih: '2025-10-26 21:56:50' // UTC formatında sistem tarihi
+                    MovementId: parseInt(hareketId, 10),
+                    IsReconciled: isMutabik
                 })
             });
 
-            if (!response.ok) {
-                throw new Error('Mutabakat durumu güncellenemedi.');
+            const data = await response.json();
+            const isSuccess = (data && (data.isSuccess || data.IsSuccess)) || false;
+
+            if (!response.ok || !isSuccess) {
+                const errorMsg = (data && data.errors && data.errors.length > 0) ? data.errors[0] : 'İşlem başarısız';
+                throw new Error(errorMsg);
             }
-            showToast('Mutabakat durumu güncellendi.', 'success');
+            showToast('İşlem başarılı', 'success');
 
         } catch (error) {
             showToast(error.message, 'danger');
