@@ -28,21 +28,21 @@ namespace KuyumHesapWeb.UI.Controllers
             return View();
         }
 
-        [HttpPost]
+        [HttpPost("[action]")]
         public async Task<IActionResult> Create([FromBody] CreateAccountCommandRequestDto model)
         {
             var data = await _mediator.Send(model);
             return Ok(data);
         }
 
-        [HttpGet("[action]")]
+        [HttpGet("[action]/{id}")]
         public async Task<IActionResult> GetById(int id)
         {
             var data = await _mediator.Send(new GetByIdAccountQueryRequest(id));
             return Ok(data);
         }
 
-        [HttpPost]
+        [HttpPost("[action]")]
         public async Task<IActionResult> Update([FromBody] GetByIdAccountAndAccountTypeResponseDto request)
         {
             // Mapper is used to convert response dto back to command request if needed
@@ -53,7 +53,7 @@ namespace KuyumHesapWeb.UI.Controllers
             return Ok(result);
         }
 
-        [HttpDelete]
+        [HttpDelete("[action]/{id}")]
         public async Task<IActionResult> Delete(int id)
         {
             // Need to verify if there is a DeleteAccountCommandRequest

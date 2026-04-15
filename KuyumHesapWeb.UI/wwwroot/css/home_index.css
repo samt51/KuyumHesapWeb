@@ -127,6 +127,26 @@ body {
     transition: transform 0.3s ease-in-out;
 }
 
-    .chevron-icon.rotate-180 {
-        transform: rotate(180deg);
-    }
+.chevron-icon.rotate-180 {
+    transform: rotate(180deg);
+}
+
+/* Sidebar Submenu Accordion Styles (Mobile) */
+#sidebar-menu .submenu {
+    background-color: #fcfcfc;
+    border-top: 1px solid #f0f0f0;
+}
+
+#sidebar-menu .submenu a {
+    padding-left: 3rem !important; /* Indent sublinks */
+    background-color: white;
+}
+
+#sidebar-menu .submenu a:hover {
+    background-color: rgba(30, 132, 73, 0.05) !important;
+}
+
+/* Hide flyout if submenu is shown inline */
+#sidebar-menu .submenu:not(.hidden) ~ #submenu-flyout {
+    display: none;
+}

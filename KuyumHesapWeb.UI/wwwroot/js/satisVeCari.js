@@ -300,7 +300,8 @@ document.addEventListener('DOMContentLoaded', () => {
         activeCurrency: 'TRY',
         activeCurrencyId: null,
         loadedFis: null,
-        fisList: []
+        fisList: [],
+        isInternalLoading: false
     };
     let isFormDirty = false;
     let timeUpdateInterval;
@@ -468,7 +469,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // fetchAndRenderCariBakiye — cari bakiye çağrısını artık POST üzerinden yapar; alan isimleri esnek okunur
     // fetchAndRenderCariBakiye — cari bakiye çağrısını artık POST üzerinden yapar
-    const fetchAndRenderCariBakiye = async (endDateString) => {
+    const fetchAndRenderCariBakiye = async (endDateString, targetFisId = null) => {
         const selectedValue = customerSlimSelect.getSelected();
         const hesapId = Array.isArray(selectedValue) ? selectedValue[0] : selectedValue;
 
@@ -478,13 +479,31 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
+        // YENİ: Eğer targetFisId verilmediyse ama yüklü bir fişimiz varsa, onun context'ini kullan
+        if (!targetFisId && state.loadedFis && state.loadedFis.fisID) {
+            targetFisId = state.loadedFis.fisID;
+            if (!endDateString && state.loadedFis.tarih) {
+                try {
+                    endDateString = getLocalDateString(new Date(state.loadedFis.tarih));
+                } catch (e) { console.warn('state.loadedFis.tarih parse fail', e); }
+            }
+        }
+
         try {
             const baslangicTarihi = '1970-01-01';
-            const bitisTarihi = endDateString ? getLocalDateString(new Date(endDateString)) : getLocalDateString(new Date());
+            // Eğer bir bitiş tarihi verilmişse (örn. fiş yüklenirken), o tarihin bir sonrasına kadar çekmek 
+            // fişin içindeki tüm hareketlerin (özellikle gün sonuna denk gelme ihtimaline karşı) 
+            // ekstreye dahil olmasını garanti eder.
+            let fetchEndDate = new Date();
+            if (endDateString) {
+                fetchEndDate = new Date(endDateString);
+                fetchEndDate.setDate(fetchEndDate.getDate() + 1); 
+            }
+            const bitisTarihi = getLocalDateString(fetchEndDate);
 
             const data = await getHesapEkstresi(hesapId, baslangicTarihi, bitisTarihi);
             // getHesapEkstresi artık Data unwrap yapıyor; yine de esnek olalım
-            const payload = (data && (data.DevredenBakiyeler || data.devredenBakiyeler || data.DevredenBakiyeler)) ? data : (data && (data.Data || data.data) ? (data.Data || data.data) : data);
+            const payload = (data && (data.DevredenBakiyeler || data.devredenBakiyeler)) ? data : (data && (data.Data || data.data) ? (data.Data || data.data) : data);
 
             const bakiyeDurumu = (payload.DevredenBakiyeler || payload.devredenBakiyeler || payload.DevredenBakiye || []).reduce((acc, b) => {
                 const code = tryKeys(b, ['CurrencyCode', 'currencyCode', 'dovizKodu', 'Currency', 'BalanceCurrency']) || '';
@@ -493,10 +512,33 @@ document.addEventListener('DOMContentLoaded', () => {
                 return acc;
             }, {});
 
-            (payload.Hareketler || payload.hareketler || payload.Hareketler || payload.Hareket || []).forEach(h => {
+            const hareketler = (payload.Hareketler || payload.hareketler || payload.Movements || payload.movements || []);
+            console.log(`fetchAndRenderCariBakiye: [DEBUG] Searching for target=${targetFisId} in ${hareketler.length} movements.`);
+            for (const h of hareketler) {
+                const hFisId = tryKeys(h, ['ReceiptId', 'receiptId', 'fisID', 'fisId']);
+                const hMovId = tryKeys(h, ['MovementId', 'movementId', 'hareketID', 'hareketId']);
+                
+                // Match primarily on ReceiptId, but allow fallback to MovementId if target matches (since they are often confused in UI)
+                const isMatch = (targetFisId && (String(hFisId) === String(targetFisId) || String(hMovId) === String(targetFisId)));
+                
+                if (isMatch) {
+                    console.log(`fetchAndRenderCariBakiye: [MATCH FOUND] movement=(M:${hMovId}, R:${hFisId}) matches target=${targetFisId}`);
+                    const bCurrency = tryKeys(h, ['BalanceCurrency', 'balanceCurrency', 'birim']);
+                    const oldBal = tryKeys(h, ['OldBalance', 'oldBalance', 'eskiBakiye']);
+                    if (bCurrency && oldBal !== undefined && oldBal !== null) {
+                        console.log(`fetchAndRenderCariBakiye: [SETTING] ${bCurrency} = ${oldBal}`);
+                        bakiyeDurumu[bCurrency] = Number(oldBal);
+                    }
+                    console.log('fetchAndRenderCariBakiye: [BREAK] Loop stopped.');
+                    break;
+                }
+                
                 const bakiyeGosterimBirimi = tryKeys(h, ['BalanceCurrency', 'balanceCurrency', 'karsilikBirim', 'birim', 'BalanceCurrency']) || '';
-                bakiyeDurumu[bakiyeGosterimBirimi] = (tryKeys(h, ['FinalBalance', 'finalBalance', 'sonBakiye', 'FinalBal', 'final_bal']) ?? bakiyeDurumu[bakiyeGosterimBirimi] ?? 0);
-            });
+                if (bakiyeGosterimBirimi) {
+                    bakiyeDurumu[bakiyeGosterimBirimi] = (tryKeys(h, ['FinalBalance', 'finalBalance', 'sonBakiye', 'FinalBal', 'final_bal']) ?? bakiyeDurumu[bakiyeGosterimBirimi] ?? 0);
+                }
+            }
+            console.log('fetchAndRenderCariBakiye: [FINAL STATE]', JSON.stringify(bakiyeDurumu));
 
             cariDevirBakiyeler = bakiyeDurumu;
         } catch (error) {
@@ -3788,7 +3830,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 updatedItemData.equivalentCurrency = karsilikBirimi;
                 updatedItemData.equivalentCurrencyId = (karsilikAktif && document.getElementById('form-virman-karsilik-currency')) ? document.getElementById('form-virman-karsilik-currency').value : currencyId;
                 updatedItemData.hesapKuru = karsilikKuru;
-                updatedItem.details.karsilikAktif = true; // EKLENDİ
+                updatedItemData.details.karsilikAktif = true; // DÜZELTİLDİ: updatedItemData kullanıldı
 
             } else {
                 updatedItem.details.karsilikAktif = false; // EKLENDİ
@@ -3846,40 +3888,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 updatedItem.hesapKuru = hesapRate;
                 updatedItem.equivalentCurrencyId = equivalentCurrencySelect.value;
                 updatedItem.equivalentCurrency = allCurrencies.find(c => c.id == updatedItem.equivalentCurrencyId)?.dovizKodu;
+                updatedItem.details.karsilikAktif = true; // EKLENDİ
             } else {
-                // Yeni mantık: (Tutar * KaynakKur) / HedefKur
-                try {
-                    const miktarRate = parseFormattedNumber(document.getElementById('form-exchange-rate-miktar').value);
-                    const equivalentCurrencySelect = document.getElementById('form-currency-equivalent');
-                    const targetCurrencyId = equivalentCurrencySelect && equivalentCurrencySelect.value ? equivalentCurrencySelect.value : (nationalCurrency ? nationalCurrency.id : null);
-
-                    // ONLY for Nakit Ödeme and Nakit Çıkış (User specified)
-                    const isEntryFlagForFetch = (originalItem.isIncome === false) ? true : null;
-
-                    const sourceRateLive = await fetchLatestCure(currencyId, isEntryFlagForFetch);
-                    const targetRateLive = targetCurrencyId ? await fetchLatestCure(targetCurrencyId, isEntryFlagForFetch) : (nationalCurrency ? await fetchLatestCure(nationalCurrency.id, isEntryFlagForFetch) : null);
-
-                    const safeSource = (typeof sourceRateLive === 'number' && sourceRateLive > 0) ? sourceRateLive : (miktarRate || 1);
-                    const safeTarget = (typeof targetRateLive === 'number' && targetRateLive > 0) ? targetRateLive : 1;
-
-                    updatedItem.equivalentTotal = (amount * safeSource) / safeTarget;
-                    const targetCurrencyObj = allCurrencies.find(c => String(c.id) === String(targetCurrencyId)) || allCurrencies.find(c => c.dovizKodu === (nationalCurrency && nationalCurrency.dovizKodu));
-                    updatedItem.equivalentCurrency = targetCurrencyObj ? targetCurrencyObj.dovizKodu : (nationalCurrency ? nationalCurrency.dovizKodu : currency);
-                    updatedItem.equivalentCurrencyId = targetCurrencyObj ? targetCurrencyObj.id : currencyId;
-                    updatedItem.miktarKuru = safeSource;
-                    updatedItem.hesapKuru = safeTarget;
-
-                    // UI'ya yaz
-                    const amountEquivalentInput = document.getElementById('form-amount-equivalent');
-                    if (amountEquivalentInput) amountEquivalentInput.value = formatCurrency(parseFloat(updatedItem.equivalentTotal.toFixed(2)), 2);
-                } catch (err) {
-                    console.error('Güncelleme sırasında karşılık hesaplama hatası:', err);
-                    updatedItem.equivalentTotal = updatedItem.total;
-                    updatedItem.equivalentCurrency = updatedItem.currency;
-                    updatedItem.equivalentCurrencyId = currencyId;
-                    updatedItem.miktarKuru = parseFormattedNumber(document.getElementById('form-exchange-rate-miktar').value);
-                    updatedItem.hesapKuru = updatedItem.miktarKuru;
-                }
+                updatedItem.details.karsilikAktif = false;
+                updatedItem.equivalentTotal = amount;
+                updatedItem.equivalentCurrency = currency;
+                updatedItem.equivalentCurrencyId = currencyId;
+                updatedItem.miktarKuru = parseFormattedNumber(document.getElementById('form-exchange-rate-miktar').value) || 1;
+                updatedItem.hesapKuru = updatedItem.miktarKuru;
             }
         } else {
             // SATIŞ modu:
@@ -4179,38 +4195,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 newItem.hesapKuru = hesapKuru;
                 newItem.details.karsilikAktif = true; // EKLENDİ
             } else {
-                newItem.details.karsilikAktif = false; // EKLENDİ
-                try {
-                    const equivalentCurrencySelect = document.getElementById('form-currency-equivalent');
-                    const targetCurrencyId = equivalentCurrencySelect && equivalentCurrencySelect.value ? equivalentCurrencySelect.value : (nationalCurrency ? nationalCurrency.id : null);
-
-                    const { equivalent, sourceRate, targetRate } = await computeEquivalentForCurrencies(
-                        total,
-                        currencyId,
-                        targetCurrencyId,
-                        // isEntry: ONLY true for Nakit Ödeme and Nakit Çıkış (isIncome === false)
-                        (isIncome === false) ? true : null
-                    );
-
-                    const targetCurrencyObj = allCurrencies.find(c => String(c.id) === String(targetCurrencyId)) || allCurrencies.find(c => c.dovizKodu === (nationalCurrency && nationalCurrency.dovizKodu));
-                    const targetCurrencyCode = targetCurrencyObj ? targetCurrencyObj.dovizKodu : (nationalCurrency ? nationalCurrency.dovizKodu : currency);
-
-                    newItem.equivalentTotal = parseFloat((equivalent || 0).toFixed(2));
-                    newItem.equivalentCurrency = targetCurrencyCode || currency;
-                    newItem.equivalentCurrencyId = targetCurrencyObj ? targetCurrencyObj.id : currencyId;
-                    newItem.hesapKuru = targetRate || 1;
-                    newItem.miktarKuru = sourceRate || 1;
-
-                    // UI'ya da yaz (eğer form üzerindeyse)
-                    const amountEquivalentInput = document.getElementById('form-amount-equivalent');
-                    if (amountEquivalentInput) amountEquivalentInput.value = formatCurrency(newItem.equivalentTotal, 2);
-                } catch (err) {
-                    console.error('Karşılık hesaplama hatası (CARİ):', err);
-                    newItem.equivalentTotal = total;
-                    newItem.equivalentCurrency = currency;
-                    newItem.equivalentCurrencyId = currencyId;
-                    newItem.hesapKuru = miktarKuru;
-                }
+                newItem.details.karsilikAktif = false;
+                newItem.equivalentTotal = total;
+                newItem.equivalentCurrency = currency;
+                newItem.equivalentCurrencyId = currencyId;
+                newItem.hesapKuru = miktarKuru;
+                newItem.miktarKuru = miktarKuru;
             }
         } else {
             // --- SATIŞ MODU ---
@@ -4810,16 +4800,13 @@ document.addEventListener('DOMContentLoaded', () => {
                         exchangeRateHesapInput.value = formatCurrency(hesapKuruVal, 4);
                     }
 
-                    // Eğer detay içinde karsilik bilgisi varsa toggle'ı aç ve detay bloğunu göster
-                    const hasKarsilikDetail = !!(itemToEdit.details && (itemToEdit.details.karsilikBirimi || itemToEdit.details.karsilikDegeri || itemToEdit.details.karsilikKuru));
-                    const differentCurrency = !!(itemToEdit.equivalentCurrency && itemToEdit.equivalentCurrency !== itemToEdit.currency);
+                    // Karşılık/Birim kontrolü ile switch durumunu belirle
+                    const hasKarsilikDetail = !!(itemToEdit.details && (itemToEdit.details.karsilikDegeri || itemToEdit.details.karsilikKuru || itemToEdit.details.karsilikAktif));
+                    const isDifferentCurrency = !!(itemToEdit.equivalentCurrency && itemToEdit.equivalentCurrency !== itemToEdit.currency);
+                    const karsilikEnabled = !!(itemToEdit.details && itemToEdit.details.karsilikAktif) || hasKarsilikDetail || isDifferentCurrency;
+
                     if (karsilikToggle) {
-                        karsilikToggle.checked = hasKarsilikDetail || differentCurrency;
-                        karsilikDetails.classList.toggle('hidden', !karsilikToggle.checked);
-                    }
-                    const karsilikAktifFlag = !!(itemToEdit.details && itemToEdit.details.karsilikAktif);
-                    if (karsilikToggle) {
-                        karsilikToggle.checked = karsilikAktifFlag;
+                        karsilikToggle.checked = karsilikEnabled;
                         karsilikDetails.classList.toggle('hidden', !karsilikToggle.checked);
                     }
                     // Eğer karşılık seçiliyse, karşılık select'in görünümünü güncelle ve kur/miktarı tekrar hesapla/formatla
@@ -5281,6 +5268,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return items;
     };
     const loadFisToScreen = async (fisId, isEditMode = false) => {
+        state.isInternalLoading = true;
         showLoadingOverlay();
         try {
             const base = String(Front_BASE_URL || API_BASE_URL).replace(/\/$/, '');
@@ -5371,39 +5359,41 @@ document.addEventListener('DOMContentLoaded', () => {
                 const counterCurrencyCode = resolveCurrencyCode(rawCounterCode);
 
                 return {
-                    movementId: id,
-                    fisID: m.receiptId ?? m.fisID ?? m.receiptId,
-                    hareketTipID: m.transactionTypeId ?? m.hareketTipID ?? m.TransactionTypeId,
-                    islemKodu: m.transactionCode ?? m.transactionCode ?? m.transactionCode,
-                    islemAdi: m.transactionName ?? m.transactionName ?? m.transactionName,
-                    hesapID: m.accountId ?? m.hesapID ?? m.accountId,
-                    hesapAdi: m.accountName ?? m.accountName ?? m.AccountName ?? '',
-                    hesapTipID: m.accountTypeId ?? m.accountTypeId ?? m.hesapTipID ?? null,
-                    stokID: m.stockId ?? m.stokID ?? null,
-                    aciklama: m.description ?? m.aciklama ?? '',
-                    miktar: Number(m.foreignCurrencyAmount ?? m.foreignAmount ?? m.miktar ?? 0),
-                    birim: foreignCurrencyCode, // artık döviz kodu
-                    kur: Number(m.foreignExchangeRate ?? m.kur ?? 0),
-                    karsilikMiktar: Number(m.counterCurrencyAmount ?? m.counterAmount ?? m.karsilikDegeri ?? 0),
-                    karsilikBirim: counterCurrencyCode, // artık döviz kodu
-                    karsilikKuru: Number(m.counterExchangeRate ?? m.karsilikKuru ?? 0),
-                    baseCurrencyAmount: Number(m.baseCurrencyAmount ?? m.BaseCurrencyAmount ?? 0),
+                    movementId: tryKeys(m, ['Id', 'id', 'movementId', 'hareketID']),
+                    fisID: tryKeys(m, ['ReceiptId', 'receiptId', 'fisID', 'fisId']),
+                    hareketTipID: tryKeys(m, ['TransactionTypeId', 'transactionTypeId', 'hareketTipID', 'hareketTipId']),
+                    islemKodu: tryKeys(m, ['TransactionCode', 'transactionCode', 'islemKodu']),
+                    islemAdi: tryKeys(m, ['TransactionName', 'transactionName', 'islemAdi']),
+                    hesapID: tryKeys(m, ['AccountId', 'accountId', 'hesapID', 'hesapId']),
+                    hesapAdi: tryKeys(m, ['AccountName', 'accountName', 'hesapAdi']),
+                    hesapTipID: tryKeys(m, ['AccountTypeId', 'accountTypeId', 'hesapTipID', 'hesapTipId']),
+                    stokID: tryKeys(m, ['StockId', 'stockId', 'stokID', 'stokId']),
+                    aciklama: tryKeys(m, ['Description', 'description', 'aciklama']),
+                    miktar: Number(tryKeys(m, ['ForeignCurrencyAmount', 'foreignCurrencyAmount', 'foreignAmount', 'miktar', 'Miktar', 'Amount', 'amount']) ?? 0),
+                    birim: foreignCurrencyCode,
+                    kur: Number(tryKeys(m, ['ForeignExchangeRate', 'foreignExchangeRate', 'kur', 'Kur', 'ExchangeRate', 'exchangeRate']) ?? 0),
+                    karsilikMiktar: Number(tryKeys(m, ['CounterCurrencyAmount', 'counterCurrencyAmount', 'counterAmount', 'karsilikDegeri', 'CounterAmount', 'counterAmount', 'karsilikMiktar']) ?? 0),
+                    karsilikBirim: counterCurrencyCode,
+                    karsilikKuru: Number(tryKeys(m, ['CounterExchangeRate', 'counterExchangeRate', 'karsilikKuru', 'CounterExchangeRate', 'counterExchangeRate']) ?? 0),
+                    baseCurrencyAmount: Number(tryKeys(m, ['BaseCurrencyAmount', 'baseCurrencyAmount']) ?? 0),
                     counterMovementId: counterId,
-                    kur2: Number(m.counterExchangeRate ?? m.karsilikKuru ?? 0),
-                    girisMi: inferredGiris
+                    kur2: Number(tryKeys(m, ['CounterExchangeRate', 'counterExchangeRate', 'karsilikKuru']) ?? 0),
+                    girisMi: inferredGiris,
+                    oldBalance: Number(tryKeys(m, ['OldBalance', 'oldBalance', 'eskiBakiye']) ?? 0),
+                    finalBalance: Number(tryKeys(m, ['FinalBalance', 'finalBalance', 'sonBakiye']) ?? 0)
                 };
             });
 
             const fisData = {
-                fisID: payload.id ?? payload.FisId ?? payload.receiptId ?? payload.receiptID,
-                fisNo: payload.receiptNumber ?? payload.fisNo ?? payload.ReceiptNumber ?? '',
-                tarih: payload.receiptDate ?? payload.tarih ?? payload.ReceiptDate ?? '',
-                cariHesapID: payload.accountId ?? payload.cariHesapID ?? payload.AccountId ?? null,
-                paraBirimi: payload.currencyCode ?? payload.paraBirimi ?? payload.CurrencyCode ?? (payload.currency ?? ''),
-                acikHesapTutar: payload.openBalanceAmount ?? payload.acikHesapTutar ?? payload.OpenBalanceAmount ?? 0,
-                personelID: payload.employeeId ?? payload.personelID ?? payload.EmployeeId ?? null,
-                cariMi: (payload.isCustomerReceipt ?? payload.cariMi) ? 1 : 0,
-                hesapAdi: payload.accountName ?? payload.AccountName ?? '',
+                fisID: tryKeys(payload, ['Id', 'id', 'fisID', 'fisId', 'receiptID', 'receiptId']),
+                fisNo: tryKeys(payload, ['ReceiptNumber', 'receiptNumber', 'fisNo']),
+                tarih: tryKeys(payload, ['ReceiptDate', 'receiptDate', 'tarih']),
+                cariHesapID: tryKeys(payload, ['AccountId', 'accountId', 'cariHesapID', 'cariHesapId']),
+                paraBirimi: resolveCurrencyCode(tryKeys(payload, ['CurrencyCode', 'currencyCode', 'paraBirimi', 'currency', 'CurrencyId', 'currencyId'])),
+                acikHesapTutar: parseFloat(tryKeys(payload, ['OpenBalanceAmount', 'openBalanceAmount', 'acikHesapTutar', 'AcikHesapTutar', 'OpenAccountAmount']) ?? 0),
+                personelID: tryKeys(payload, ['EmployeeId', 'employeeId', 'personelID', 'personelId']),
+                cariMi: (tryKeys(payload, ['IsCustomerReceipt', 'isCustomerReceipt', 'cariMi']) ? 1 : 0),
+                hesapAdi: tryKeys(payload, ['AccountName', 'accountName', 'hesapAdi']),
                 hareketler: mappedMovements
             };
 
@@ -5430,9 +5420,9 @@ document.addEventListener('DOMContentLoaded', () => {
             updateActiveCurrency();
 
             const fisDate = new Date(fisData.tarih);
-            const dayBefore = new Date(fisDate);
-            dayBefore.setDate(fisDate.getDate() - 1);
-            await fetchAndRenderCariBakiye(getLocalDateString(dayBefore));
+            // Day'i bir azaltmaya gerek yok çünkü fetchAndRenderCariBakiye içerisinde targetFisId ile ulaşıldığında duruyoruz.
+            // Bu sayede tam fiş öncesi bakiyeyi (EB) almış oluyoruz.
+            await fetchAndRenderCariBakiye(getLocalDateString(fisDate), fisData.fisID);
 
             state.receiptItems = reconstructReceiptItems(fisData);
             renderReceipt();
@@ -5455,6 +5445,7 @@ document.addEventListener('DOMContentLoaded', () => {
             showToast(error.message, 'error');
             console.error('loadFisToScreen error:', error);
         } finally {
+            state.isInternalLoading = false;
             hideLoadingOverlay();
         }
     };
@@ -6490,8 +6481,10 @@ document.addEventListener('DOMContentLoaded', () => {
                         showDefaultMessage();
                         return;
                     }
-
-                    if (state.operationType === 'cari') {
+ 
+                    if (state.operationType === 'cari' && !state.isInternalLoading) {
+                        // Manuel müşteri değişiminde yüklü fişi temizle (yeni fiş/işlem bağlamı)
+                        state.loadedFis = null;
                         debouncedFetchAndRenderCariBakiye();
                     }
                 } catch (err) {
@@ -6743,7 +6736,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            if (state.operationType === 'cari') {
+            if (state.operationType === 'cari' && !state.isInternalLoading) {
                 debouncedFetchAndRenderCariBakiye();
             }
         });

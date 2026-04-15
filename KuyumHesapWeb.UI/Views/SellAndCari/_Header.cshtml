@@ -87,8 +87,8 @@
     </div>
 
     <!-- MIDDLE COLUMN (Masaustunde Ortada) FORM PANELI -->
-    <div id="mobile-modal-wrapper" class="hidden fixed inset-0 z-50 items-end lg:items-stretch lg:static lg:z-auto lg:flex lg:p-0 lg:col-span-4 lg:col-start-5 lg:row-span-2 lg:row-start-1 h-full">
-        <div id="middle-panel" class="bg-white rounded-t-2xl lg:rounded-xl shadow-2xl lg:shadow-sm flex flex-col theme-border h-[85vh] lg:h-full w-full overflow-hidden transform transition-transform translate-y-full lg:translate-y-0" style="transition: transform 0.3s ease-out;">
+    <div id="mobile-modal-wrapper" class="hidden fixed inset-0 z-50 items-center justify-center p-4 lg:items-stretch lg:static lg:z-auto lg:flex lg:p-0 lg:col-span-4 lg:col-start-5 lg:row-span-2 lg:row-start-1 h-full">
+        <div id="middle-panel" class="bg-white rounded-2xl lg:rounded-xl shadow-2xl lg:shadow-sm flex flex-col theme-border h-full max-h-[90vh] lg:max-h-none w-full max-w-lg lg:max-w-none overflow-hidden transform transition-transform translate-y-full lg:translate-y-0" style="transition: transform 0.3s ease-out;">
 
             <!-- Mobile Drag Handle and Title -->
             <div class="lg:hidden flex flex-col items-center p-3 border-b border-gray-200 bg-gray-50">
@@ -118,21 +118,23 @@
                 </div>
             </div>
             <div id="receipt-log" class="flex-grow p-3 overflow-y-auto custom-scrollbar min-h-0 bg-white"></div>
-            <div id="receipt-totals" class="p-2 lg:p-3 border-t border-gray-200 flex-shrink-0 max-h-40 lg:max-h-48 overflow-y-auto custom-scrollbar bg-white">
-                <div id="satis-totals" class="space-y-1">
-                    <div class="flex justify-between items-center text-xs"><strong class="font-medium text-gray-600">Giren Toplam:</strong><span id="giren-toplam" class="font-bold text-green-600">0,00 TRY</span></div>
-                    <div class="flex justify-between items-center text-xs"><strong class="font-medium text-gray-600">Çıkan Toplam:</strong><span id="cikan-toplam" class="font-bold text-red-600">0,00 TRY</span></div>
-                    <hr class="my-1">
-                    <div class="flex justify-between items-center text-sm"><strong class="font-semibold text-gray-800">Fark:</strong><span id="fark-toplam" class="font-extrabold text-blue-700">0,00 TRY</span></div>
+            <div class="receipt-footer flex flex-col flex-shrink-0 border-t border-gray-200 max-h-[50%] lg:max-h-none overflow-y-auto custom-scrollbar bg-gray-50 rounded-b-xl">
+                <div id="receipt-totals" class="p-2 lg:p-3 bg-white">
+                    <div id="satis-totals" class="space-y-1">
+                        <div class="flex justify-between items-center text-xs"><strong class="font-medium text-gray-600">Giren Toplam:</strong><span id="giren-toplam" class="font-bold text-green-600">0,00 TRY</span></div>
+                        <div class="flex justify-between items-center text-xs"><strong class="font-medium text-gray-600">Çıkan Toplam:</strong><span id="cikan-toplam" class="font-bold text-red-600">0,00 TRY</span></div>
+                        <hr class="my-1">
+                        <div class="flex justify-between items-center text-sm"><strong class="font-semibold text-gray-800">Fark:</strong><span id="fark-toplam" class="font-extrabold text-blue-700">0,00 TRY</span></div>
+                    </div>
+                    <div id="cari-totals" class="hidden">
+                    </div>
                 </div>
-                <div id="cari-totals" class="hidden">
-                </div>
-            </div>
-            <div class="p-2 lg:p-3 bg-gray-100 border-t border-gray-200 flex-shrink-0 mt-auto rounded-b-xl">
-                <div class="flex flex-wrap gap-2 justify-start">
-                    <button id="main-save-button" class="bg-green-200 hover:bg-green-300 text-green-800 font-semibold py-1.5 px-4 rounded-lg transition-colors border border-green-300 text-xs w-auto"><i class="fas fa-save mr-2"></i>Kaydet</button>
-                    <button id="main-reset-button" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-1.5 px-4 rounded-lg transition-colors border border-gray-300 text-xs w-auto"><i class="fas fa-sync-alt mr-2"></i>Yeni İşlem</button>
-                    <button id="main-delete-button" class="bg-red-200 hover:bg-red-300 text-red-800 font-semibold py-1.5 px-4 rounded-lg transition-colors border border-red-300 text-xs w-auto hidden"><i class="fas fa-trash mr-2"></i>Sil</button>
+                <div class="p-2 lg:p-3 border-t border-gray-100 flex-shrink-0 bg-gray-50">
+                    <div class="flex flex-wrap gap-2 justify-start">
+                        <button id="main-save-button" class="bg-green-200 hover:bg-green-300 text-green-800 font-semibold py-1.5 px-4 rounded-lg transition-colors border border-green-300 text-xs w-auto"><i class="fas fa-save mr-2"></i>Kaydet</button>
+                        <button id="main-reset-button" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-1.5 px-4 rounded-lg transition-colors border border-gray-300 text-xs w-auto"><i class="fas fa-sync-alt mr-2"></i>Yeni İşlem</button>
+                        <button id="main-delete-button" class="bg-red-200 hover:bg-red-300 text-red-800 font-semibold py-1.5 px-4 rounded-lg transition-colors border border-red-300 text-xs w-auto hidden"><i class="fas fa-trash mr-2"></i>Sil</button>
+                    </div>
                 </div>
             </div>
         </div>

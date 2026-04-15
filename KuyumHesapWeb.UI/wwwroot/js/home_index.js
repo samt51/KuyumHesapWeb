@@ -123,8 +123,14 @@
 
             if (pinnedTrigger) {
                 pinnedTrigger.classList.remove('pinned');
+                // Accordion chevron reset
+                const chevron = pinnedTrigger.querySelector('.chevron-icon');
+                if (chevron) chevron.classList.remove('rotate-180');
                 pinnedTrigger = null;
             }
+            // Close all inline submenus when collapsing
+            document.querySelectorAll('.submenu').forEach(sm => sm.classList.add('hidden'));
+
             hideActiveSubmenu();
         };
 
@@ -209,32 +215,66 @@
         const menuItemsWithSubmenu = Array.from(document.querySelectorAll('.sidebar-link-container')).filter(item => item.querySelector('.submenu'));
         menuItemsWithSubmenu.forEach(item => {
             const trigger = item.querySelector('.sidebar-link');
-            if (!trigger) return;
+            const submenu = item.querySelector('.submenu');
+            const chevron = trigger ? trigger.querySelector('.chevron-icon') : null;
+
+            if (!trigger || !submenu) return;
+
             trigger.addEventListener('click', (e) => {
                 e.stopPropagation();
+
+                const isMobile = isMobileView();
                 const isAlreadyPinned = trigger === pinnedTrigger;
-                if (isAlreadyPinned) {
-                    if (pinnedTrigger) {
-                        pinnedTrigger.classList.remove('pinned');
+
+                if (isMobile) {
+                    // --- MOBILE ACCORDION LOGIC ---
+                    if (isAlreadyPinned) {
+                        submenu.classList.add('hidden');
+                        chevron && chevron.classList.remove('rotate-180');
+                        trigger.classList.remove('pinned');
                         pinnedTrigger = null;
+                    } else {
+                        // Close previously open submenu if any
+                        if (pinnedTrigger) {
+                            pinnedTrigger.classList.remove('pinned');
+                            const prevItem = pinnedTrigger.closest('.sidebar-link-container');
+                            const prevSubmenu = prevItem ? prevItem.querySelector('.submenu') : null;
+                            const prevChevron = pinnedTrigger.querySelector('.chevron-icon');
+                            if (prevSubmenu) prevSubmenu.classList.add('hidden');
+                            if (prevChevron) prevChevron.classList.remove('rotate-180');
+                        }
+
+                        // Open current
+                        submenu.classList.remove('hidden');
+                        chevron && chevron.classList.add('rotate-180');
+                        trigger.classList.add('pinned');
+                        pinnedTrigger = trigger;
                     }
+                    // In mobile, we don't use flyout
                     hideActiveSubmenu();
-                    return;
-                }
-                if (pinnedTrigger) pinnedTrigger.classList.remove('pinned');
+                } else {
+                    // --- DESKTOP FLYOUT LOGIC ---
+                    if (isAlreadyPinned) {
+                        trigger.classList.remove('pinned');
+                        pinnedTrigger = null;
+                        hideActiveSubmenu();
+                        return;
+                    }
+                    if (pinnedTrigger) pinnedTrigger.classList.remove('pinned');
 
-                trigger.classList.add('pinned');
-                pinnedTrigger = trigger;
-                if (activeSubmenu) hideActiveSubmenu();
+                    trigger.classList.add('pinned');
+                    pinnedTrigger = trigger;
+                    if (activeSubmenu) hideActiveSubmenu();
 
-                const submenuContent = item.querySelector('.submenu').innerHTML;
-                if (submenuFlyout) submenuFlyout.innerHTML = `<div class="py-2 flex flex-col">${submenuContent}</div>`;
-                const sidebarWidth = sidebarMenu ? sidebarMenu.offsetWidth : 64;
-                if (submenuFlyout) {
-                    submenuFlyout.style.left = `${sidebarWidth}px`;
-                    submenuFlyout.classList.remove('opacity-0', 'pointer-events-none');
+                    const submenuContent = submenu.innerHTML;
+                    if (submenuFlyout) {
+                        submenuFlyout.innerHTML = `<div class="py-2 flex flex-col">${submenuContent}</div>`;
+                        const sidebarWidth = sidebarMenu ? sidebarMenu.offsetWidth : 64;
+                        submenuFlyout.style.left = `${sidebarWidth}px`;
+                        submenuFlyout.classList.remove('opacity-0', 'pointer-events-none');
+                    }
+                    activeSubmenu = item;
                 }
-                activeSubmenu = item;
             });
         });
 

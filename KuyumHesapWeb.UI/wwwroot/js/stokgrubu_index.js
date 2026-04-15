@@ -169,20 +169,20 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    deleteButton.addEventListener('click', async () => {
-        const itemId = idInput.value;
-        if (!itemId || !confirm(`'${stokGrupAdiInput.value}' kaydını silmek istediğinizden emin misiniz?`)) return;
+    //deleteButton.addEventListener('click', async () => {
+    //    const itemId = idInput.value;
+    //    if (!itemId || !confirm(`'${stokGrupAdiInput.value}' kaydını silmek istediğinizden emin misiniz?`)) return;
 
-        try {
-            const response = await fetch(`${API_BASE_URL}/${itemId}`, { method: 'DELETE', headers: getAuthHeaders() });
-            if (!response.ok) throw new Error('Silme işlemi başarısız.');
-            showToast('Kayıt başarıyla silindi.');
-            await fetchItems();
-            resetForm();
-        } catch (error) {
-            showToast(error.message, 'danger');
-        }
-    });
+    //    try {
+    //        const response = await fetch(`${API_BASE_URL}/${itemId}`, { method: 'DELETE', headers: getAuthHeaders() });
+    //        if (!response.ok) throw new Error('Silme işlemi başarısız.');
+    //        showToast('Kayıt başarıyla silindi.');
+    //        await fetchItems();
+    //        resetForm();
+    //    } catch (error) {
+    //        showToast(error.message, 'danger');
+    //    }
+    //});
 
     document.getElementById('vazgec-btn').addEventListener('click', resetForm);
     document.getElementById('vazgec-guncelle-btn').addEventListener('click', resetForm);

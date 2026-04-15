@@ -1,4 +1,4 @@
-﻿using KuyumHesapWeb.Core.Commond.Abstract;
+using KuyumHesapWeb.Core.Commond.Abstract;
 using KuyumHesapWeb.Core.Commond.Abstract.ApiClient;
 using KuyumHesapWeb.Core.Commond.Models;
 using MediatR;
@@ -15,7 +15,7 @@ namespace KuyumHesapWeb.Core.Feature.StockTypeFeature.Queries.GetById
         {
             var data = await _apiService.GetAsync<GetByIdStockTypeQueryResponse>($"StockType/GetById/{request.Id}");
 
-            return new ResponseDto<GetByIdStockTypeQueryResponse>().Success(data.data);
+            return data;
         }
     }
 }

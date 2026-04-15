@@ -6,14 +6,16 @@ using KuyumHesapWeb.Core.Feature.StockGroupFeature.Queries.GetAll;
 using KuyumHesapWeb.Core.Feature.StockGroupFeature.Queries.GetById;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using KuyumHesapWeb.UI.Controllers.BaseCont;
 
 namespace KuyumHesapWeb.UI.Controllers
 {
-    public class StockGroupController : Controller
+    public class StockGroupController : BaseController
     {
         private readonly IMediator _mediator;
         private readonly IMapper _mapper;
         public StockGroupController(IMediator mediator, IMapper mapper)
+            : base(mediator, mapper)
         {
             _mapper = mapper;
             _mediator = mediator;
@@ -45,7 +47,7 @@ namespace KuyumHesapWeb.UI.Controllers
             return data;
         }
 
-        [HttpGet("GetById/{id}")]
+        [HttpGet]
         public async Task<ResponseDto<GetByIdStockGroupQueryResponse>> GetById(int id)
         {
             return await _mediator.Send(new GetByIdStockGroupQueryRequest(id));

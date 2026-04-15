@@ -5,7 +5,6 @@ using KuyumHesapWeb.Core.Feature.ExchangeFeature.Queries.GetExchangeRateByCurren
 using KuyumHesapWeb.UI.Controllers.BaseCont;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
-using static KuyumHesapWeb.Core.Feature.CureFeature.Dtos.DailyCureDataDto;
 
 namespace KuyumHesapWeb.UI.Controllers
 {
