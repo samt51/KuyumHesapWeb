@@ -1,4 +1,5 @@
-tailwind.config = {
+window.tailwind = window.tailwind || {};
+window.tailwind.config = {
     theme: {
         extend: {
             colors: {
@@ -33,6 +34,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const toastContainer = document.getElementById('toast-container');
     const deleteModal = document.getElementById('delete-modal');
     const modalMenuName = document.getElementById('modal-menu-name');
+    const isActiveText = document.getElementById('menuIsActiveText');
     let currentMode = 'add';
     let itemToDeleteId = null;
     let menus = [];
@@ -45,7 +47,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         iconUrl: document.getElementById('menuIconUrl'),
         parentId: parentSelect,
         orderNo: document.getElementById('menuOrderNo'),
-        requiredPermissionCode: document.getElementById('requiredPermissionCode')
+        requiredPermissionCode: document.getElementById('requiredPermissionCode'),
+        isActive: document.getElementById('menuIsActive')
     };
 
     const getAuthHeaders = () => ({ 'Content-Type': 'application/json' });
@@ -72,11 +75,28 @@ document.addEventListener('DOMContentLoaded', async () => {
         editButtons.classList.toggle('hidden', mode === 'add');
     };
 
+    const updateActiveSwitchText = () => {
+        if (!isActiveText || !fields.isActive) return;
+        isActiveText.textContent = fields.isActive.checked
+            ? 'Açık ise yetkisi olan Admin kullanıcılarında görünür.'
+            : 'Kapalı ise yetkisi olsa bile Admin menüsünde görünmez.';
+    };
+
+    const isMenuActiveChecked = () => !fields.isActive || fields.isActive.checked;
+
+    const setMenuActiveChecked = value => {
+        if (fields.isActive) {
+            fields.isActive.checked = value;
+        }
+        updateActiveSwitchText();
+    };
+
     const resetForm = () => {
         form.reset();
         fields.id.value = '';
         fields.parentId.value = '';
         fields.orderNo.value = '';
+        setMenuActiveChecked(true);
         setMode('add');
     };
 
@@ -84,6 +104,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     const getId = item => val(item, 'id', 'Id', 'menuId', 'MenuId');
     const getParentId = item => val(item, 'parentId', 'ParentId', 'parentMenuId', 'ParentMenuId');
     const getOrderNo = item => val(item, 'orderNo', 'OrderNo', 'order', 'Order', 'sortOrder', 'SortOrder') ?? 0;
+    const getIsActive = item => val(item, 'isActive', 'IsActive') !== false;
+    const setIsActive = (item, isActive) => {
+        if (!item) return;
+        if ('isActive' in item) item.isActive = isActive;
+        item.IsActive = isActive;
+    };
 
     const flattenMenuItems = (items, parentId = null) => {
         const result = [];
@@ -127,15 +153,20 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const id = getId(item);
                 const parent = menus.find(x => String(getId(x)) === String(getParentId(item)));
                 const code = val(item, 'code', 'Code') || '';
+                const isActive = getIsActive(item);
 
                 return `
-                    <div class="p-3 rounded cursor-pointer hover:bg-gray-200 ${index % 2 !== 0 ? 'bg-list-item-bg' : 'bg-white'} flex justify-between items-center" data-id="${esc(id)}">
-                        <div>
+                    <div class="p-3 rounded cursor-pointer hover:bg-gray-200 ${index % 2 !== 0 ? 'bg-list-item-bg' : 'bg-white'} grid grid-cols-[1fr_5rem_5rem] items-center gap-2" data-id="${esc(id)}">
+                        <div class="min-w-0">
                             <span class="font-medium text-gray-700">${esc(getTitle(item))}</span>
                             <p class="text-xs text-gray-500">${parent ? esc(getTitle(parent)) : 'Ana menu'}${code ? ' / ' + esc(code) : ''}</p>
                         </div>
-                        <div class="text-right">
-                            <div class="text-sm font-semibold text-gray-700">${esc(getOrderNo(item))}</div>
+                        <div class="text-center text-sm font-semibold text-gray-700">${esc(getOrderNo(item))}</div>
+                        <div class="flex justify-center">
+                            <label class="menu-switch menu-switch-sm" title="${isActive ? 'Aktif' : 'Pasif'}">
+                                <input type="checkbox" class="menu-active-switch" data-id="${esc(id)}" ${isActive ? 'checked' : ''}>
+                                <span class="menu-switch-slider"></span>
+                            </label>
                         </div>
                     </div>`;
             }).join('');
@@ -160,16 +191,57 @@ document.addEventListener('DOMContentLoaded', async () => {
         fields.iconUrl.value = val(item, 'iconUrl', 'IconUrl', 'icon', 'Icon') || '';
         fields.orderNo.value = getOrderNo(item);
         fields.requiredPermissionCode.value = val(item, 'requiredPermissionCode', 'RequiredPermissionCode') || '';
+        setMenuActiveChecked(getIsActive(item));
         renderParentOptions();
         fields.parentId.value = getParentId(item) || '';
         setMode('edit');
     };
 
     listEl.addEventListener('click', e => {
+        if (e.target.closest('.menu-active-switch') || e.target.closest('.menu-switch')) return;
         const row = e.target.closest('[data-id]');
         if (!row) return;
         const item = menus.find(x => String(getId(x)) === String(row.dataset.id));
         if (item) populateForm(item);
+    });
+
+    listEl.addEventListener('change', async e => {
+        const switchInput = e.target.closest('.menu-active-switch');
+        if (!switchInput) return;
+
+        const item = menus.find(x => String(getId(x)) === String(switchInput.dataset.id));
+        if (!item) return;
+
+        const nextIsActive = switchInput.checked;
+        const previousIsActive = getIsActive(item);
+        switchInput.disabled = true;
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/UpdatesIsActive`, {
+                method: 'PUT',
+                headers: getAuthHeaders(),
+                body: JSON.stringify({
+                    Id: Number(getId(item)),
+                    IsActive: nextIsActive
+                })
+            });
+            const json = await response.json();
+            if (!response.ok || json.isSuccess === false) {
+                throw new Error((json.errors && json.errors[0]) || 'Durum güncellenemedi.');
+            }
+
+            setIsActive(item, nextIsActive);
+            if (String(fields.id.value) === String(getId(item))) {
+                setMenuActiveChecked(nextIsActive);
+            }
+            renderList();
+            showToast(nextIsActive ? 'Menü aktif edildi.' : 'Menü pasif edildi.');
+        } catch (error) {
+            switchInput.checked = previousIsActive;
+            showToast(error.message, 'danger');
+        } finally {
+            switchInput.disabled = false;
+        }
     });
 
     form.addEventListener('submit', async e => {
@@ -181,7 +253,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             IconUrl: normalizeIconValue(fields.iconUrl.value),
             ParentId: fields.parentId.value ? Number(fields.parentId.value) : null,
             OrderNo: fields.orderNo.value ? Number(fields.orderNo.value) : 0,
-            RequiredPermissionCode: fields.requiredPermissionCode.value
+            RequiredPermissionCode: fields.requiredPermissionCode.value,
+            IsActive: isMenuActiveChecked()
         };
 
         if (currentMode === 'edit') {
@@ -235,6 +308,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     document.getElementById('reset-btn').addEventListener('click', resetForm);
     document.getElementById('cancel-edit-btn').addEventListener('click', resetForm);
+    fields.isActive && fields.isActive.addEventListener('change', updateActiveSwitchText);
 
     try {
         await fetchMenus();

@@ -11,9 +11,9 @@ namespace KuyumHesapWeb.Core.Feature.MenuFeature.Commands.Update
         {
         }
 
-        public Task<ResponseDto<UpdateMenuCommandResponse>> Handle(UpdateMenuCommandRequest request, CancellationToken cancellationToken)
+        public async Task<ResponseDto<UpdateMenuCommandResponse>> Handle(UpdateMenuCommandRequest request, CancellationToken cancellationToken)
         {
-            return _apiService.PutAsync<UpdateMenuCommandRequest, UpdateMenuCommandResponse>("Menu/Update", request);
+            return  await _apiService.PutAsync<UpdateMenuCommandRequest, UpdateMenuCommandResponse>("Menu/Update", request);
         }
     }
 }

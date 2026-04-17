@@ -2,6 +2,7 @@ using KuyumHesapWeb.Core.Commond.Models;
 using KuyumHesapWeb.Core.Feature.MenuFeature.Commands.Create;
 using KuyumHesapWeb.Core.Feature.MenuFeature.Commands.Delete;
 using KuyumHesapWeb.Core.Feature.MenuFeature.Commands.Update;
+using KuyumHesapWeb.Core.Feature.MenuFeature.Commands.UpdateMenuIsActive;
 using KuyumHesapWeb.Core.Feature.MenuFeature.Queries.GetAll;
 using KuyumHesapWeb.Core.Feature.MenuFeature.Queries.GetAuthorized;
 using KuyumHesapWeb.Core.Feature.MenuFeature.Queries.GetById;
@@ -35,8 +36,19 @@ namespace KuyumHesapWeb.UI.Controllers
         }
 
         [HttpGet]
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
+            var roleIds = TryGetCurrentRoleIds();
+            if (!roleIds.Any())
+            {
+                roleIds = await TryGetCurrentUserRoleIdsAsync();
+            }
+
+            if (!roleIds.Contains(3))
+            {
+                return Forbid();
+            }
+
             return View();
         }
 
@@ -88,6 +100,12 @@ namespace KuyumHesapWeb.UI.Controllers
 
         [HttpPut]
         public async Task<ResponseDto<UpdateMenuCommandResponse>> Update([FromBody] UpdateMenuCommandRequest request)
+        {
+            return await _mediator.Send(request);
+        }
+
+        [HttpPut]
+        public async Task<ResponseDto<UpdateMenuIsActiveCommandResponse>> UpdatesIsActive([FromBody] UpdateMenuIsActiveCommandRequest request)
         {
             return await _mediator.Send(request);
         }
@@ -422,4 +440,6 @@ namespace KuyumHesapWeb.UI.Controllers
             return key.Contains("role", StringComparison.OrdinalIgnoreCase);
         }
     }
+
+
 }

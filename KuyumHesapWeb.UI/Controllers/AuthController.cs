@@ -38,6 +38,27 @@ namespace KuyumHesapWeb.UI.Controllers
             };
         }
 
+        private CookieOptions BuildClientAuthCookieOptions(DateTimeOffset expires)
+        {
+            var options = BuildAuthCookieOptions(expires);
+            options.HttpOnly = false;
+            return options;
+        }
+
+        private CookieOptions BuildAuthCookieDeleteOptions()
+        {
+            var host = Request.Host.Host;
+            var isLocalhost = host.Equals("localhost", StringComparison.OrdinalIgnoreCase);
+
+            return new CookieOptions
+            {
+                Secure = !isLocalhost,
+                SameSite = isLocalhost ? SameSiteMode.Lax : SameSiteMode.None,
+                Domain = isLocalhost ? null : ".kuyumhesap.com",
+                Path = "/"
+            };
+        }
+
 
         [HttpGet]
         public IActionResult Login(string? returnUrl = null)
@@ -60,6 +81,7 @@ namespace KuyumHesapWeb.UI.Controllers
 
             // JWT cookie
             Response.Cookies.Append("AuthToken", data.data.token, BuildAuthCookieOptions(data.data.tokenExpireDate));
+            Response.Cookies.Append("AuthTokenClient", data.data.token, BuildClientAuthCookieOptions(data.data.tokenExpireDate));
 
             // MVC cookie (Authorize bunu okur)
             var claims = BuildClaimsFromToken(data.data.token, request.UserName);
@@ -89,10 +111,12 @@ namespace KuyumHesapWeb.UI.Controllers
 
             if (Request.Cookies.ContainsKey("AuthToken"))
             {
-                Response.Cookies.Delete("AuthToken", new CookieOptions
-                {
-                    Path = "/"
-                });
+                Response.Cookies.Delete("AuthToken", BuildAuthCookieDeleteOptions());
+            }
+
+            if (Request.Cookies.ContainsKey("AuthTokenClient"))
+            {
+                Response.Cookies.Delete("AuthTokenClient", BuildAuthCookieDeleteOptions());
             }
             return RedirectToAction("Login", "Auth");
         }
@@ -108,6 +132,8 @@ namespace KuyumHesapWeb.UI.Controllers
             {
                 return claims;
             }
+
+            claims.Add(new Claim("access_token", token));
 
             var parts = token.Split('.');
             if (parts.Length < 2)

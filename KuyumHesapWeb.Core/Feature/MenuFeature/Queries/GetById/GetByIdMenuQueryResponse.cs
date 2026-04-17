@@ -10,5 +10,6 @@ namespace KuyumHesapWeb.Core.Feature.MenuFeature.Queries.GetById
         public int? ParentId { get; set; }
         public int? OrderNo { get; set; }
         public string? RequiredPermissionCode { get; set; }
+        public bool IsActive { get; set; }
     }
 }

@@ -51,7 +51,7 @@
 
         const saveSettings = async (sidebarGizli) => {
             try {
-                const token = localStorage.getItem('jwt_token');
+                const token = window.khGetAuthToken ? window.khGetAuthToken() : localStorage.getItem('jwt_token');
                 if (!token) return;
                 await fetch(`${API_BASE_URL}/Ayarlar/me`, {
                     method: 'POST',
@@ -143,6 +143,8 @@
         const menuParentIdOf = item => getValue(item, 'parentId', 'ParentId', 'parentMenuId', 'ParentMenuId');
         const menuOrderOf = item => Number(getValue(item, 'orderNo', 'OrderNo', 'order', 'Order', 'sortOrder', 'SortOrder') ?? 0);
         const menuIconOf = item => getValue(item, 'iconUrl', 'IconUrl', 'icon', 'Icon', 'iconClass', 'IconClass') || 'fas fa-circle';
+        const menuIsActiveOf = item => getValue(item, 'isActive', 'IsActive') !== false;
+        const menuCodeOf = item => String(getValue(item, 'code', 'Code') || '').trim().toUpperCase();
 
         const normalizeNavigationUrl = (value) => {
             let url = String(value || '').trim();
@@ -154,6 +156,50 @@
         };
 
         const menuUrlOf = (item) => normalizeNavigationUrl(getValue(item, 'url', 'Url', 'path', 'Path') || '');
+
+        const menuIdentityKeyOf = item => {
+            const code = menuCodeOf(item);
+            if (code) return `code:${code}`;
+
+            const url = menuUrlOf(item).toLowerCase();
+            if (url) return `url:${url}`;
+
+            return `title:${String(menuTitleOf(item) || '').trim().toLocaleLowerCase('tr-TR')}`;
+        };
+
+        const pruneInactiveMenuItems = items => {
+            const flatItems = Array.isArray(items) ? items : [];
+            const byId = new Map();
+            const inactiveIds = new Set();
+
+            flatItems.forEach(item => {
+                const id = menuIdOf(item);
+                if (id !== undefined && id !== null) {
+                    byId.set(String(id), item);
+                    if (!menuIsActiveOf(item)) {
+                        inactiveIds.add(String(id));
+                    }
+                }
+            });
+
+            const hasInactiveParent = item => {
+                let parentId = menuParentIdOf(item);
+                const visited = new Set();
+
+                while (parentId !== undefined && parentId !== null && parentId !== 0) {
+                    const key = String(parentId);
+                    if (inactiveIds.has(key)) return true;
+                    if (visited.has(key) || !byId.has(key)) return false;
+
+                    visited.add(key);
+                    parentId = menuParentIdOf(byId.get(key));
+                }
+
+                return false;
+            };
+
+            return flatItems.filter(item => menuIsActiveOf(item) && !hasInactiveParent(item));
+        };
 
         const fallbackSidebarItems = [
             { Id: -1, Name: 'Ana Sayfa', Code: 'DASHBOARD_VIEW', Url: '/Dashboard/IndexDashboard', IconUrl: 'fas fa-home w-6 text-center text-xl text-gray-500', OrderNo: 1 },
@@ -207,6 +253,90 @@
         };
 
         const parseApiData = response => response && response.data !== undefined ? response.data : response;
+
+        const loadAllMenuItems = async () => {
+            try {
+                const response = await fetch('/MenuSettings/GetAll', { headers: { 'Accept': 'application/json' } });
+                if (!response.ok) return [];
+
+                return flattenMenuItems(parseApiData(await response.json()) || []);
+            } catch (error) {
+                console.warn('[home_index] Tum menu aktiflik bilgisi alinamadi.', error);
+                return [];
+            }
+        };
+
+        const pruneMenusByGlobalActiveState = (items, allMenus) => {
+            const flatItems = Array.isArray(items) ? items : [];
+            const flatAllMenus = Array.isArray(allMenus) ? allMenus : [];
+            if (!flatAllMenus.length) {
+                return pruneInactiveMenuItems(flatItems);
+            }
+
+            const allById = new Map();
+            const allByKey = new Map();
+            const inactiveIds = new Set();
+            const inactiveKeys = new Set();
+
+            flatAllMenus.forEach(menu => {
+                const id = menuIdOf(menu);
+                const key = menuIdentityKeyOf(menu);
+                if (id !== undefined && id !== null) {
+                    allById.set(String(id), menu);
+                }
+                if (key) {
+                    allByKey.set(key, menu);
+                }
+                if (!menuIsActiveOf(menu)) {
+                    if (id !== undefined && id !== null) {
+                        inactiveIds.add(String(id));
+                    }
+                    if (key) {
+                        inactiveKeys.add(key);
+                    }
+                }
+            });
+
+            const allMenuFor = item => {
+                const id = menuIdOf(item);
+                if (id !== undefined && id !== null && allById.has(String(id))) {
+                    return allById.get(String(id));
+                }
+
+                return allByKey.get(menuIdentityKeyOf(item));
+            };
+
+            const hasInactiveParentInAllMenus = item => {
+                let current = allMenuFor(item) || item;
+                let parentId = menuParentIdOf(current);
+                const visited = new Set();
+
+                while (parentId !== undefined && parentId !== null && parentId !== 0) {
+                    const key = String(parentId);
+                    if (inactiveIds.has(key)) return true;
+                    if (visited.has(key) || !allById.has(key)) return false;
+
+                    visited.add(key);
+                    current = allById.get(key);
+                    parentId = menuParentIdOf(current);
+                }
+
+                return false;
+            };
+
+            return flatItems.filter(item => {
+                const allMenu = allMenuFor(item);
+                const key = menuIdentityKeyOf(item);
+                const id = allMenu ? menuIdOf(allMenu) : menuIdOf(item);
+
+                if (allMenu && !menuIsActiveOf(allMenu)) return false;
+                if (id !== undefined && id !== null && inactiveIds.has(String(id))) return false;
+                if (inactiveKeys.has(key)) return false;
+
+                return menuIsActiveOf(item) && !hasInactiveParentInAllMenus(item);
+            });
+        };
+
         const loadCurrentRoleIds = async () => {
             try {
                 const response = await fetch('/MenuSettings/GetCurrentRoleIds', { headers: { 'Accept': 'application/json' } });
@@ -221,15 +351,36 @@
             }
         };
 
-        const canUseFullFallbackMenu = roleIds => roleIds.includes('1') || roleIds.includes('3');
+        const canUseFullFallbackMenu = roleIds => roleIds.includes('3');
+        const hasSystemAdminRole = roleIds => roleIds.includes('3');
+
+        const isSystemAdminOnlyMenu = item => {
+            const title = String(menuTitleOf(item) || '').trim().toLocaleLowerCase('tr-TR');
+            const code = String(getValue(item, 'code', 'Code', 'requiredPermissionCode', 'RequiredPermissionCode') || '').trim().toUpperCase();
+            const url = menuUrlOf(item).toLowerCase();
+
+            return url.includes('/menusettings') ||
+                url.includes('/pageactionsettings') ||
+                code.includes('MENU_SETTINGS') ||
+                code.includes('PAGE_ACTION_SETTINGS') ||
+                title.includes('menü ayarları') ||
+                title.includes('menu ayarları') ||
+                title.includes('sayfa aksiyon');
+        };
+
+        const pruneSystemAdminOnlyMenus = (items, roleIds) => {
+            const canShowSystemAdminOnly = hasSystemAdminRole(roleIds);
+            return (Array.isArray(items) ? items : []).filter(item => canShowSystemAdminOnly || !isSystemAdminOnlyMenu(item));
+        };
 
         const applyRoleRestrictedLinks = async (currentRoleIds = null) => {
             const restrictedLinks = Array.from(document.querySelectorAll('[data-role-ids]'));
             if (!restrictedLinks.length) return;
 
+            restrictedLinks.forEach(link => link.classList.add('hidden'));
+
             try {
                 const roleIds = Array.isArray(currentRoleIds) ? currentRoleIds : await loadCurrentRoleIds();
-                if (!roleIds.length) return;
 
                 restrictedLinks.forEach(link => {
                     const allowedRoles = String(link.dataset.roleIds || '').split(',').map(id => id.trim()).filter(Boolean);
@@ -334,7 +485,14 @@
 
                 const raw = await response.json();
                 const roleIds = await loadCurrentRoleIds();
-                const items = mergeFallbackSidebarItems(flattenMenuItems(parseApiData(raw)), canUseFullFallbackMenu(roleIds));
+                const allMenus = await loadAllMenuItems();
+                const items = pruneSystemAdminOnlyMenus(
+                    pruneMenusByGlobalActiveState(
+                        mergeFallbackSidebarItems(flattenMenuItems(parseApiData(raw)), canUseFullFallbackMenu(roleIds)),
+                        allMenus
+                    ),
+                    roleIds
+                );
                 if (!Array.isArray(items) || items.length === 0) return;
 
                 const activeItems = items.slice().sort((a, b) => menuOrderOf(a) - menuOrderOf(b));

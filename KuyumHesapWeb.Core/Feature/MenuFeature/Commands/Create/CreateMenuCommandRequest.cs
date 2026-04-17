@@ -12,5 +12,6 @@ namespace KuyumHesapWeb.Core.Feature.MenuFeature.Commands.Create
         public int? ParentId { get; set; }
         public int? OrderNo { get; set; }
         public string? RequiredPermissionCode { get; set; }
+        public bool IsActive { get; set; } = true;
     }
 }

@@ -266,13 +266,14 @@
         <div id="content-frames" class="flex-grow relative"></div>
     </main>
 
+    <script src="~/js/common.js" asp-append-version="true"></script>
     <!-- JavaScript Kodları Yeniden Düzenlendi ve Sadeleştirildi -->
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const mainElement = document.getElementById('main-content');
             const loginUrl = mainElement.dataset.loginUrl;
             const dashboardUrl = mainElement.dataset.dashboardUrl;
-            const token = localStorage.getItem('jwt_token');
+            const token = window.khGetAuthToken ? window.khGetAuthToken() : localStorage.getItem('jwt_token');
 
             if (!token) {
                 window.location.href = loginUrl;

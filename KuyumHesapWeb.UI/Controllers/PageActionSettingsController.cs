@@ -25,8 +25,19 @@ namespace KuyumHesapWeb.UI.Controllers
         }
 
         [HttpGet]
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
+            var roleIds = TryGetCurrentRoleIds();
+            if (!roleIds.Any())
+            {
+                roleIds = await TryGetCurrentUserRoleIdsAsync();
+            }
+
+            if (!roleIds.Contains(3))
+            {
+                return Forbid();
+            }
+
             return View();
         }
 
