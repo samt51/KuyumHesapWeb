@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using System.Text;
+using System.Text.Json;
 
 namespace KuyumHesapWeb.UI.Controllers
 {
@@ -60,7 +62,7 @@ namespace KuyumHesapWeb.UI.Controllers
             Response.Cookies.Append("AuthToken", data.data.token, BuildAuthCookieOptions(data.data.tokenExpireDate));
 
             // MVC cookie (Authorize bunu okur)
-            var claims = new List<Claim> { new Claim(ClaimTypes.Name, request.Email) };
+            var claims = BuildClaimsFromToken(data.data.token, request.UserName);
             var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
 
             await HttpContext.SignInAsync(
@@ -93,6 +95,87 @@ namespace KuyumHesapWeb.UI.Controllers
                 });
             }
             return RedirectToAction("Login", "Auth");
+        }
+
+        private static List<Claim> BuildClaimsFromToken(string token, string userName)
+        {
+            var claims = new List<Claim>
+            {
+                new Claim("userName", userName)
+            };
+
+            if (string.IsNullOrWhiteSpace(token))
+            {
+                return claims;
+            }
+
+            var parts = token.Split('.');
+            if (parts.Length < 2)
+            {
+                return claims;
+            }
+
+            try
+            {
+                var payload = parts[1].Replace('-', '+').Replace('_', '/');
+                payload = payload.PadRight(payload.Length + (4 - payload.Length % 4) % 4, '=');
+                using var doc = JsonDocument.Parse(Encoding.UTF8.GetString(Convert.FromBase64String(payload)));
+
+                foreach (var property in doc.RootElement.EnumerateObject())
+                {
+                    AddClaim(claims, property.Name, property.Value);
+                }
+
+                AddAliasClaim(claims, "Id", ClaimTypes.NameIdentifier);
+                AddAliasClaim(claims, "id", ClaimTypes.NameIdentifier);
+                AddAliasClaim(claims, "roleId", "roleId");
+                AddAliasClaim(claims, "roleName", ClaimTypes.Role);
+            }
+            catch
+            {
+                return claims;
+            }
+
+            return claims
+                .GroupBy(x => new { x.Type, x.Value })
+                .Select(x => x.First())
+                .ToList();
+        }
+
+        private static void AddClaim(List<Claim> claims, string type, JsonElement value)
+        {
+            if (value.ValueKind == JsonValueKind.String)
+            {
+                var stringValue = value.GetString();
+                if (!string.IsNullOrWhiteSpace(stringValue))
+                {
+                    claims.Add(new Claim(type, stringValue));
+                }
+                return;
+            }
+
+            if (value.ValueKind == JsonValueKind.Number || value.ValueKind == JsonValueKind.True || value.ValueKind == JsonValueKind.False)
+            {
+                claims.Add(new Claim(type, value.ToString()));
+                return;
+            }
+
+            if (value.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var item in value.EnumerateArray())
+                {
+                    AddClaim(claims, type, item);
+                }
+            }
+        }
+
+        private static void AddAliasClaim(List<Claim> claims, string sourceType, string targetType)
+        {
+            var value = claims.FirstOrDefault(x => string.Equals(x.Type, sourceType, StringComparison.OrdinalIgnoreCase))?.Value;
+            if (!string.IsNullOrWhiteSpace(value) && !claims.Any(x => x.Type == targetType && x.Value == value))
+            {
+                claims.Add(new Claim(targetType, value));
+            }
         }
     }
 }

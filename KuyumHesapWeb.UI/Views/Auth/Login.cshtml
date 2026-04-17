@@ -185,8 +185,16 @@
 
                 <form asp-controller="Auth" asp-action="Login" method="post" class="space-y-6">
                     <div class="relative form-group">
-                        <input asp-for="Email" type="text" required class="form-input w-full p-3 border rolex-green-border rounded-md shadow-sm focus:outline-none focus:border-black focus:ring-0 peer" placeholder=" ">
-                        <label for="username" class="form-label">Email</label>
+                        <input asp-for="CompanyCode" type="text" required class="form-input w-full p-3 border rolex-green-border rounded-md shadow-sm focus:outline-none focus:border-black focus:ring-0 peer" placeholder="Firma Kodu">
+                        <label for="firmaKodu" class="form-label">Firma Kodu</label>
+                    </div>
+                    <div class="relative form-group">
+                        <input asp-for="BranchCode" type="text" required class="form-input w-full p-3 border rolex-green-border rounded-md shadow-sm focus:outline-none focus:border-black focus:ring-0 peer" placeholder="Şube Kodu">
+                        <label for="username" class="form-label"> Şube Kodu</label>
+                    </div>
+                    <div class="relative form-group">
+                        <input asp-for="UserName" type="text" required class="form-input w-full p-3 border rolex-green-border rounded-md shadow-sm focus:outline-none focus:border-black focus:ring-0 peer" placeholder=" ">
+                        <label for="username" class="form-label">Kullanıcı Adı</label>
                     </div>
                     <div class="relative form-group">
                         <input asp-for="Password" type="password" required class="form-input w-full p-3 border rolex-green-border rounded-md shadow-sm focus:outline-none focus:border-black focus:ring-0 peer" placeholder=" ">

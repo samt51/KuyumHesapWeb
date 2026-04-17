@@ -40,9 +40,20 @@
                     <form id="user-form" class="space-y-6">
                         <input type="hidden" id="userID">
 
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div class="relative form-group group">
+                                <input type="text" id="firstName" required autocomplete="off" class="form-input block w-full px-4 py-4 bg-gray-50 border-2 border-transparent rounded-xl text-sm text-gray-900 font-medium transition-all focus:bg-white focus:border-rolex-green focus:ring-4 focus:ring-rolex-green/5 outline-none peer appearance-none" placeholder=" ">
+                                <label for="firstName" class="form-label">Ad</label>
+                            </div>
+                            <div class="relative form-group group">
+                                <input type="text" id="lastName" required autocomplete="off" class="form-input block w-full px-4 py-4 bg-gray-50 border-2 border-transparent rounded-xl text-sm text-gray-900 font-medium transition-all focus:bg-white focus:border-rolex-green focus:ring-4 focus:ring-rolex-green/5 outline-none peer appearance-none" placeholder=" ">
+                                <label for="lastName" class="form-label">Soyad</label>
+                            </div>
+                        </div>
+
                         <div class="relative form-group group">
-                            <input type="email" id="email" required autocomplete="off" class="form-input block w-full px-4 py-4 bg-gray-50 border-2 border-transparent rounded-xl text-sm text-gray-900 font-medium transition-all focus:bg-white focus:border-rolex-green focus:ring-4 focus:ring-rolex-green/5 outline-none peer appearance-none" placeholder=" ">
-                            <label for="email" class="form-label">E-Posta Adresi</label>
+                            <input type="text" id="userName" required autocomplete="off" class="form-input block w-full px-4 py-4 bg-gray-50 border-2 border-transparent rounded-xl text-sm text-gray-900 font-medium transition-all focus:bg-white focus:border-rolex-green focus:ring-4 focus:ring-rolex-green/5 outline-none peer appearance-none" placeholder=" ">
+                            <label for="userName" class="form-label">Kullanıcı Adı</label>
                         </div>
 
                         <div class="relative form-group group">
@@ -60,6 +71,17 @@
                         <div class="relative form-group group">
                             <input type="tel" id="phone" autocomplete="off" class="form-input block w-full px-4 py-4 bg-gray-50 border-2 border-transparent rounded-xl text-sm text-gray-900 font-medium transition-all focus:bg-white focus:border-rolex-green focus:ring-4 focus:ring-rolex-green/5 outline-none peer appearance-none" placeholder=" ">
                             <label for="phone" class="form-label">Telefon Numarası</label>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div class="relative form-group group">
+                                <input type="text" id="companyCode" autocomplete="off" class="form-input block w-full px-4 py-4 bg-gray-50 border-2 border-transparent rounded-xl text-sm text-gray-900 font-medium transition-all focus:bg-white focus:border-rolex-green focus:ring-4 focus:ring-rolex-green/5 outline-none peer appearance-none" placeholder=" ">
+                                <label for="companyCode" class="form-label text-[10px]">Firma Kodu</label>
+                            </div>
+                            <div class="relative form-group group">
+                                <input type="text" id="branchCode" autocomplete="off" class="form-input block w-full px-4 py-4 bg-gray-50 border-2 border-transparent rounded-xl text-sm text-gray-900 font-medium transition-all focus:bg-white focus:border-rolex-green focus:ring-4 focus:ring-rolex-green/5 outline-none peer appearance-none" placeholder=" ">
+                                <label for="branchCode" class="form-label text-[10px]">Şube Kodu</label>
+                            </div>
                         </div>
 
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -126,7 +148,7 @@
                         <div class="flex gap-2">
                             <div class="relative w-full sm:w-64">
                                 <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-[10px]"></i>
-                                <input type="text" id="user-search" placeholder="E-Posta ile ara..." class="w-full pl-8 pr-3 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-xs focus:ring-2 focus:ring-rolex-green/10 focus:border-rolex-green outline-none transition-all">
+                                <input type="text" id="user-search" placeholder="Ad, kullanıcı adı veya rol ara..." class="w-full pl-8 pr-3 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-xs focus:ring-2 focus:ring-rolex-green/10 focus:border-rolex-green outline-none transition-all">
                             </div>
                         </div>
                     </div>
@@ -135,7 +157,7 @@
                 <!-- Table Header -->
                 <div class="px-4 sm:px-6 py-3 bg-gray-50/50 border-b border-gray-100 flex-shrink-0">
                     <div class="grid grid-cols-4 items-center px-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-                        <span class="col-span-2">Kullanıcı / E-Posta</span>
+                        <span class="col-span-2">Kullanıcı / Bilgiler</span>
                         <span class="text-center">Durum</span>
                         <span class="text-right">İşlemler</span>
                     </div>

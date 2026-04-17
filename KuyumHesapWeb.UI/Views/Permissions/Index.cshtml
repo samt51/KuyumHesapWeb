@@ -1,0 +1,99 @@
+@{
+    ViewData["Title"] = "İzinler";
+    var noLayout = Context.Request.Query["noLayout"] == "1";
+    Layout = noLayout ? "~/Views/Shared/_IframeLayout.cshtml" : "~/Views/Shared/_Layout.cshtml";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/permissions.css" asp-append-version="true" />
+}
+
+<div class="permissions-page h-[calc(100vh-2.5rem)] p-4 overflow-hidden">
+    <div class="grid grid-cols-1 xl:grid-cols-[360px_1fr] gap-4 h-full min-h-0">
+        <section class="permission-panel bg-white border border-rolex-green rounded-lg shadow-sm flex flex-col min-h-0">
+            <div class="p-5 border-b border-gray-200">
+                <div class="flex items-center gap-3">
+                    <span class="w-11 h-11 rounded-md bg-green-50 text-rolex-green flex items-center justify-center">
+                        <i class="fas fa-user-shield text-xl"></i>
+                    </span>
+                    <div>
+                        <h1 class="text-xl font-semibold text-gray-900">İzinler</h1>
+                        <p class="text-xs text-gray-500 mt-1">Rol veya kullanıcı için izin verin ve geri alın.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-5 border-b border-gray-200">
+                <div class="grid grid-cols-2 gap-2 p-1 bg-gray-100 rounded-md">
+                    <button type="button" id="role-mode-btn" class="permission-mode-btn active">Role Göre</button>
+                    <button type="button" id="user-mode-btn" class="permission-mode-btn">Kullanıcıya Göre</button>
+                </div>
+            </div>
+
+            <div class="p-5 space-y-4 overflow-y-auto">
+                <div id="role-picker-wrap">
+                    <label for="role-select" class="permission-label">Rol Seçin</label>
+                    <select id="role-select" class="permission-select">
+                        <option value="">Rol seçiniz</option>
+                    </select>
+                    <p class="text-xs text-gray-500 mt-2">Seçilen role verilen izinler tüm rol kullanıcılarına uygulanır.</p>
+                </div>
+
+                <div id="user-picker-wrap" class="hidden">
+                    <label for="user-select" class="permission-label">Kullanıcı Seçin</label>
+                    <select id="user-select" class="permission-select">
+                        <option value="">Kullanıcı seçiniz</option>
+                    </select>
+                    <p class="text-xs text-gray-500 mt-2">Kullanıcı izni, kişiye özel yetki vermek için kullanılır.</p>
+                </div>
+
+                <div class="rounded-md bg-gray-50 border border-gray-200 p-4">
+                    <div class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Seçili Kayıt</div>
+                    <div id="selected-title" class="text-base font-semibold text-gray-900 mt-2">Henüz seçim yapılmadı</div>
+                    <div id="selected-detail" class="text-xs text-gray-500 mt-1">İzinleri görüntülemek için rol veya kullanıcı seçin.</div>
+                    <div class="grid grid-cols-2 gap-3 mt-4">
+                        <div class="rounded-md bg-white border border-gray-200 p-3">
+                            <div class="text-xs text-gray-500">Toplam İzin</div>
+                            <div id="total-permission-count" class="text-lg font-bold text-gray-800">0</div>
+                        </div>
+                        <div class="rounded-md bg-white border border-gray-200 p-3">
+                            <div class="text-xs text-gray-500">Verilen</div>
+                            <div id="assigned-permission-count" class="text-lg font-bold text-rolex-green">0</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="permission-panel bg-white border border-rolex-green rounded-lg shadow-sm flex flex-col min-h-0">
+            <div class="p-5 border-b border-gray-200">
+                <div class="flex flex-col lg:flex-row lg:items-center gap-3 justify-between">
+                    <div>
+                        <h2 class="text-xl font-semibold text-gray-900">İzin Listesi</h2>
+                        <p class="text-xs text-gray-500 mt-1">Checkbox açık ise izin verilmiştir. Kapattığınızda izin geri alınır.</p>
+                    </div>
+                    <div class="relative w-full lg:w-80">
+                        <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                        <input id="permission-search" type="text" class="permission-search" placeholder="İzin adı veya kodu ara...">
+                    </div>
+                </div>
+            </div>
+
+            <div class="px-5 py-3 border-b border-gray-200 bg-gray-50 flex flex-wrap items-center gap-3">
+                <button type="button" id="refresh-btn" class="permission-action-btn">
+                    <i class="fas fa-rotate-right"></i>
+                    Yenile
+                </button>
+                <span id="permission-status" class="text-xs text-gray-500">Veriler yükleniyor...</span>
+            </div>
+
+            <div id="permission-list" class="permission-list flex-1 min-h-0 overflow-y-auto p-5 space-y-2"></div>
+        </section>
+    </div>
+</div>
+
+<div id="toast-container" class="fixed bottom-5 right-5 z-50 space-y-2"></div>
+
+@section Scripts {
+    <script src="~/js/permissions.js" asp-append-version="true"></script>
+}

@@ -47,7 +47,7 @@
                 <span class="font-bold text-lg text-gray-800 tracking-wide">KuyumHesap</span>
             </div>
         </div>
-        <div id="menu-links-container" class="py-2 overflow-y-auto overflow-x-hidden flex-grow">
+        <div id="menu-links-container" data-authorized-menu-url="@Url.Action("GetAuthorizedForCurrentUser", "MenuSettings")" class="py-2 overflow-y-auto overflow-x-hidden flex-grow">
             <!-- ARAMA ALANI EKLENDİ (Dar modda simge, genişte input) -->
             <div class="sidebar-link-container">
                 <div class="relative flex items-center px-5 py-2 text-gray-700 transition-colors overflow-hidden">
@@ -120,7 +120,7 @@
                     </a>
                 </div>
             </div>
-            <div class="sidebar-link-container">
+            <div class="sidebar-link-container" data-static-menu="settings">
                 <div class="sidebar-link flex items-center px-5 py-2.5 text-gray-700 transition-colors cursor-pointer">
                     <i class="fas fa-cog menu-icon"></i>
                     <span class="ml-3 font-semibold text-sm sidebar-text whitespace-nowrap">Ayarlar</span>
@@ -132,6 +132,15 @@
                     </a>
                     <a href="javascript:void(0);" onclick="openTab('@Url.Action("Index", "BarcodeSetting")', 'Barkod Ayarlar')" class="flex items-center px-4 py-2.5 text-xs font-medium text-gray-600 hover:bg-gray-50 hover:text-green-700 transition-colors border-l-2 border-transparent hover:border-green-600 group">
                         <i class="fas fa-wallet w-5 text-center text-gray-400 mr-2 group-hover:text-green-600 transition-colors"></i><span>Barkod Ayarlar</span>
+                    </a>
+                    <a href="javascript:void(0);" data-role-ids="3" onclick="openTab('@Url.Action("Index", "MenuSettings")', 'Menü Ayarları ve İzinler')" class="flex items-center px-4 py-2.5 text-xs font-medium text-gray-600 hover:bg-gray-50 hover:text-green-700 transition-colors border-l-2 border-transparent hover:border-green-600 group">
+                        <i class="fas fa-list w-5 text-center text-gray-400 mr-2 group-hover:text-green-600 transition-colors"></i><span>Menü Ayarları ve İzinler</span>
+                    </a>
+                    <a href="javascript:void(0);" data-role-ids="3" onclick="openTab('@Url.Action("Index", "PageActionSettings")', 'Sayfa Aksiyonları')" class="flex items-center px-4 py-2.5 text-xs font-medium text-gray-600 hover:bg-gray-50 hover:text-green-700 transition-colors border-l-2 border-transparent hover:border-green-600 group">
+                        <i class="fas fa-toggle-on w-5 text-center text-gray-400 mr-2 group-hover:text-green-600 transition-colors"></i><span>Sayfa Aksiyonları</span>
+                    </a>
+                    <a href="javascript:void(0);" data-role-ids="1,3" onclick="openTab('@Url.Action("Index", "Permissions")', 'İzinler')" class="flex items-center px-4 py-2.5 text-xs font-medium text-gray-600 hover:bg-gray-50 hover:text-green-700 transition-colors border-l-2 border-transparent hover:border-green-600 group">
+                        <i class="fas fa-user-shield w-5 text-center text-gray-400 mr-2 group-hover:text-green-600 transition-colors"></i><span>İzinler</span>
                     </a>
                 </div>
             </div>
@@ -154,7 +163,7 @@
 
     <div id="submenu-flyout" class="fixed top-0 h-full z-30 bg-white shadow-lg rolex-green-border transition-opacity duration-200 ease-in-out opacity-0 pointer-events-none" style="width: 220px;"></div>
 
-    <main id="main-content" data-login-url="@Url.Action("Login", "Auth")" data-dashboard-url=" @Url.Action("IndexDashboard", "Dashboard")" class="h-screen flex flex-col transition-all duration-300 ease-in-out w-full pl-0 md:pl-16">
+    <main id="main-content" data-login-url="@Url.Action("Login", "Auth")" data-dashboard-url="@Url.Action("IndexDashboard", "Dashboard")" class="h-screen flex flex-col transition-all duration-300 ease-in-out w-full pl-0 md:pl-16">
         <div class="flex items-center w-full bg-gray-100 border-b border-gray-300" style="height: 40px;">
             <div id="mobile-top-hamburger" class="md:hidden flex-shrink-0 flex items-center justify-center px-4 h-full cursor-pointer text-gray-600 hover:text-green-700 border-r border-gray-300 bg-white transition-colors shadow-sm relative z-40">
                 <i class="fas fa-bars text-lg"></i>
@@ -166,9 +175,9 @@
         </div>
         <div id="content-frames" class="flex-1 min-h-0 relative overflow-hidden hidden"></div>
     </main>
+    <script src="~/js/permission_guard.js" asp-append-version="true"></script>
     @RenderSection("Scripts", required: false)
-
-    <script src="~/js/home_index.js"></script>
+    <script src="~/js/home_index.js" asp-append-version="true"></script>
     <script src="https://cdn.jsdelivr.net/npm/slim-select@1.27.0/dist/slimselect.min.js"></script>
 </body>
 </html>
