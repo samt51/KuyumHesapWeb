@@ -53,8 +53,6 @@ document.addEventListener('DOMContentLoaded', () => {
         sembol: document.getElementById('sembol'),
         ulke: document.getElementById('ulke'),
         metaKodu: document.getElementById('metaKodu'),
-        alisOrani: document.getElementById('alisOrani'),
-        satisOrani: document.getElementById('satisOrani'),
         aktif: document.getElementById('aktif'),
         bilancoParabirimi: document.getElementById('bilancoParabirimi'),
         ulkeParabirimi: document.getElementById('ulkeParabirimi'),
@@ -138,8 +136,8 @@ document.addEventListener('DOMContentLoaded', () => {
         fields.sembol.value = symbol || '';
         fields.ulke.value = country || '';
         fields.metaKodu.value = metaCode || '';
-        fields.alisOrani.value = buyRate || 0;
-        fields.satisOrani.value = sellRate || 0;
+        if (fields.alisOrani) fields.alisOrani.value = buyRate || 0;
+        if (fields.satisOrani) fields.satisOrani.value = sellRate || 0;
         fields.aktif.checked = isActive;
         fields.bilancoParabirimi.checked = isBaseCurrency;
         fields.ulkeParabirimi.checked = isNationalCurrency;
@@ -183,8 +181,8 @@ document.addEventListener('DOMContentLoaded', () => {
             Symbol: fields.sembol.value,
             Country: fields.ulke.value,
             MetaCode: fields.metaKodu.value,
-            BuyRate: parseFloat(fields.alisOrani.value) || 0,
-            SellRate: parseFloat(fields.satisOrani.value) || 0,
+            BuyRate: 0,
+            SellRate: 0,
             IsActive: fields.aktif.checked,
             IsBaseCurrency: fields.bilancoParabirimi.checked,
             IsNationalCurrency: fields.ulkeParabirimi.checked
