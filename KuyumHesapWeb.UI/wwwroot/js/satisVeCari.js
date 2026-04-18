@@ -300,7 +300,8 @@ document.addEventListener('DOMContentLoaded', () => {
         activeCurrency: 'TRY',
         activeCurrencyId: null,
         loadedFis: null,
-        fisList: []
+        fisList: [],
+        isInternalLoading: false
     };
     let isFormDirty = false;
     let timeUpdateInterval;
@@ -431,12 +432,12 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             lastFetchedEkstreFinalBalance = { ...finalBalances };
-            renderBakiyeOzeti(finalBalances);
+            await renderBakiyeOzeti(finalBalances);
 
             if (hareketler.length > 0) {
                 const contentHTML = hareketler.map(h => createEkstreSatiri(h, balancesHistory.get(tryKeys(h, ['MovementId', 'movementId', 'hareketID', 'hareketId'])))).join('');
                 ekstreContent.innerHTML = `<div class="ekstre-list-container">${contentHTML}</div>`;
-                setTimeout(() => {
+                setTimeout(async () => {
                     const items = ekstreContent.querySelectorAll('.ekstre-item');
                     const lastRow = items[items.length - 1];
                     if (lastRow) {
@@ -449,12 +450,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
                         try {
                             const balances = JSON.parse(lastRow.dataset.balances || '{}');
-                            renderBakiyeOzeti(balances);
+                            await renderBakiyeOzeti(balances);
                         } catch (e) {
-                            renderBakiyeOzeti(lastFetchedEkstreFinalBalance);
+                            await renderBakiyeOzeti(lastFetchedEkstreFinalBalance);
                         }
                     } else {
-                        renderBakiyeOzeti(lastFetchedEkstreFinalBalance);
+                        await renderBakiyeOzeti(lastFetchedEkstreFinalBalance);
                     }
                 }, 10);
             } else {
@@ -468,7 +469,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // fetchAndRenderCariBakiye — cari bakiye çağrısını artık POST üzerinden yapar; alan isimleri esnek okunur
     // fetchAndRenderCariBakiye — cari bakiye çağrısını artık POST üzerinden yapar
-    const fetchAndRenderCariBakiye = async (endDateString) => {
+    const fetchAndRenderCariBakiye = async (endDateString, targetFisId = null) => {
         const selectedValue = customerSlimSelect.getSelected();
         const hesapId = Array.isArray(selectedValue) ? selectedValue[0] : selectedValue;
 
@@ -478,13 +479,31 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
+        // YENİ: Eğer targetFisId verilmediyse ama yüklü bir fişimiz varsa, onun context'ini kullan
+        if (!targetFisId && state.loadedFis && state.loadedFis.fisID) {
+            targetFisId = state.loadedFis.fisID;
+            if (!endDateString && state.loadedFis.tarih) {
+                try {
+                    endDateString = getLocalDateString(new Date(state.loadedFis.tarih));
+                } catch (e) { console.warn('state.loadedFis.tarih parse fail', e); }
+            }
+        }
+
         try {
             const baslangicTarihi = '1970-01-01';
-            const bitisTarihi = endDateString ? getLocalDateString(new Date(endDateString)) : getLocalDateString(new Date());
+            // Eğer bir bitiş tarihi verilmişse (örn. fiş yüklenirken), o tarihin bir sonrasına kadar çekmek 
+            // fişin içindeki tüm hareketlerin (özellikle gün sonuna denk gelme ihtimaline karşı) 
+            // ekstreye dahil olmasını garanti eder.
+            let fetchEndDate = new Date();
+            if (endDateString) {
+                fetchEndDate = new Date(endDateString);
+                fetchEndDate.setDate(fetchEndDate.getDate() + 1); 
+            }
+            const bitisTarihi = getLocalDateString(fetchEndDate);
 
             const data = await getHesapEkstresi(hesapId, baslangicTarihi, bitisTarihi);
             // getHesapEkstresi artık Data unwrap yapıyor; yine de esnek olalım
-            const payload = (data && (data.DevredenBakiyeler || data.devredenBakiyeler || data.DevredenBakiyeler)) ? data : (data && (data.Data || data.data) ? (data.Data || data.data) : data);
+            const payload = (data && (data.DevredenBakiyeler || data.devredenBakiyeler)) ? data : (data && (data.Data || data.data) ? (data.Data || data.data) : data);
 
             const bakiyeDurumu = (payload.DevredenBakiyeler || payload.devredenBakiyeler || payload.DevredenBakiye || []).reduce((acc, b) => {
                 const code = tryKeys(b, ['CurrencyCode', 'currencyCode', 'dovizKodu', 'Currency', 'BalanceCurrency']) || '';
@@ -493,10 +512,33 @@ document.addEventListener('DOMContentLoaded', () => {
                 return acc;
             }, {});
 
-            (payload.Hareketler || payload.hareketler || payload.Hareketler || payload.Hareket || []).forEach(h => {
+            const hareketler = (payload.Hareketler || payload.hareketler || payload.Movements || payload.movements || []);
+            console.log(`fetchAndRenderCariBakiye: [DEBUG] Searching for target=${targetFisId} in ${hareketler.length} movements.`);
+            for (const h of hareketler) {
+                const hFisId = tryKeys(h, ['ReceiptId', 'receiptId', 'fisID', 'fisId']);
+                const hMovId = tryKeys(h, ['MovementId', 'movementId', 'hareketID', 'hareketId']);
+                
+                // Match primarily on ReceiptId, but allow fallback to MovementId if target matches (since they are often confused in UI)
+                const isMatch = (targetFisId && (String(hFisId) === String(targetFisId) || String(hMovId) === String(targetFisId)));
+                
+                if (isMatch) {
+                    console.log(`fetchAndRenderCariBakiye: [MATCH FOUND] movement=(M:${hMovId}, R:${hFisId}) matches target=${targetFisId}`);
+                    const bCurrency = tryKeys(h, ['BalanceCurrency', 'balanceCurrency', 'birim']);
+                    const oldBal = tryKeys(h, ['OldBalance', 'oldBalance', 'eskiBakiye']);
+                    if (bCurrency && oldBal !== undefined && oldBal !== null) {
+                        console.log(`fetchAndRenderCariBakiye: [SETTING] ${bCurrency} = ${oldBal}`);
+                        bakiyeDurumu[bCurrency] = Number(oldBal);
+                    }
+                    console.log('fetchAndRenderCariBakiye: [BREAK] Loop stopped.');
+                    break;
+                }
+                
                 const bakiyeGosterimBirimi = tryKeys(h, ['BalanceCurrency', 'balanceCurrency', 'karsilikBirim', 'birim', 'BalanceCurrency']) || '';
-                bakiyeDurumu[bakiyeGosterimBirimi] = (tryKeys(h, ['FinalBalance', 'finalBalance', 'sonBakiye', 'FinalBal', 'final_bal']) ?? bakiyeDurumu[bakiyeGosterimBirimi] ?? 0);
-            });
+                if (bakiyeGosterimBirimi) {
+                    bakiyeDurumu[bakiyeGosterimBirimi] = (tryKeys(h, ['FinalBalance', 'finalBalance', 'sonBakiye', 'FinalBal', 'final_bal']) ?? bakiyeDurumu[bakiyeGosterimBirimi] ?? 0);
+                }
+            }
+            console.log('fetchAndRenderCariBakiye: [FINAL STATE]', JSON.stringify(bakiyeDurumu));
 
             cariDevirBakiyeler = bakiyeDurumu;
         } catch (error) {
@@ -815,7 +857,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const base = String(baseRaw).replace(/\/$/, '');
             let url = `${base}/Cure/GetLastCure?id=${encodeURIComponent(currencyId)}`;
-            if (typeof isEntry === 'boolean') url += `&isEntry=${isEntry ? 'true' : 'false'}`;
+            
+            // isEntry kontrolü (Agresif - hepsi için ekle)
+            if (isEntry === true || isEntry === 'true' || isEntry === 1) {
+                url += `&isEntry=true&IsEntry=true`;
+            } else if (isEntry === false || isEntry === 'false' || isEntry === 0) {
+                url += `&isEntry=false&IsEntry=false`;
+            }
+
+            console.log('fetchLatestCure -> REQUESTING:', url);
+
+            // Visible debug output
+            console.log('fetchLatestCure CALL:', { currencyId, isEntry, finalUrl: url });
 
             // Visible debug output (use console.log so it's not hidden by DevTools level)
             console.log('fetchLatestCure -> requesting', url);
@@ -3837,7 +3890,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 updatedItemData.equivalentCurrency = karsilikBirimi;
                 updatedItemData.equivalentCurrencyId = (karsilikAktif && document.getElementById('form-virman-karsilik-currency')) ? document.getElementById('form-virman-karsilik-currency').value : currencyId;
                 updatedItemData.hesapKuru = karsilikKuru;
-                updatedItem.details.karsilikAktif = true; // EKLENDİ
+                updatedItemData.details.karsilikAktif = true; // DÜZELTİLDİ: updatedItemData kullanıldı
 
             } else {
                 updatedItem.details.karsilikAktif = false; // EKLENDİ
@@ -3895,40 +3948,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 updatedItem.hesapKuru = hesapRate;
                 updatedItem.equivalentCurrencyId = equivalentCurrencySelect.value;
                 updatedItem.equivalentCurrency = allCurrencies.find(c => c.id == updatedItem.equivalentCurrencyId)?.dovizKodu;
+                updatedItem.details.karsilikAktif = true; // EKLENDİ
             } else {
-                // Yeni mantık: (Tutar * KaynakKur) / HedefKur
-                try {
-                    const miktarRate = parseFormattedNumber(document.getElementById('form-exchange-rate-miktar').value);
-                    const equivalentCurrencySelect = document.getElementById('form-currency-equivalent');
-                    const targetCurrencyId = equivalentCurrencySelect && equivalentCurrencySelect.value ? equivalentCurrencySelect.value : (nationalCurrency ? nationalCurrency.id : null);
-
-                    // Öncelik: formdaki dataset/visible değerleri, sonra sunucudan GetLastCure
-                    const isEntryFlagForFetch = (originalItem && originalItem.isIncome) ? true : null;
-
-                    const sourceRateLive = await fetchLatestCure(currencyId, isEntryFlagForFetch);
-                    const targetRateLive = targetCurrencyId ? await fetchLatestCure(targetCurrencyId, isEntryFlagForFetch) : (nationalCurrency ? await fetchLatestCure(nationalCurrency.id, isEntryFlagForFetch) : null);
-
-                    const safeSource = (typeof sourceRateLive === 'number' && sourceRateLive > 0) ? sourceRateLive : (miktarRate || 1);
-                    const safeTarget = (typeof targetRateLive === 'number' && targetRateLive > 0) ? targetRateLive : 1;
-
-                    updatedItem.equivalentTotal = (amount * safeSource) / safeTarget;
-                    const targetCurrencyObj = allCurrencies.find(c => String(c.id) === String(targetCurrencyId)) || allCurrencies.find(c => c.dovizKodu === (nationalCurrency && nationalCurrency.dovizKodu));
-                    updatedItem.equivalentCurrency = targetCurrencyObj ? targetCurrencyObj.dovizKodu : (nationalCurrency ? nationalCurrency.dovizKodu : currency);
-                    updatedItem.equivalentCurrencyId = targetCurrencyObj ? targetCurrencyObj.id : currencyId;
-                    updatedItem.miktarKuru = safeSource;
-                    updatedItem.hesapKuru = safeTarget;
-
-                    // UI'ya yaz
-                    const amountEquivalentInput = document.getElementById('form-amount-equivalent');
-                    if (amountEquivalentInput) amountEquivalentInput.value = formatCurrency(parseFloat(updatedItem.equivalentTotal.toFixed(2)), 2);
-                } catch (err) {
-                    console.error('Güncelleme sırasında karşılık hesaplama hatası:', err);
-                    updatedItem.equivalentTotal = updatedItem.total;
-                    updatedItem.equivalentCurrency = updatedItem.currency;
-                    updatedItem.equivalentCurrencyId = currencyId;
-                    updatedItem.miktarKuru = parseFormattedNumber(document.getElementById('form-exchange-rate-miktar').value);
-                    updatedItem.hesapKuru = updatedItem.miktarKuru;
-                }
+                updatedItem.details.karsilikAktif = false;
+                updatedItem.equivalentTotal = amount;
+                updatedItem.equivalentCurrency = currency;
+                updatedItem.equivalentCurrencyId = currencyId;
+                updatedItem.miktarKuru = parseFormattedNumber(document.getElementById('form-exchange-rate-miktar').value) || 1;
+                updatedItem.hesapKuru = updatedItem.miktarKuru;
             }
         } else {
             // SATIŞ modu:
@@ -4022,76 +4049,95 @@ document.addEventListener('DOMContentLoaded', () => {
             if (anahtar) anahtar.checked = !isMutabik;
         }
     };
-    // (renderBakiyeOzeti) — HAS kuru yoksa API'den id=1 ile alır, pozisyonu HAS cinsinden hesaplar ve UI'yi günceller
-    const renderBakiyeOzeti = (bakiyeDurumu) => {
+
+    // (renderBakiyeOzeti) — her para birimi için canlı kurları çeker, pozisyonu HAS cinsinden hesaplar ve UI'yi günceller
+    const renderBakiyeOzeti = async (bakiyeDurumu) => {
         let bakiyeHTML = '';
-        let toplamHas = 0;
-        // Öncelikle allExchangeRates içinden HAS'i al
-        const hasKuruEntry = Array.isArray(allExchangeRates) ? allExchangeRates.find(k => k.dovizKodu === 'HAS') : null;
-        const localHasKuru = hasKuruEntry ? (hasKuruEntry.alisKuru ?? hasKuruEntry.satisKuru ?? 1) : null;
-        let hasRows = false;
+        let hasFound = false;
 
-        // Hesaplama ve UI güncelleme işlevi (tekrar kullanılacak)
-        const computeAndRender = (usedHasKuru) => {
-            let html = '';
-            let accHas = 0;
-            let hasFound = false;
+        // Pozisyon alanında "Hesaplanıyor..." göster
+        if (ekstreHasPozisyon) {
+            ekstreHasPozisyon.innerHTML = `Pozisyon: <span class="text-gray-500 font-mono italic animate-pulse">Hesaplanıyor...</span>`;
+        }
 
-            for (const dovizKodu in bakiyeDurumu) {
-                const bakiye = bakiyeDurumu[dovizKodu];
-                if (Math.abs(bakiye) < 0.001) continue;
-                hasFound = true;
+        // 1) HAS döviz bilgisini ve ID'sini bul
+        const hasCurrency = allCurrencies.find(c => c.dovizKodu === 'HAS');
+        const hasCurrencyId = hasCurrency ? hasCurrency.id : null;
 
-                const durumClass = bakiye >= 0 ? 'alacak' : 'borc';
-                const durumText = bakiye >= 0 ? 'Alacak' : 'Borç';
+        // 2) Bakiye durumundaki döviz kodlarını topla
+        const currencyCodes = Object.keys(bakiyeDurumu).filter(code => Math.abs(bakiyeDurumu[code]) >= 0.0001);
 
-                // Döviz kuru bilgisi (allExchangeRates'de varsa al)
-                const dovizKurData = Array.isArray(allExchangeRates) ? allExchangeRates.find(k => k.dovizKodu === dovizKodu) : null;
-                const dovizKur = dovizKurData ? (dovizKurData.alisKuru ?? dovizKurData.satisKuru ?? 1) : 1;
+        // 3) Gerekli kurlar için fetch listesi oluştur (HAS her zaman dahil)
+        const fetchMap = []; // { code, promise }
+        const neededCodes = new Set(currencyCodes);
+        neededCodes.add('HAS');
 
-                // Pozisyona katkı: eğer döviz HAS ise direkt ekle, değilse dövizi önce kendi kura çarp ve HAS kuruna böl
-                if (dovizKodu === 'HAS') {
-                    accHas += bakiye;
-                } else {
-                    // usedHasKuru kesinlikle > 0 olmalı; değilse 1 kullan
-                    const effectiveHasKuru = (usedHasKuru && usedHasKuru > 0) ? usedHasKuru : 1;
-                    accHas += (bakiye * dovizKur) / effectiveHasKuru;
+        neededCodes.forEach(code => {
+            const cur = allCurrencies.find(c => c.dovizKodu === code);
+            const curId = cur ? cur.id : (code === 'TRY' ? 3 : null); // TRY fallback to ID 3
+
+            if (curId) {
+                // fetchLatestCure(id, isEntry=null)
+                fetchMap.push({ code, promise: fetchLatestCure(curId, null) });
+            } else {
+                console.warn(`renderBakiyeOzeti: ID bulunamadı -> ${code}`);
+                fetchMap.push({ code, promise: Promise.resolve(1) });
+            }
+        });
+
+        // 4) Parallel fetch
+        const results = await Promise.all(fetchMap.map(m => m.promise));
+        const rateMap = {};
+        fetchMap.forEach((m, idx) => {
+            let rate = results[idx];
+            // Eğer rate alınamadıysa fallback; TRY ise 1, diğerleri için 0 veya mevcut listeden
+            if (rate === null || isNaN(rate) || rate <= 0) {
+                if (m.code === 'TRY') rate = 1;
+                else {
+                    const fallback = allExchangeRates.find(k => k.dovizKodu === m.code);
+                    rate = fallback ? (fallback.alisKuru ?? fallback.satisKuru ?? 1) : 1;
                 }
+            }
+            rateMap[m.code] = rate;
+        });
 
-                html += `
+        const hasRate = rateMap['HAS'] || 1;
+        let accHas = 0;
+
+        // 5) Hesaplama ve HTML oluşturma
+        for (const dovizKodu of currencyCodes) {
+            const bakiye = bakiyeDurumu[dovizKodu];
+            hasFound = true;
+
+            const durumClass = bakiye >= 0 ? 'alacak' : 'borc';
+            const durumText = bakiye >= 0 ? 'Alacak' : 'Borç';
+
+            const currentRateToTL = rateMap[dovizKodu] || 1;
+
+            // Pozisyona katkı: (Miktar * KurToTL) / HASRateToTL
+            if (dovizKodu === 'HAS') {
+                accHas += bakiye;
+            } else {
+                accHas += (bakiye * currentRateToTL) / hasRate;
+            }
+
+            bakiyeHTML += `
                 <div class="bakiye-item">
                     <span class="birim">${dovizKodu}</span>
                     <span class="tutar ${durumClass}">${formatCurrency(Math.abs(bakiye))} ${durumText}</span>
                 </div>
             `;
-            }
+        }
 
-            if (!hasFound) {
-                html = '<div class="text-center text-gray-500 py-2 text-sm">Bakiye bulunmuyor.</div>';
-            }
+        if (!hasFound) {
+            bakiyeHTML = '<div class="text-center text-gray-500 py-2 text-sm">Bakiye bulunmuyor.</div>';
+        }
 
-            ekstreBakiyeOzeti.innerHTML = html;
+        // 6) UI Güncelle
+        if (ekstreBakiyeOzeti) ekstreBakiyeOzeti.innerHTML = bakiyeHTML;
+        if (ekstreHasPozisyon) {
             const pozisyonRenk = accHas >= 0 ? 'text-green-700' : 'text-red-700';
             ekstreHasPozisyon.innerHTML = `Pozisyon: <span class="${pozisyonRenk} font-mono">${formatCurrency(accHas, 2)} HAS</span>`;
-        };
-
-        // İlk render: eğer HAS kuru varsa hemen hesapla
-        if (localHasKuru !== null) {
-            computeAndRender(localHasKuru);
-        } else {
-            // Geçici render (varsayılan HAS kuru = 1) — sonra gerçek kuru ile yeniden hesaplayacağız
-            computeAndRender(1);
-
-            // Arka planda Cure/GetLastCure?id=1 çağır ve gelirse tekrar hesapla
-            fetchLatestCure(1).then(rate => {
-                if (rate && !isNaN(rate) && rate > 0) {
-                    computeAndRender(rate);
-                } else {
-                    console.warn('HAS kuru alınamadı veya geçersiz:', rate);
-                }
-            }).catch(err => {
-                console.warn('HAS kuru fetch hatası:', err);
-            });
         }
     };
     // --- Güncellendi: hesaplama helper'ı artık isEntry parametresini kabul eder ve fetchLatestCure çağrılarına iletir ---
@@ -4209,38 +4255,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 newItem.hesapKuru = hesapKuru;
                 newItem.details.karsilikAktif = true; // EKLENDİ
             } else {
-                newItem.details.karsilikAktif = false; // EKLENDİ
-                try {
-                    const equivalentCurrencySelect = document.getElementById('form-currency-equivalent');
-                    const targetCurrencyId = equivalentCurrencySelect && equivalentCurrencySelect.value ? equivalentCurrencySelect.value : (nationalCurrency ? nationalCurrency.id : null);
-
-                    const { equivalent, sourceRate, targetRate } = await computeEquivalentForCurrencies(
-                        total,
-                        currencyId,
-                        targetCurrencyId,
-                        // isEntry: sadece CARİ modunda ve Nakit Giriş (isIncome === true) için true gönder
-                        (state.operationType === 'cari' && isIncome === true) ? true : null
-                    );
-
-                    const targetCurrencyObj = allCurrencies.find(c => String(c.id) === String(targetCurrencyId)) || allCurrencies.find(c => c.dovizKodu === (nationalCurrency && nationalCurrency.dovizKodu));
-                    const targetCurrencyCode = targetCurrencyObj ? targetCurrencyObj.dovizKodu : (nationalCurrency ? nationalCurrency.dovizKodu : currency);
-
-                    newItem.equivalentTotal = parseFloat((equivalent || 0).toFixed(2));
-                    newItem.equivalentCurrency = targetCurrencyCode || currency;
-                    newItem.equivalentCurrencyId = targetCurrencyObj ? targetCurrencyObj.id : currencyId;
-                    newItem.hesapKuru = targetRate || 1;
-                    newItem.miktarKuru = sourceRate || 1;
-
-                    // UI'ya da yaz (eğer form üzerindeyse)
-                    const amountEquivalentInput = document.getElementById('form-amount-equivalent');
-                    if (amountEquivalentInput) amountEquivalentInput.value = formatCurrency(newItem.equivalentTotal, 2);
-                } catch (err) {
-                    console.error('Karşılık hesaplama hatası (CARİ):', err);
-                    newItem.equivalentTotal = total;
-                    newItem.equivalentCurrency = currency;
-                    newItem.equivalentCurrencyId = currencyId;
-                    newItem.hesapKuru = miktarKuru;
-                }
+                newItem.details.karsilikAktif = false;
+                newItem.equivalentTotal = total;
+                newItem.equivalentCurrency = currency;
+                newItem.equivalentCurrencyId = currencyId;
+                newItem.hesapKuru = miktarKuru;
+                newItem.miktarKuru = miktarKuru;
             }
         } else {
             // --- SATIŞ MODU ---
@@ -4449,6 +4469,7 @@ document.addEventListener('DOMContentLoaded', () => {
         dynamicContentArea.innerHTML = formHTML;
 
         // --- Element references ---
+        // --- Element references ---
         const nameSelect = document.getElementById('form-account-name');
         const amountInput = document.getElementById('form-amount');
         const formCurrencySelect = document.getElementById('form-currency-tutar');
@@ -4460,6 +4481,44 @@ document.addEventListener('DOMContentLoaded', () => {
         const exchangeRateMiktarInput = document.getElementById('form-exchange-rate-miktar');
         const exchangeRateHesapInput = document.getElementById('form-exchange-rate-hesap');
         const equivalentCurrencySelect = document.getElementById('form-currency-equivalent');
+
+        // --- EKLENDİ: CARİ için updateRateForCurrency helper (MOVED UP) ---
+        const updateRateForCurrency = async (currencySelectEl, rateInputEl) => {
+            if (!currencySelectEl || !rateInputEl) return;
+            const currencyIdRaw = currencySelectEl.value;
+            const currencyId = String(currencyIdRaw ?? '').trim();
+            if (!currencyId) {
+                rateInputEl.value = formatCurrency(1, 4);
+                if (isCari) calculateEquivalent();
+                return;
+            }
+
+            // isEntry: Nakit Ödeme (isIncome=false) ve Nakit Çıkış (isIncome=false) için TRUE
+            const isEntryFlag = (isIncome === false) ? true : null;
+            
+            let rate = null;
+            try {
+                const live = await fetchLatestCure(currencyId, isEntryFlag);
+                if (live !== null && !isNaN(live) && live > 0) rate = live;
+            } catch (err) {
+                console.warn('updateRateForCurrency error:', err);
+            }
+
+            if (rate === null) {
+                const currencyObj = allCurrencies.find(c => String(c.id) === String(currencyId));
+                if (currencyObj) {
+                    rate = (currencyObj.dovizKodu === nationalCurrency.dovizKodu) ? 1.0 :
+                        (allExchangeRates.find(r => r.dovizKodu === currencyObj.dovizKodu)?.alisKuru ??
+                            allExchangeRates.find(r => r.dovizKodu === currencyObj.dovizKodu)?.satisKuru ??
+                            currencyObj.alisKuru ?? currencyObj.satisKuru ?? 1);
+                } else {
+                    rate = 1.0;
+                }
+            }
+            rateInputEl.value = formatCurrency(rate, 4);
+            if (isCari) calculateEquivalent();
+        };
+
         (function bindCurrencySelectToExchangeRate() {
             try {
                 const rateInputEl = document.getElementById('form-exchange-rate'); // hedef input
@@ -4481,6 +4540,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                         // Prefer the local helper if available (handles isEntry logic for CARİ)
                         if (typeof updateRateForCurrency === 'function') {
+                            console.log('bindCurrencySelectToExchangeRate -> calling updateRateForCurrency');
                             await updateRateForCurrency(currencySelectEl, rateInputEl || document.getElementById('form-exchange-rate'));
                             return;
                         }
@@ -4606,54 +4666,6 @@ document.addEventListener('DOMContentLoaded', () => {
             [amountInput, exchangeRateInput, amountEquivalentInput, exchangeRateMiktarInput, exchangeRateHesapInput].forEach(el => { if (el) enforceNumericInput(el); });
         }
 
-        // --- EKLENDİ: CARİ için updateRateForCurrency helper ---
-        // REPLACE the existing updateRateForCurrency inside renderNakitForm with this enhanced version
-        const updateRateForCurrency = async (currencySelectEl, rateInputEl) => {
-            if (!currencySelectEl || !rateInputEl) return;
-            const currencyIdRaw = currencySelectEl.value;
-            const currencyId = String(currencyIdRaw ?? '').trim();
-            if (!currencyId) {
-                rateInputEl.value = formatCurrency(1, 4);
-                if (isCari) calculateEquivalent();
-                console.debug('updateRateForCurrency: currencyId empty -> set 1.0000');
-                return;
-            }
-
-            // isEntry yalnızca CARİ modunda ve Nakit Giriş (isIncome === true) için true gönder
-            const isEntryFlag = (state.operationType === 'cari' && isIncome === true) ? true : null;
-
-            let rate = null;
-            try {
-                console.debug('updateRateForCurrency -> fetching live rate', { currencyId, isEntryFlag });
-                // Use existing helper which already builds URL; keep debugging info
-                const live = await fetchLatestCure(currencyId, isEntryFlag);
-                console.debug('updateRateForCurrency -> fetchLatestCure returned', live);
-                if (live !== null && !isNaN(live) && live > 0) rate = live;
-            } catch (err) {
-                console.warn('updateRateForCurrency: fetchLatestCure failed', err);
-                rate = null;
-            }
-
-            if (rate === null) {
-                // fallback: search local exchange lists
-                const currencyObj = allCurrencies.find(c => String(c.id) === String(currencyId));
-                if (currencyObj) {
-                    rate = (currencyObj.dovizKodu === nationalCurrency.dovizKodu) ? 1.0 :
-                        (allExchangeRates.find(r => r.dovizKodu === currencyObj.dovizKodu)?.alisKuru ??
-                            allExchangeRates.find(r => r.dovizKodu === currencyObj.dovizKodu)?.satisKuru ??
-                            currencyObj.alisKuru ?? currencyObj.satisKuru ?? 1);
-                    console.debug('updateRateForCurrency -> fallback found rate', rate, { currencyObj });
-                } else {
-                    rate = 1.0;
-                    console.debug('updateRateForCurrency -> no local info, using 1.0');
-                }
-            }
-
-            rateInputEl.value = formatCurrency(rate, 4);
-
-            // after updating the rate, recalc only the equivalent (do NOT change the amount)
-            if (isCari) calculateEquivalent();
-        };
 
         // --- Hesaplama helper: sadece form-amount-equivalent güncellenecek ---
         const calculateEquivalent = () => {
@@ -4692,22 +4704,26 @@ document.addEventListener('DOMContentLoaded', () => {
                 amountEquivalentInput.addEventListener('input', () => {
                     isFormDirty = true;
                     if (karsilikToggle && karsilikToggle.checked) {
-                        // amount = (equivalent * targetRate) / sourceRate
+                        // Hedef Kur = (Asıl Miktar * Asıl Kur) / Cari Karşılık Miktarı
                         const equivalent = parseFormattedNumber(amountEquivalentInput.value) || 0;
-                        const sourceRate = parseFormattedNumber(exchangeRateMiktarInput?.value) || 1;
-                        const targetRate = parseFormattedNumber(exchangeRateHesapInput?.value) || 1;
-                        const newAmount = (sourceRate !== 0) ? ((equivalent * targetRate) / sourceRate) : 0;
-                        if (amountInput) amountInput.value = formatCurrency(newAmount, 2);
+                        if (equivalent > 0) {
+                            const amount = parseFormattedNumber(amountInput?.value) || 0;
+                            const sourceRate = parseFormattedNumber(exchangeRateMiktarInput?.value) || 1;
+                            const newTargetRate = (amount * sourceRate) / equivalent;
+                            if (exchangeRateHesapInput) exchangeRateHesapInput.value = formatRate(newTargetRate);
+                        }
                     }
                 });
                 amountEquivalentInput.addEventListener('blur', (e) => {
                     e.target.value = formatCurrency(parseFormattedNumber(e.target.value), 2);
                     if (karsilikToggle && karsilikToggle.checked) {
                         const equivalent = parseFormattedNumber(amountEquivalentInput.value) || 0;
-                        const sourceRate = parseFormattedNumber(exchangeRateMiktarInput?.value) || 1;
-                        const targetRate = parseFormattedNumber(exchangeRateHesapInput?.value) || 1;
-                        const newAmount = (sourceRate !== 0) ? ((equivalent * targetRate) / sourceRate) : 0;
-                        if (amountInput) amountInput.value = formatCurrency(newAmount, 2);
+                        if (equivalent > 0) {
+                            const amount = parseFormattedNumber(amountInput?.value) || 0;
+                            const sourceRate = parseFormattedNumber(exchangeRateMiktarInput?.value) || 1;
+                            const newTargetRate = (amount * sourceRate) / equivalent;
+                            if (exchangeRateHesapInput) exchangeRateHesapInput.value = formatRate(newTargetRate);
+                        }
                     }
                 });
             }
@@ -4719,14 +4735,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Sync when toggle changes: if açıldı ve karşılık > 0, propagate to amount; otherwise compute equivalent from amount
                     const eq = parseFormattedNumber(amountEquivalentInput?.value) || 0;
                     if (karsilikToggle.checked) {
-                        if (eq > 0) {
-                            const sourceRate = parseFormattedNumber(exchangeRateMiktarInput?.value) || 1;
-                            const targetRate = parseFormattedNumber(exchangeRateHesapInput?.value) || 1;
-                            const newAmount = (sourceRate !== 0) ? ((eq * targetRate) / sourceRate) : 0;
-                            if (amountInput) amountInput.value = formatCurrency(newAmount, 2);
-                        } else {
-                            calculateEquivalent();
-                        }
+                        calculateEquivalent();
                     } else {
                         calculateEquivalent();
                     }
@@ -4851,16 +4860,13 @@ document.addEventListener('DOMContentLoaded', () => {
                         exchangeRateHesapInput.value = formatCurrency(hesapKuruVal, 4);
                     }
 
-                    // Eğer detay içinde karsilik bilgisi varsa toggle'ı aç ve detay bloğunu göster
-                    const hasKarsilikDetail = !!(itemToEdit.details && (itemToEdit.details.karsilikBirimi || itemToEdit.details.karsilikDegeri || itemToEdit.details.karsilikKuru));
-                    const differentCurrency = !!(itemToEdit.equivalentCurrency && itemToEdit.equivalentCurrency !== itemToEdit.currency);
+                    // Karşılık/Birim kontrolü ile switch durumunu belirle
+                    const hasKarsilikDetail = !!(itemToEdit.details && (itemToEdit.details.karsilikDegeri || itemToEdit.details.karsilikKuru || itemToEdit.details.karsilikAktif));
+                    const isDifferentCurrency = !!(itemToEdit.equivalentCurrency && itemToEdit.equivalentCurrency !== itemToEdit.currency);
+                    const karsilikEnabled = !!(itemToEdit.details && itemToEdit.details.karsilikAktif) || hasKarsilikDetail || isDifferentCurrency;
+
                     if (karsilikToggle) {
-                        karsilikToggle.checked = hasKarsilikDetail || differentCurrency;
-                        karsilikDetails.classList.toggle('hidden', !karsilikToggle.checked);
-                    }
-                    const karsilikAktifFlag = !!(itemToEdit.details && itemToEdit.details.karsilikAktif);
-                    if (karsilikToggle) {
-                        karsilikToggle.checked = karsilikAktifFlag;
+                        karsilikToggle.checked = karsilikEnabled;
                         karsilikDetails.classList.toggle('hidden', !karsilikToggle.checked);
                     }
                     // Eğer karşılık seçiliyse, karşılık select'in görünümünü güncelle ve kur/miktarı tekrar hesapla/formatla
@@ -5322,6 +5328,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return items;
     };
     const loadFisToScreen = async (fisId, isEditMode = false) => {
+        state.isInternalLoading = true;
         showLoadingOverlay();
         try {
             const base = String(Front_BASE_URL || API_BASE_URL).replace(/\/$/, '');
@@ -5412,39 +5419,41 @@ document.addEventListener('DOMContentLoaded', () => {
                 const counterCurrencyCode = resolveCurrencyCode(rawCounterCode);
 
                 return {
-                    movementId: id,
-                    fisID: m.receiptId ?? m.fisID ?? m.receiptId,
-                    hareketTipID: m.transactionTypeId ?? m.hareketTipID ?? m.TransactionTypeId,
-                    islemKodu: m.transactionCode ?? m.transactionCode ?? m.transactionCode,
-                    islemAdi: m.transactionName ?? m.transactionName ?? m.transactionName,
-                    hesapID: m.accountId ?? m.hesapID ?? m.accountId,
-                    hesapAdi: m.accountName ?? m.accountName ?? m.AccountName ?? '',
-                    hesapTipID: m.accountTypeId ?? m.accountTypeId ?? m.hesapTipID ?? null,
-                    stokID: m.stockId ?? m.stokID ?? null,
-                    aciklama: m.description ?? m.aciklama ?? '',
-                    miktar: Number(m.foreignCurrencyAmount ?? m.foreignAmount ?? m.miktar ?? 0),
-                    birim: foreignCurrencyCode, // artık döviz kodu
-                    kur: Number(m.foreignExchangeRate ?? m.kur ?? 0),
-                    karsilikMiktar: Number(m.counterCurrencyAmount ?? m.counterAmount ?? m.karsilikDegeri ?? 0),
-                    karsilikBirim: counterCurrencyCode, // artık döviz kodu
-                    karsilikKuru: Number(m.counterExchangeRate ?? m.karsilikKuru ?? 0),
-                    baseCurrencyAmount: Number(m.baseCurrencyAmount ?? m.BaseCurrencyAmount ?? 0),
+                    movementId: tryKeys(m, ['Id', 'id', 'movementId', 'hareketID']),
+                    fisID: tryKeys(m, ['ReceiptId', 'receiptId', 'fisID', 'fisId']),
+                    hareketTipID: tryKeys(m, ['TransactionTypeId', 'transactionTypeId', 'hareketTipID', 'hareketTipId']),
+                    islemKodu: tryKeys(m, ['TransactionCode', 'transactionCode', 'islemKodu']),
+                    islemAdi: tryKeys(m, ['TransactionName', 'transactionName', 'islemAdi']),
+                    hesapID: tryKeys(m, ['AccountId', 'accountId', 'hesapID', 'hesapId']),
+                    hesapAdi: tryKeys(m, ['AccountName', 'accountName', 'hesapAdi']),
+                    hesapTipID: tryKeys(m, ['AccountTypeId', 'accountTypeId', 'hesapTipID', 'hesapTipId']),
+                    stokID: tryKeys(m, ['StockId', 'stockId', 'stokID', 'stokId']),
+                    aciklama: tryKeys(m, ['Description', 'description', 'aciklama']),
+                    miktar: Number(tryKeys(m, ['ForeignCurrencyAmount', 'foreignCurrencyAmount', 'foreignAmount', 'miktar', 'Miktar', 'Amount', 'amount']) ?? 0),
+                    birim: foreignCurrencyCode,
+                    kur: Number(tryKeys(m, ['ForeignExchangeRate', 'foreignExchangeRate', 'kur', 'Kur', 'ExchangeRate', 'exchangeRate']) ?? 0),
+                    karsilikMiktar: Number(tryKeys(m, ['CounterCurrencyAmount', 'counterCurrencyAmount', 'counterAmount', 'karsilikDegeri', 'CounterAmount', 'counterAmount', 'karsilikMiktar']) ?? 0),
+                    karsilikBirim: counterCurrencyCode,
+                    karsilikKuru: Number(tryKeys(m, ['CounterExchangeRate', 'counterExchangeRate', 'karsilikKuru', 'CounterExchangeRate', 'counterExchangeRate']) ?? 0),
+                    baseCurrencyAmount: Number(tryKeys(m, ['BaseCurrencyAmount', 'baseCurrencyAmount']) ?? 0),
                     counterMovementId: counterId,
-                    kur2: Number(m.counterExchangeRate ?? m.karsilikKuru ?? 0),
-                    girisMi: inferredGiris
+                    kur2: Number(tryKeys(m, ['CounterExchangeRate', 'counterExchangeRate', 'karsilikKuru']) ?? 0),
+                    girisMi: inferredGiris,
+                    oldBalance: Number(tryKeys(m, ['OldBalance', 'oldBalance', 'eskiBakiye']) ?? 0),
+                    finalBalance: Number(tryKeys(m, ['FinalBalance', 'finalBalance', 'sonBakiye']) ?? 0)
                 };
             });
 
             const fisData = {
-                fisID: payload.id ?? payload.FisId ?? payload.receiptId ?? payload.receiptID,
-                fisNo: payload.receiptNumber ?? payload.fisNo ?? payload.ReceiptNumber ?? '',
-                tarih: payload.receiptDate ?? payload.tarih ?? payload.ReceiptDate ?? '',
-                cariHesapID: payload.accountId ?? payload.cariHesapID ?? payload.AccountId ?? null,
-                paraBirimi: payload.currencyCode ?? payload.paraBirimi ?? payload.CurrencyCode ?? (payload.currency ?? ''),
-                acikHesapTutar: payload.openBalanceAmount ?? payload.acikHesapTutar ?? payload.OpenBalanceAmount ?? 0,
-                personelID: payload.employeeId ?? payload.personelID ?? payload.EmployeeId ?? null,
-                cariMi: (payload.isCustomerReceipt ?? payload.cariMi) ? 1 : 0,
-                hesapAdi: payload.accountName ?? payload.AccountName ?? '',
+                fisID: tryKeys(payload, ['Id', 'id', 'fisID', 'fisId', 'receiptID', 'receiptId']),
+                fisNo: tryKeys(payload, ['ReceiptNumber', 'receiptNumber', 'fisNo']),
+                tarih: tryKeys(payload, ['ReceiptDate', 'receiptDate', 'tarih']),
+                cariHesapID: tryKeys(payload, ['AccountId', 'accountId', 'cariHesapID', 'cariHesapId']),
+                paraBirimi: resolveCurrencyCode(tryKeys(payload, ['CurrencyCode', 'currencyCode', 'paraBirimi', 'currency', 'CurrencyId', 'currencyId'])),
+                acikHesapTutar: parseFloat(tryKeys(payload, ['OpenBalanceAmount', 'openBalanceAmount', 'acikHesapTutar', 'AcikHesapTutar', 'OpenAccountAmount']) ?? 0),
+                personelID: tryKeys(payload, ['EmployeeId', 'employeeId', 'personelID', 'personelId']),
+                cariMi: (tryKeys(payload, ['IsCustomerReceipt', 'isCustomerReceipt', 'cariMi']) ? 1 : 0),
+                hesapAdi: tryKeys(payload, ['AccountName', 'accountName', 'hesapAdi']),
                 hareketler: mappedMovements
             };
 
@@ -5471,9 +5480,9 @@ document.addEventListener('DOMContentLoaded', () => {
             updateActiveCurrency();
 
             const fisDate = new Date(fisData.tarih);
-            const dayBefore = new Date(fisDate);
-            dayBefore.setDate(fisDate.getDate() - 1);
-            await fetchAndRenderCariBakiye(getLocalDateString(dayBefore));
+            // Day'i bir azaltmaya gerek yok çünkü fetchAndRenderCariBakiye içerisinde targetFisId ile ulaşıldığında duruyoruz.
+            // Bu sayede tam fiş öncesi bakiyeyi (EB) almış oluyoruz.
+            await fetchAndRenderCariBakiye(getLocalDateString(fisDate), fisData.fisID);
 
             state.receiptItems = reconstructReceiptItems(fisData);
             renderReceipt();
@@ -5496,6 +5505,7 @@ document.addEventListener('DOMContentLoaded', () => {
             showToast(error.message, 'error');
             console.error('loadFisToScreen error:', error);
         } finally {
+            state.isInternalLoading = false;
             hideLoadingOverlay();
         }
     };
@@ -6531,8 +6541,10 @@ document.addEventListener('DOMContentLoaded', () => {
                         showDefaultMessage();
                         return;
                     }
-
-                    if (state.operationType === 'cari') {
+ 
+                    if (state.operationType === 'cari' && !state.isInternalLoading) {
+                        // Manuel müşteri değişiminde yüklü fişi temizle (yeni fiş/işlem bağlamı)
+                        state.loadedFis = null;
                         debouncedFetchAndRenderCariBakiye();
                     }
                 } catch (err) {
@@ -6784,7 +6796,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            if (state.operationType === 'cari') {
+            if (state.operationType === 'cari' && !state.isInternalLoading) {
                 debouncedFetchAndRenderCariBakiye();
             }
         });
@@ -6897,7 +6909,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        ekstreContent.addEventListener('click', (e) => {
+        ekstreContent.addEventListener('click', async (e) => {
             // Önce "Düzenle" düğmesine mi tıklandı diye kontrol et
             const editButton = e.target.closest('.edit-ekstre-fis-btn');
             if (editButton && editButton.dataset.fisId) {
@@ -6917,19 +6929,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (row && row.dataset.balances) {
                 if (row === currentlySelected) { // Zaten seçili satıra tekrar tıklandıysa seçimi kaldır
-                    renderBakiyeOzeti(lastFetchedEkstreFinalBalance);
+                    await renderBakiyeOzeti(lastFetchedEkstreFinalBalance);
                 } else {
                     row.classList.add('selected-ekstre-row');
                     try {
                         const balancesForThisRow = JSON.parse(row.dataset.balances);
-                        renderBakiyeOzeti(balancesForThisRow);
+                        await renderBakiyeOzeti(balancesForThisRow);
                     } catch (error) {
                         console.error('Satır bakiyesi parse edilemedi:', error);
-                        renderBakiyeOzeti(lastFetchedEkstreFinalBalance);
+                        await renderBakiyeOzeti(lastFetchedEkstreFinalBalance);
                     }
                 }
             } else { // Boş bir alana tıklandıysa
-                renderBakiyeOzeti(lastFetchedEkstreFinalBalance);
+                await renderBakiyeOzeti(lastFetchedEkstreFinalBalance);
             }
         });
 

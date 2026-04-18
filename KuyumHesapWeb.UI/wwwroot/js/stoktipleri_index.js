@@ -228,14 +228,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
 
-    deleteButton.addEventListener('click', () => {
-        const itemId = stokTipIDInput.value;
-        if (!itemId) return;
-        itemToDeleteId = itemId;
-        modalItemName.textContent = `'${stokTipAdiInput.value}'`;
-        deleteModal.classList.remove('hidden');
-        deleteModal.querySelector('div').classList.add('scale-100');
-    });
+    //deleteButton.addEventListener('click', () => {
+    //    const itemId = stokTipIDInput.value;
+    //    if (!itemId) return;
+    //    itemToDeleteId = itemId;
+    //    modalItemName.textContent = `'${stokTipAdiInput.value}'`;
+    //    deleteModal.classList.remove('hidden');
+    //    deleteModal.querySelector('div').classList.add('scale-100');
+    //});
 
     const closeModal = () => {
         if (!deleteModal) return;

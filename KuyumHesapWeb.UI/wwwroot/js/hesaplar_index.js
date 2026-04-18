@@ -140,11 +140,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             const response = await fetch('/Account/GetAll', { headers: getAuthHeaders() });
             const data = await parseApiResponse(response);
             allAccounts = (data || []).map(it => ({
-                id: it.id ?? it.Id,
-                hesapAdi: it.hesapAdi ?? it.accountName ?? 'Bilinmeyen',
-                hesapTipiID: it.hesapTipiID ?? it.accountTypeId,
-                hesapTipiAdi: it.hesapTipiAdi ?? it.accountTypeName ?? 'Bilinmeyen',
-                aktif: it.aktif ?? it.isActive ?? false
+                id: it.accountId ?? it.AccountId ?? it.id ?? it.Id,
+                hesapAdi: it.accountName ?? it.AccountName ?? it.hesapAdi ?? 'Bilinmeyen',
+                hesapTipiID: it.accountTypeId ?? it.AccountTypeId ?? it.hesapTipiID,
+                hesapTipiAdi: it.accountTypeName ?? it.AccountTypeName ?? it.hesapTipiAdi ?? 'Bilinmeyen',
+                aktif: it.isActive ?? it.IsActive ?? it.aktif ?? false
             }));
             renderList(allAccounts);
             listCountEl.textContent = `${allAccounts.length} Kayıt`;
@@ -192,21 +192,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     const populateForm = (data) => {
         const item = data.getByIdAccountQueryResponse || data;
         form.reset();
-        idInput.value = item.id ?? item.Id;
-        hesapAdiInput.value = item.hesapAdi ?? item.accountName ?? '';
-        hesapTipiIDInput.value = item.hesapTipiID ?? item.accountTypeId ?? '';
-        musteriTipiInput.value = item.musteriTipi ?? item.customerType ?? 'Bireysel';
-        cepTelefonuInput.value = item.cepTelefonu ?? item.phone ?? '';
-        mailInput.value = item.mail ?? item.email ?? '';
-        tcKimlikNoInput.value = item.tcKimlikNo ?? item.identityNumber ?? '';
-        vergiDairesiInput.value = item.vergiDairesi ?? item.taxOffice ?? '';
-        vergiNoInput.value = item.vergiNo ?? item.taxNumber ?? '';
-        aktifInput.checked = item.aktif ?? item.isActive ?? false;
-        ulkeInput.value = item.ulke ?? item.country ?? 'Türkiye';
-        sehirInput.value = item.sehir ?? item.city ?? '';
-        ilceInput.value = item.ilce ?? item.district ?? '';
-        mahalleInput.value = item.mahalle ?? item.neighborhood ?? '';
-        fullAdresInput.value = item.fullAdres ?? item.address ?? '';
+        idInput.value = item.id ?? item.Id ?? '';
+        hesapAdiInput.value = item.accountName ?? item.AccountName ?? item.hesapAdi ?? '';
+        hesapTipiIDInput.value = item.accountTypeId ?? item.AccountTypeId ?? item.hesapTipiID ?? '';
+        musteriTipiInput.value = item.customerType ?? item.CustomerType ?? item.musteriTipi ?? 'Bireysel';
+        cepTelefonuInput.value = item.mobilePhone ?? item.MobilePhone ?? item.cepTelefonu ?? '';
+        mailInput.value = item.email ?? item.Email ?? item.mail ?? '';
+        tcKimlikNoInput.value = item.nationalIdNumber ?? item.NationalIdNumber ?? item.tcKimlikNo ?? '';
+        vergiDairesiInput.value = item.taxOffice ?? item.TaxOffice ?? item.vergiDairesi ?? '';
+        vergiNoInput.value = item.taxNumber ?? item.TaxNumber ?? item.vergiNo ?? '';
+        aktifInput.checked = item.isActive ?? item.IsActive ?? item.aktif ?? false;
+        ulkeInput.value = item.country ?? item.Country ?? item.ulke ?? 'Türkiye';
+        sehirInput.value = item.city ?? item.City ?? item.sehir ?? '';
+        ilceInput.value = item.district ?? item.District ?? item.ilce ?? '';
+        mahalleInput.value = item.neighborhood ?? item.Neighborhood ?? item.mahalle ?? '';
+        fullAdresInput.value = item.fullAddress ?? item.FullAddress ?? item.fullAdres ?? '';
 
         // Trigger floating labels and visibility
         musteriTipiInput.dispatchEvent(new Event('change'));
@@ -242,22 +242,22 @@ document.addEventListener('DOMContentLoaded', async () => {
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
         const payload = {
-            GetByIdAccountQueryResponse: {
+            getByIdAccountQueryResponse: {
                 id: currentMode === 'edit' ? parseInt(idInput.value) : 0,
-                hesapAdi: hesapAdiInput.value,
-                hesapTipiID: parseInt(hesapTipiIDInput.value),
-                musteriTipi: musteriTipiInput.value,
-                cepTelefonu: cepTelefonuInput.value,
-                mail: mailInput.value,
-                tcKimlikNo: tcKimlikNoInput.value,
-                vergiDairesi: vergiDairesiInput.value,
-                vergiNo: vergiNoInput.value,
-                aktif: aktifInput.checked,
-                ulke: ulkeInput.value,
-                sehir: sehirInput.value,
-                ilce: ilceInput.value,
-                mahalle: mahalleInput.value,
-                fullAdres: fullAdresInput.value
+                accountName: hesapAdiInput.value,
+                accountTypeId: parseInt(hesapTipiIDInput.value),
+                customerType: musteriTipiInput.value,
+                mobilePhone: cepTelefonuInput.value,
+                email: mailInput.value,
+                nationalIdNumber: tcKimlikNoInput.value,
+                taxOffice: vergiDairesiInput.value,
+                taxNumber: vergiNoInput.value,
+                isActive: aktifInput.checked,
+                country: ulkeInput.value,
+                city: sehirInput.value,
+                district: ilceInput.value,
+                neighborhood: mahalleInput.value,
+                fullAddress: fullAdresInput.value
             }
         };
 
@@ -266,7 +266,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const response = await fetch(url, {
                 method: 'POST',
                 headers: getAuthHeaders(),
-                body: JSON.stringify(currentMode === 'add' ? { request: payload.GetByIdAccountQueryResponse } : payload)
+                body: JSON.stringify(currentMode === 'add' ? { request: payload.getByIdAccountQueryResponse } : payload)
             });
             await parseApiResponse(response);
             showToast(`Hesap başarıyla ${currentMode === 'add' ? 'eklendi' : 'güncellendi'}.`);

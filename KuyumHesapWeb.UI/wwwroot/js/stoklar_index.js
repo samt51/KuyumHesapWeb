@@ -47,7 +47,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const addModeButtons = document.getElementById('add-mode-buttons');
     const editModeButtons = document.getElementById('edit-mode-buttons');
     const toastContainer = document.getElementById('toast-container');
-    const deleteButton = document.getElementById('sil-btn');
+
 
     // Filtre elemanları
     const listSearchInput = document.getElementById('listSearchInput');
@@ -239,7 +239,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         form.reset();
         stokIDInput.value = item.id || item.Id;
         stokAdiInput.value = item.stockName || item.StockName;
-        stokTipIDSelect.value = item.stockTypeId || item.StockTypeId;
+        stokTipIDSelect.value = (item.stockTypeResponseDto ? item.stockTypeResponseDto.id : null) || (item.StockTypeResponseDto ? item.StockTypeResponseDto.Id : null) || item.stockTypeId || item.StockTypeId;
         birimSelect.value = item.unitName || item.UnitName;
         iscilikBirimiSelect.value = item.laborUnitId || item.LaborUnitId;
         
@@ -327,9 +327,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         setTimeout(() => deleteModal.classList.add('hidden'), 300);
     };
 
-    deleteButton.addEventListener('click', () => {
-        if (stokIDInput.value) showDeleteModal(stokIDInput.value, stokAdiInput.value);
-    });
+  
 
     cancelDeleteBtn.addEventListener('click', hideDeleteModal);
 
