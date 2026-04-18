@@ -81,7 +81,6 @@ namespace KuyumHesapWeb.UI.Controllers
 
             // JWT cookie
             Response.Cookies.Append("AuthToken", data.data.token, BuildAuthCookieOptions(data.data.tokenExpireDate));
-            Response.Cookies.Append("AuthTokenClient", data.data.token, BuildClientAuthCookieOptions(data.data.tokenExpireDate));
 
             // MVC cookie (Authorize bunu okur)
             var claims = BuildClaimsFromToken(data.data.token, request.UserName);
