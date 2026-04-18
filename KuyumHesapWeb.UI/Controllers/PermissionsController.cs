@@ -158,9 +158,9 @@ namespace KuyumHesapWeb.UI.Controllers
         }
 
         [HttpPost]
-        public Task<ResponseDto<AssignUserPermissionCommandResponse>> AssignUserPermission([FromBody] AssignUserPermissionCommandRequest request)
+        public async Task<ResponseDto<AssignUserPermissionCommandResponse>> AssignUserPermission([FromBody] AssignUserPermissionCommandRequest request)
         {
-            return _mediator.Send(request);
+            return await _mediator.Send(request);
         }
 
         [HttpDelete]

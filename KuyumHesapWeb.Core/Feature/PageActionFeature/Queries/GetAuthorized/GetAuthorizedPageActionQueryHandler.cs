@@ -11,9 +11,10 @@ namespace KuyumHesapWeb.Core.Feature.PageActionFeature.Queries.GetAuthorized
         {
         }
 
-        public Task<ResponseDto<List<GetAuthorizedPageActionQueryResponse>>> Handle(GetAuthorizedPageActionQueryRequest request, CancellationToken cancellationToken)
+        public async Task<ResponseDto<List<GetAuthorizedPageActionQueryResponse>>> Handle(GetAuthorizedPageActionQueryRequest request, CancellationToken cancellationToken)
         {
-            return _apiService.GetAsync<List<GetAuthorizedPageActionQueryResponse>>($"PageAction/Authorized?userId={request.UserId}&pageCode={Uri.EscapeDataString(request.PageCode)}");
+            var data = await _apiService.GetAsync<List<GetAuthorizedPageActionQueryResponse>>($"PageAction/Authorized?userId={request.UserId}&pageCode={Uri.EscapeDataString(request.PageCode)}");
+            return data;
         }
     }
 }

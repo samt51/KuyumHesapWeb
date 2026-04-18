@@ -11,9 +11,10 @@ namespace KuyumHesapWeb.Core.Feature.MenuFeature.Queries.GetAll
         {
         }
 
-        public Task<ResponseDto<List<GetAllMenuQueryResponse>>> Handle(GetAllMenuQueryRequest request, CancellationToken cancellationToken)
+        public async Task<ResponseDto<List<GetAllMenuQueryResponse>>> Handle(GetAllMenuQueryRequest request, CancellationToken cancellationToken)
         {
-            return _apiService.GetAsync<List<GetAllMenuQueryResponse>>("Menu/GetAll");
+            var data = await _apiService.GetAsync<List<GetAllMenuQueryResponse>>("Menu/GetAll");
+            return data;
         }
     }
 }

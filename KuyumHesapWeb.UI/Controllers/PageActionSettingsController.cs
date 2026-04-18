@@ -229,7 +229,11 @@ namespace KuyumHesapWeb.UI.Controllers
             var roleIds = new List<int>();
             foreach (var claim in User.Claims)
             {
-                AddRoleIds(roleIds, claim.Value);
+                // Güvenlik Düzeltmesi: Sadece anahtar kelimesinde "role" geçen verileri Rol olarak kabul et
+                if (IsRoleIdKey(claim.Type))
+                {
+                    AddRoleIds(roleIds, claim.Value);
+                }
             }
 
             var token = Request.Cookies["AuthToken"];

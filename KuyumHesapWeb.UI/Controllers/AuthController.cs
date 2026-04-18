@@ -1,4 +1,4 @@
-﻿using KuyumHesapWeb.Core.Feature.AuthFeature.Commands.Login;
+using KuyumHesapWeb.Core.Feature.AuthFeature.Commands.Login;
 using MediatR;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -24,14 +24,14 @@ namespace KuyumHesapWeb.UI.Controllers
         private CookieOptions BuildAuthCookieOptions(DateTimeOffset expires)
         {
             var host = Request.Host.Host;
-            var isLocalhost = host.Equals("localhost", StringComparison.OrdinalIgnoreCase);
+            var isProdDomain = host.EndsWith("kuyumhesap.com", StringComparison.OrdinalIgnoreCase);
 
             return new CookieOptions
             {
                 HttpOnly = true,
-                Secure = !isLocalhost,                    // prod true
-                SameSite = isLocalhost ? SameSiteMode.Lax : SameSiteMode.None,
-                Domain = isLocalhost ? null : ".kuyumhesap.com",
+                Secure = isProdDomain,
+                SameSite = isProdDomain ? SameSiteMode.None : SameSiteMode.Lax,
+                Domain = isProdDomain ? ".kuyumhesap.com" : null,
                 Path = "/",
                 Expires = expires,
                 IsEssential = true
@@ -48,13 +48,13 @@ namespace KuyumHesapWeb.UI.Controllers
         private CookieOptions BuildAuthCookieDeleteOptions()
         {
             var host = Request.Host.Host;
-            var isLocalhost = host.Equals("localhost", StringComparison.OrdinalIgnoreCase);
+            var isProdDomain = host.EndsWith("kuyumhesap.com", StringComparison.OrdinalIgnoreCase);
 
             return new CookieOptions
             {
-                Secure = !isLocalhost,
-                SameSite = isLocalhost ? SameSiteMode.Lax : SameSiteMode.None,
-                Domain = isLocalhost ? null : ".kuyumhesap.com",
+                Secure = isProdDomain,
+                SameSite = isProdDomain ? SameSiteMode.None : SameSiteMode.Lax,
+                Domain = isProdDomain ? ".kuyumhesap.com" : null,
                 Path = "/"
             };
         }
@@ -79,12 +79,22 @@ namespace KuyumHesapWeb.UI.Controllers
                 return View("Login", request);
             }
 
+            // Backend'den gelen TokenExpireDate eğer UTC destekli değilse (Saat dilimi farkı sebebiyle)
+            // Tarayıcı direkt çerezi "Süresi dolmuş" olarak çöpe atıyor! 
+            // Bunu aşmak için manuel ve güvenli bir son kullanma tarihi (3 Günlük) atıyoruz!
+            var safeExpireDate = DateTime.UtcNow.AddDays(3);
+
             // JWT cookie
-            Response.Cookies.Append("AuthToken", data.data.token, BuildAuthCookieOptions(data.data.tokenExpireDate));
-            Response.Cookies.Append("AuthTokenClient", data.data.token, BuildClientAuthCookieOptions(data.data.tokenExpireDate));
+            Response.Cookies.Append("AuthToken", data.data.token, BuildAuthCookieOptions(safeExpireDate));
+            Response.Cookies.Append("AuthTokenClient", data.data.token, BuildClientAuthCookieOptions(safeExpireDate));
 
             // MVC cookie (Authorize bunu okur)
             var claims = BuildClaimsFromToken(data.data.token, request.UserName);
+            
+            // Çift boyut şişkinliğini (Header Bloat Limits) engellemek için Token stringini kimliklerden atıyoruz!
+            // Zaten "AuthToken" Cookie'si aracılığıyla IHttpContextAccessor'dan gerektiğinde okunabiliyor.
+            claims.RemoveAll(c => c.Type == "access_token");
+
             var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
 
             await HttpContext.SignInAsync(
@@ -93,7 +103,7 @@ namespace KuyumHesapWeb.UI.Controllers
                 new AuthenticationProperties
                 {
                     IsPersistent = true,
-                    ExpiresUtc = data.data.tokenExpireDate
+                    ExpiresUtc = safeExpireDate
                 });
 
             if (!string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl))

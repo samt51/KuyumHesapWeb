@@ -57,15 +57,18 @@
             if (!required || allowed.has(required)) {
                 if (element.dataset.permissionOriginalHidden !== 'true') {
                     element.classList.remove('hidden');
-                    element.hidden = false;
+                    // element.hidden = false; kaldırıldı
                 }
                 element.disabled = false;
+                element.classList.remove('opacity-50', 'pointer-events-none');
                 return;
             }
 
-            element.hidden = true;
-            element.classList.add('hidden');
+            // KULLANICI TALEBİ: Yetkisi olmayanlar ekrandan tamamen silinmesin, sadece buzlu dursun
+            // element.hidden = true; kaldırıldı
+            // element.classList.add('hidden'); kaldırıldı
             element.disabled = true;
+            element.classList.add('opacity-50', 'pointer-events-none');
         });
     };
 
@@ -110,9 +113,9 @@
 
         const actions = await loadAuthorizedActions(effectivePageCode);
         const allowedCodes = actionCodesOf(actions);
-        if (isSellAndCariPage(effectivePageCode) && allowedCodes.length === 0) {
-            return applyFullPageAccess(effectivePageCode);
-        }
+
+        // ESKİDEN BURADA OLAN: "Sıfır yetki geliyorsa FullPageAccess ver" geliştirici kuralı, 
+        // gerçek rol/izin testlerini bozduğu için Kökünden Silindi! Orjinal güvenlik devrede.
 
         window.currentPageActionCodes = allowedCodes;
         window.currentPageActions = actions;
@@ -129,8 +132,10 @@
 
         guardedElements.forEach(element => {
             element.dataset.permissionOriginalHidden = String(element.hidden || element.classList.contains('hidden'));
-            element.hidden = true;
-            element.classList.add('hidden');
+            // element.hidden = true; kaldırıldı
+            
+            // BAŞLANGIÇTA GİZLEMESİN (Kullanıcı talebi)
+            // element.classList.add('hidden');
         });
 
         try {

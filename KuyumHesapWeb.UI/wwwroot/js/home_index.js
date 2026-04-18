@@ -49,6 +49,28 @@
         // Yardımcı fonksiyonlar
         const generateId = (prefix) => `${prefix}-${Date.now()}-${++idCounter}`;
 
+        const parseJwtToUserName = () => {
+            try {
+                const token = window.khGetAuthToken ? window.khGetAuthToken() : localStorage.getItem('jwt_token');
+                if (!token) return 'Kullanıcı';
+                
+                const payloadStr = atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'));
+                const payload = JSON.parse(decodeURIComponent(escape(payloadStr)));
+                
+                return payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name'] || 
+                       payload.userName || payload.username || 
+                       payload.unique_name || payload.name || payload.given_name || 'Kullanıcı';
+            } catch (e) {
+                console.warn('[home_index] Token çözülemedi, varsayılan Kullanıcı adı kullanılacak', e);
+                return 'Kullanıcı';
+            }
+        };
+
+        const displayUsernameEl = document.getElementById('display-username');
+        if (displayUsernameEl) {
+            displayUsernameEl.innerText = parseJwtToUserName();
+        }
+
         const saveSettings = async (sidebarGizli) => {
             try {
                 const token = window.khGetAuthToken ? window.khGetAuthToken() : localStorage.getItem('jwt_token');
@@ -101,7 +123,7 @@
 
             // Genişleme sınıflarını her durumda temizle
             sidebarMenu.classList.remove('expanded', 'w-64');
-            
+
             if (isMobile) {
                 console.log('[home_index] collapsing for mobile');
                 sidebarMenu.classList.add('hidden');
@@ -351,8 +373,8 @@
             }
         };
 
-        const canUseFullFallbackMenu = roleIds => roleIds.includes('3');
-        const hasSystemAdminRole = roleIds => roleIds.includes('3');
+        const canUseFullFallbackMenu = roleIds => roleIds.includes('1') || roleIds.includes('3');
+        const hasSystemAdminRole = roleIds => roleIds.includes('1') || roleIds.includes('3');
 
         const isSystemAdminOnlyMenu = item => {
             const title = String(menuTitleOf(item) || '').trim().toLocaleLowerCase('tr-TR');
@@ -480,7 +502,12 @@
                 const staticMenuMarkup = Array.from(container.querySelectorAll('[data-static-menu]'))
                     .map(element => element.outerHTML)
                     .join('');
-                const response = await fetch(menuUrl, { headers: { 'Accept': 'application/json' } });
+                const roleIdsForCheck = await loadCurrentRoleIds();
+                let targetUrl = menuUrl;
+                if (roleIdsForCheck.includes('1') || roleIdsForCheck.includes('3') || roleIdsForCheck.includes(1) || roleIdsForCheck.includes(3)) {
+                    targetUrl = '/MenuSettings/GetAll';
+                }
+                const response = await fetch(targetUrl, { headers: { 'Accept': 'application/json' } });
                 if (!response.ok) return;
 
                 const raw = await response.json();
@@ -643,10 +670,10 @@
             link.addEventListener('click', () => {
                 const container = link.closest('.sidebar-link-container');
                 const hasSubmenu = container && container.querySelector('.submenu') !== null;
-                
+
                 // Eğer doğrudan bir link ise veya onclick ile bir sayfa açıyorsa sidebar'ı kapat
                 const isDirectLink = !hasSubmenu || link.hasAttribute('onclick');
-                
+
                 if (isDirectLink) {
                     // Mobil ekranlarda her zaman, masaüstünde isPinned değilse kapat
                     if (isMobileView() || !isPinned) {
@@ -784,7 +811,7 @@
                 const button = document.querySelector(`.tab-button[data-tab-id="${tab.id}"]`);
                 const frame = tab.frameId ? document.getElementById(tab.frameId) : null;
                 if (button) button.classList.toggle('active', tab.id === tabId);
-                
+
                 if (tab.id === tabId) {
                     activeTab = tab;
                     if (tab.isNative) {
@@ -893,7 +920,7 @@
                     try {
                         const tabUrlLower = activeTab.url.replace(/\/$/, '').toLowerCase();
                         const hrefLower = hrefAttr.replace(/\/$/, '').toLowerCase();
-                        
+
                         // Eşleştirme logic'i
                         let isMatch = false;
                         if (onclickAttr.includes(`'${activeTab.url}'`) || onclickAttr.includes(`"${activeTab.url}"`)) {
@@ -929,14 +956,14 @@
 
                 let title = 'Ana Sayfa';
                 let isDashboard = locPath.includes(normalizedDashboard) || pageHasDashboardMarkup;
-                
+
                 if (!isDashboard) {
                     const allLinks = document.querySelectorAll('.sidebar-link-container a');
                     for (const link of allLinks) {
                         const href = link.getAttribute('href');
                         const onclickAttr = link.getAttribute('onclick') || '';
                         let targetUrl = '';
-                        
+
                         if (onclickAttr.includes('openTab(')) {
                             // Extract URL from openTab('/Url', 'Title')
                             const match = onclickAttr.match(/openTab\(['"]([^'"]+)['"]/);
@@ -963,23 +990,23 @@
                 tabButton.className = 'tab-button flex items-center px-3 py-1.5 text-xs font-medium active';
                 tabButton.dataset.tabId = tabId;
                 tabButton.innerHTML = `<span>${title}</span>` + (isDashboard ? '' : `<span class="close-tab-btn ml-2 text-gray-500 hover:text-gray-800">&times;</span>`);
-                
+
                 if (tabsContainer) {
                     tabsContainer.appendChild(tabButton);
                 }
-                
+
                 const nativeUrl = isDashboard ? dashboardUrl : normalizeNavigationUrl(window.location.pathname || dashboardUrl);
                 openTabs.push({ id: tabId, url: nativeUrl, title: title, isNative: true });
-                
+
                 if (!isDashboard) {
                     const closeBtn = tabButton.querySelector('.close-tab-btn');
                     closeBtn && closeBtn.addEventListener('click', (e) => { e.stopPropagation(); closeTab(tabId); });
                 }
-                
+
                 tabButton.addEventListener('click', () => switchTab(tabId));
-                
+
                 switchTab(tabId);
-                
+
             } catch (e) {
                 console.error("Tab açılış hatası:", e);
                 openTab(dashboardUrl, 'Ana Sayfa');

@@ -53,9 +53,9 @@ namespace KuyumHesapWeb.UI.Controllers
         }
 
         [HttpGet]
-        public Task<ResponseDto<List<GetAllMenuQueryResponse>>> GetAll()
+        public async Task<ResponseDto<List<GetAllMenuQueryResponse>>> GetAll()
         {
-            return _mediator.Send(new GetAllMenuQueryRequest());
+            return await _mediator.Send(new GetAllMenuQueryRequest());
         }
 
         [HttpGet("MenuSettings/GetAuthorized/{userId:int}")]
