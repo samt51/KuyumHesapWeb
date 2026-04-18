@@ -11,9 +11,30 @@ document.addEventListener('DOMContentLoaded', function () {
     const deleteModal = document.getElementById('delete-modal');
     
     let allUsers = [];
+    let allRoles = [];
     let isEditMode = false;
 
     // --- Core Functions ---
+    const getValue = (obj, ...keys) => keys.map(key => obj && obj[key]).find(value => value !== undefined && value !== null);
+    const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+    const roleOf = user => getValue(user, 'roleResponse', 'RoleResponse') || {};
+    const roleNameOf = user => getValue(roleOf(user), 'name', 'Name', 'code', 'Code', 'type', 'Type') || '-';
+    const roleIdOf = user => getValue(roleOf(user), 'id', 'Id') || getValue(user, 'roleID', 'RoleID', 'roleId', 'RoleId') || '';
+    const userNameOf = user => getValue(user, 'userName', 'UserName', 'email', 'Email') || '-';
+    const firstNameOf = user => getValue(user, 'firstName', 'FirstName') || '';
+    const lastNameOf = user => getValue(user, 'lastName', 'LastName') || '';
+    const fullNameOf = user => `${firstNameOf(user)} ${lastNameOf(user)}`.trim();
+    const companyBranchOf = user => {
+        const company = getValue(user, 'companyCode', 'CompanyCode') || '';
+        const branch = getValue(user, 'branchCode', 'BranchCode') || '';
+        return [company, branch].filter(Boolean).join(' / ');
+    };
+    const setInputValue = (id, value) => {
+        const input = document.getElementById(id);
+        if (!input) return;
+        input.value = value ?? '';
+        input.classList.toggle('has-value', Boolean(input.value));
+    };
 
     const showToast = (message, type = 'success') => {
         const toast = document.createElement('div');
@@ -55,6 +76,37 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     };
 
+    const fetchRolesStrict = async () => {
+        try {
+            const response = await fetch(`${API_BASE}/GetAllRoles`);
+            const result = await response.json();
+            const isSuccess = result.isSuccess ?? result.IsSuccess;
+            const data = result.data ?? result.Data;
+
+            if (isSuccess && Array.isArray(data)) {
+                allRoles = data;
+                roleSelect.innerHTML = '<option value="" disabled selected>Rol Seçiniz</option>';
+                data
+                    .slice()
+                    .sort((a, b) => Number(getValue(a, 'id', 'Id') || 0) - Number(getValue(b, 'id', 'Id') || 0))
+                    .forEach(role => {
+                        const roleId = getValue(role, 'id', 'Id', 'roleId', 'RoleId', 'roleID', 'RoleID');
+                        const roleName = getValue(role, 'name', 'Name', 'code', 'Code') || `Rol ${roleId}`;
+                        if (!roleId) return;
+
+                        const option = document.createElement('option');
+                        option.value = String(roleId);
+                        option.textContent = roleName;
+                        option.dataset.roleId = String(roleId);
+                        option.dataset.roleName = roleName;
+                        roleSelect.appendChild(option);
+                    });
+            }
+        } catch (error) {
+            console.error('Error fetching roles:', error);
+        }
+    };
+
     const fetchUsers = async () => {
         try {
             const response = await fetch(`${API_BASE}/GetAll`);
@@ -89,19 +141,31 @@ document.addEventListener('DOMContentLoaded', function () {
 
         users.forEach((user, index) => {
             const row = document.createElement('div');
-            const email = user.email ?? user.Email ?? '';
-            const id = user.id ?? user.Id ?? 0;
-            const active = user.active ?? user.Active ?? false;
+            const id = getValue(user, 'id', 'Id') ?? 0;
+            const active = getValue(user, 'active', 'Active') ?? false;
+            const userName = userNameOf(user);
+            const fullName = fullNameOf(user);
+            const roleName = roleNameOf(user);
+            const roleId = roleIdOf(user);
+            const phone = getValue(user, 'phone', 'Phone') || '';
+            const companyBranch = companyBranchOf(user);
+            const avatarText = (fullName || userName || '?').charAt(0).toUpperCase();
+            const secondaryLine = [
+                fullName ? `Ad Soyad: ${escapeHtml(fullName)}` : '',
+                phone ? `Tel: ${escapeHtml(phone)}` : '',
+                companyBranch ? `Firma/Şube: ${escapeHtml(companyBranch)}` : ''
+            ].filter(Boolean).join(' • ');
 
             row.className = `group grid grid-cols-4 items-center gap-4 p-4 hover:bg-gray-50 transition-all border-b border-gray-50 cursor-pointer ${index % 2 === 1 ? 'bg-gray-50/30' : 'bg-white'}`;
             row.innerHTML = `
                 <div class="col-span-2 flex items-center gap-3">
                     <div class="w-8 h-8 rounded-lg bg-rolex-green/10 flex items-center justify-center text-rolex-green text-xs font-bold">
-                        ${email.charAt(0).toUpperCase()}
+                        ${escapeHtml(avatarText)}
                     </div>
                     <div class="flex flex-col min-w-0">
-                        <span class="text-sm font-bold text-gray-800 truncate">${email}</span>
-                        <span class="text-[10px] text-gray-400 font-medium">ID: ${id}</span>
+                        <span class="text-sm font-bold text-gray-800 truncate">${escapeHtml(userName)}</span>
+                        <span class="text-[10px] text-gray-500 font-semibold truncate">${secondaryLine || 'Ad Soyad bilgisi yok'}</span>
+                        <span class="text-[10px] text-gray-400 font-medium">ID: ${escapeHtml(id)} • Rol: ${escapeHtml(roleName)}${roleId ? ` (#${escapeHtml(roleId)})` : ''}</span>
                     </div>
                 </div>
                 <div class="text-center">
@@ -128,13 +192,13 @@ document.addEventListener('DOMContentLoaded', function () {
             const editBtn = row.querySelector('.edit-btn');
             editBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
-                loadUserToForm(user.id);
+                loadUserToForm(id);
             });
 
             const deleteBtn = row.querySelector('.delete-btn');
             deleteBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
-                openDeleteModal(user.id, user.email);
+                openDeleteModal(id, fullName || userName);
             });
 
             userList.appendChild(row);
@@ -150,21 +214,20 @@ document.addEventListener('DOMContentLoaded', function () {
 
             if (isSuccess && user) {
                 document.getElementById('userID').value = id;
-                document.getElementById('email').value = user.email ?? user.Email ?? '';
-                document.getElementById('email').classList.add('has-value');
+                setInputValue('firstName', getValue(user, 'firstName', 'FirstName'));
+                setInputValue('lastName', getValue(user, 'lastName', 'LastName'));
+                setInputValue('userName', getValue(user, 'userName', 'UserName'));
                 // Password should remain empty unless changing
-                document.getElementById('password').value = ''; 
-                document.getElementById('roleID').value = user.roleID ?? user.RoleID ?? '';
+                setInputValue('password', '');
+                document.getElementById('roleID').value = roleIdOf(user);
                 document.getElementById('roleID').classList.add('has-value');
-                document.getElementById('phone').value = user.phone ?? user.Phone ?? '';
-                if (document.getElementById('phone').value) document.getElementById('phone').classList.add('has-value');
-                document.getElementById('barkodYaziciAdi').value = user.barkodYaziciAdi ?? user.BarkodYaziciAdi ?? '';
-                if (document.getElementById('barkodYaziciAdi').value) document.getElementById('barkodYaziciAdi').classList.add('has-value');
-                document.getElementById('fisYaziciAdi').value = user.fisYaziciAdi ?? user.FisYaziciAdi ?? '';
-                if (document.getElementById('fisYaziciAdi').value) document.getElementById('fisYaziciAdi').classList.add('has-value');
-                document.getElementById('varsayilanYaziciAdi').value = user.varsayilanYaziciAdi ?? user.VarsayilanYaziciAdi ?? '';
-                if (document.getElementById('varsayilanYaziciAdi').value) document.getElementById('varsayilanYaziciAdi').classList.add('has-value');
-                document.getElementById('active').checked = user.active ?? user.Active ?? false;
+                setInputValue('phone', getValue(user, 'phone', 'Phone'));
+                setInputValue('companyCode', getValue(user, 'companyCode', 'CompanyCode'));
+                setInputValue('branchCode', getValue(user, 'branchCode', 'BranchCode'));
+                setInputValue('barkodYaziciAdi', getValue(user, 'barkodYaziciAdi', 'BarkodYaziciAdi'));
+                setInputValue('fisYaziciAdi', getValue(user, 'fisYaziciAdi', 'FisYaziciAdi'));
+                setInputValue('varsayilanYaziciAdi', getValue(user, 'varsayilanYaziciAdi', 'VarsayilanYaziciAdi'));
+                document.getElementById('active').checked = getValue(user, 'active', 'Active') ?? false;
                 
                 setEditMode(true);
             }
@@ -192,17 +255,34 @@ document.addEventListener('DOMContentLoaded', function () {
 
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
+        const password = document.getElementById('password').value;
+        const selectedRoleOption = roleSelect.selectedOptions[0];
+        const selectedRoleId = parseInt(selectedRoleOption?.dataset.roleId || selectedRoleOption?.value || roleSelect.value, 10);
+
+        if (!Number.isInteger(selectedRoleId) || selectedRoleId <= 0) {
+            showToast('Lütfen kullanıcı rolü seçin.', 'error');
+            return;
+        }
+
         const formData = {
-            id: parseInt(document.getElementById('userID').value) || 0,
-            email: document.getElementById('email').value,
-            password: document.getElementById('password').value,
-            roleID: parseInt(document.getElementById('roleID').value),
-            phone: document.getElementById('phone').value,
-            barkodYaziciAdi: document.getElementById('barkodYaziciAdi').value,
-            fisYaziciAdi: document.getElementById('fisYaziciAdi').value,
-            varsayilanYaziciAdi: document.getElementById('varsayilanYaziciAdi').value,
-            active: document.getElementById('active').checked
+            Id: parseInt(document.getElementById('userID').value) || 0,
+            FirstName: document.getElementById('firstName').value.trim(),
+            LastName: document.getElementById('lastName').value.trim(),
+            UserName: document.getElementById('userName').value.trim(),
+            Password: password,
+            ConfirmPassword: password,
+            RoleId: selectedRoleId,
+            RoleID: selectedRoleId,
+            roleID: selectedRoleId,
+            Phone: document.getElementById('phone').value.trim(),
+            CompanyCode: document.getElementById('companyCode').value.trim(),
+            BranchCode: document.getElementById('branchCode').value.trim(),
+            BarkodYaziciAdi: document.getElementById('barkodYaziciAdi').value.trim(),
+            FisYaziciAdi: document.getElementById('fisYaziciAdi').value.trim(),
+            VarsayilanYaziciAdi: document.getElementById('varsayilanYaziciAdi').value.trim(),
+            Active: document.getElementById('active').checked
         };
+        console.log('[user_index] Saving user role:', selectedRoleId, selectedRoleOption?.dataset.roleName || selectedRoleOption?.textContent);
 
         const endpoint = isEditMode ? 'Update' : 'Create';
         const method = 'POST'; // Controller uses [HttpPost] for both
@@ -229,7 +309,15 @@ document.addEventListener('DOMContentLoaded', function () {
 
     searchInput.addEventListener('input', (e) => {
         const term = e.target.value.toLowerCase();
-        const filtered = allUsers.filter(u => u.email.toLowerCase().includes(term));
+        const filtered = allUsers.filter(u => [
+            userNameOf(u),
+            fullNameOf(u),
+            firstNameOf(u),
+            lastNameOf(u),
+            roleNameOf(u),
+            companyBranchOf(u),
+            getValue(u, 'phone', 'Phone') || ''
+        ].some(value => String(value).toLowerCase().includes(term)));
         renderList(filtered);
     });
 
@@ -275,6 +363,6 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     // --- Init ---
-    fetchRoles();
+    fetchRolesStrict();
     fetchUsers();
 });

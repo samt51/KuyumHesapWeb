@@ -3,7 +3,7 @@
     'use strict';
 
     // Başlangıç
-    function init() {
+    async function init() {
         console.log('[home_index] DOMContentLoaded');
 
         // --- Ayarlar / Sabitler ---
@@ -16,12 +16,12 @@
             return;
         }
         const loginUrl = mainElement.dataset.loginUrl || '/Auth/Login';
-        const dashboardUrl = mainElement.dataset.dashboardUrl || '/';
+        const dashboardUrl = (mainElement.dataset.dashboardUrl || '/').trim();
         const sidebarMenu = document.getElementById('sidebar-menu');
         const mainContent = document.getElementById('main-content');
         const sidebarToggle = document.getElementById('sidebar-toggle');
         const toggleIcon = sidebarToggle ? sidebarToggle.querySelector('i') : null;
-        const searchInput = document.getElementById('sidebar-search');
+        let searchInput = document.getElementById('sidebar-search');
         const tabsContainer = document.getElementById('tabs-container');
         const contentFrames = document.getElementById('content-frames');
         const logoutButton = document.getElementById('logout-button');
@@ -49,9 +49,31 @@
         // Yardımcı fonksiyonlar
         const generateId = (prefix) => `${prefix}-${Date.now()}-${++idCounter}`;
 
+        const parseJwtToUserName = () => {
+            try {
+                const token = window.khGetAuthToken ? window.khGetAuthToken() : localStorage.getItem('jwt_token');
+                if (!token) return 'Kullanıcı';
+                
+                const payloadStr = atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'));
+                const payload = JSON.parse(decodeURIComponent(escape(payloadStr)));
+                
+                return payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name'] || 
+                       payload.userName || payload.username || 
+                       payload.unique_name || payload.name || payload.given_name || 'Kullanıcı';
+            } catch (e) {
+                console.warn('[home_index] Token çözülemedi, varsayılan Kullanıcı adı kullanılacak', e);
+                return 'Kullanıcı';
+            }
+        };
+
+        const displayUsernameEl = document.getElementById('display-username');
+        if (displayUsernameEl) {
+            displayUsernameEl.innerText = parseJwtToUserName();
+        }
+
         const saveSettings = async (sidebarGizli) => {
             try {
-                const token = localStorage.getItem('jwt_token');
+                const token = window.khGetAuthToken ? window.khGetAuthToken() : localStorage.getItem('jwt_token');
                 if (!token) return;
                 await fetch(`${API_BASE_URL}/Ayarlar/me`, {
                     method: 'POST',
@@ -101,7 +123,7 @@
 
             // Genişleme sınıflarını her durumda temizle
             sidebarMenu.classList.remove('expanded', 'w-64');
-            
+
             if (isMobile) {
                 console.log('[home_index] collapsing for mobile');
                 sidebarMenu.classList.add('hidden');
@@ -141,6 +163,410 @@
                 activeSubmenu = null;
             }
         };
+
+        const getValue = (item, ...keys) => keys.map(key => item && item[key]).find(value => value !== undefined && value !== null);
+        const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+        const menuTitleOf = item => getValue(item, 'name', 'Name', 'menuName', 'MenuName', 'text', 'Text') || 'Menü';
+        const menuIdOf = item => getValue(item, 'id', 'Id', 'menuId', 'MenuId');
+        const menuParentIdOf = item => getValue(item, 'parentId', 'ParentId', 'parentMenuId', 'ParentMenuId');
+        const menuOrderOf = item => Number(getValue(item, 'orderNo', 'OrderNo', 'order', 'Order', 'sortOrder', 'SortOrder') ?? 0);
+        const menuIconOf = item => getValue(item, 'iconUrl', 'IconUrl', 'icon', 'Icon', 'iconClass', 'IconClass') || 'fas fa-circle';
+        const menuIsActiveOf = item => getValue(item, 'isActive', 'IsActive') !== false;
+        const menuCodeOf = item => String(getValue(item, 'code', 'Code') || '').trim().toUpperCase();
+
+        const normalizeNavigationUrl = (value) => {
+            let url = String(value || '').trim();
+            if (!url) return '';
+            if (/^(https?:)?\/\//i.test(url) || url.startsWith('/') || url.startsWith('#') || url.startsWith('javascript:')) {
+                return url;
+            }
+            return `/${url.replace(/^\/+/, '')}`;
+        };
+
+        const menuUrlOf = (item) => normalizeNavigationUrl(getValue(item, 'url', 'Url', 'path', 'Path') || '');
+
+        const menuIdentityKeyOf = item => {
+            const code = menuCodeOf(item);
+            if (code) return `code:${code}`;
+
+            const url = menuUrlOf(item).toLowerCase();
+            if (url) return `url:${url}`;
+
+            return `title:${String(menuTitleOf(item) || '').trim().toLocaleLowerCase('tr-TR')}`;
+        };
+
+        const pruneInactiveMenuItems = items => {
+            const flatItems = Array.isArray(items) ? items : [];
+            const byId = new Map();
+            const inactiveIds = new Set();
+
+            flatItems.forEach(item => {
+                const id = menuIdOf(item);
+                if (id !== undefined && id !== null) {
+                    byId.set(String(id), item);
+                    if (!menuIsActiveOf(item)) {
+                        inactiveIds.add(String(id));
+                    }
+                }
+            });
+
+            const hasInactiveParent = item => {
+                let parentId = menuParentIdOf(item);
+                const visited = new Set();
+
+                while (parentId !== undefined && parentId !== null && parentId !== 0) {
+                    const key = String(parentId);
+                    if (inactiveIds.has(key)) return true;
+                    if (visited.has(key) || !byId.has(key)) return false;
+
+                    visited.add(key);
+                    parentId = menuParentIdOf(byId.get(key));
+                }
+
+                return false;
+            };
+
+            return flatItems.filter(item => menuIsActiveOf(item) && !hasInactiveParent(item));
+        };
+
+        const fallbackSidebarItems = [
+            { Id: -1, Name: 'Ana Sayfa', Code: 'DASHBOARD_VIEW', Url: '/Dashboard/IndexDashboard', IconUrl: 'fas fa-home w-6 text-center text-xl text-gray-500', OrderNo: 1 },
+            { Id: -2, Name: 'Satış Ve Cari', Code: 'SELLANDCARI_VIEW', Url: '/SellAndCari/Index', IconUrl: 'fas fa-shopping-cart w-6 text-center text-xl text-gray-500', OrderNo: 2 },
+            { Id: -3, Name: 'Cari Raporlar', Code: 'REPORTS_ROOT', Url: '', IconUrl: 'fas fa-chart-line w-6 text-center text-xl text-gray-500', OrderNo: 3 },
+            { Id: -31, ParentId: -3, Name: 'Kasa Raporu', Code: 'CASH_REPORT_VIEW', Url: '/Report/GetCashReport', IconUrl: 'fas fa-wallet', OrderNo: 1 },
+            { Id: -32, ParentId: -3, Name: 'Nakit Giriş Çıkış Raporu', Code: 'CASH_IN_OUT_REPORT_VIEW', Url: '/Report/GetCashReport', IconUrl: 'fas fa-exchange-alt', OrderNo: 2 },
+            { Id: -4, Name: 'Tanımlamalar', Code: 'DEFINITIONS_ROOT', Url: '', IconUrl: 'fas fa-sitemap w-6 text-center text-xl text-gray-500', OrderNo: 4 },
+            { Id: -41, ParentId: -4, Name: 'Hesap Tanımlama', Code: 'ACCOUNT_VIEW', Url: '/Account/Index', IconUrl: 'fas fa-tags', OrderNo: 1 },
+            { Id: -42, ParentId: -4, Name: 'Hesap Tipleri Tanımlama', Code: 'ACCOUNT_TYPE_VIEW', Url: '/AccountType/Index', IconUrl: 'fas fa-tags', OrderNo: 2 },
+            { Id: -43, ParentId: -4, Name: 'Döviz Tanımlama', Code: 'CURRENCY_VIEW', Url: '/Currency/Index', IconUrl: 'fas fa-coins', OrderNo: 3 },
+            { Id: -44, ParentId: -4, Name: 'Stok Grubu Tanımlama', Code: 'STOCK_GROUP_VIEW', Url: '/StockGroup/Index', IconUrl: 'fas fa-layer-group', OrderNo: 4 },
+            { Id: -45, ParentId: -4, Name: 'Stok Tipleri Tanımlama', Code: 'STOCK_TYPE_VIEW', Url: '/StockType/Index', IconUrl: 'fas fa-cubes', OrderNo: 5 },
+            { Id: -46, ParentId: -4, Name: 'Stok Tanımlama', Code: 'STOCK_VIEW', Url: '/Stock/Index', IconUrl: 'fas fa-box', OrderNo: 6 },
+            { Id: -47, ParentId: -4, Name: 'Ürün Tipi Tanımlama', Code: 'PRODUCT_TYPE_VIEW', Url: '/ProductType/Index', IconUrl: 'fas fa-gem', OrderNo: 7 },
+            { Id: -48, ParentId: -4, Name: 'Kullanıcı Tanımlama', Code: 'USER_VIEW', Url: '/User/Index', IconUrl: 'fas fa-users-cog', OrderNo: 8 }
+        ];
+
+        const mergeFallbackSidebarItems = (items, addMissingFallbackItems = false) => {
+            const merged = Array.isArray(items) ? items.slice() : [];
+            const normalizeCode = value => String(value || '').trim().toUpperCase();
+            const byCode = new Map();
+
+            merged.forEach(item => {
+                const code = normalizeCode(getValue(item, 'code', 'Code'));
+                if (code) byCode.set(code, item);
+            });
+
+            fallbackSidebarItems.forEach(fallback => {
+                const fallbackCode = normalizeCode(fallback.Code);
+                const existing = byCode.get(fallbackCode);
+                if (existing) {
+                    if (!menuUrlOf(existing) && fallback.Url) existing.Url = fallback.Url;
+                    if (!menuIconOf(existing) && fallback.IconUrl) existing.IconUrl = fallback.IconUrl;
+                    return;
+                }
+
+                if (!addMissingFallbackItems) return;
+
+                const parentCode = fallback.ParentId === -3 ? 'REPORTS_ROOT' : fallback.ParentId === -4 ? 'DEFINITIONS_ROOT' : '';
+                if (parentCode) {
+                    const parent = byCode.get(parentCode);
+                    fallback = { ...fallback, ParentId: parent ? menuIdOf(parent) : fallback.ParentId };
+                }
+
+                merged.push(fallback);
+                byCode.set(fallbackCode, fallback);
+            });
+
+            return merged;
+        };
+
+        const parseApiData = response => response && response.data !== undefined ? response.data : response;
+
+        const loadAllMenuItems = async () => {
+            try {
+                const response = await fetch('/MenuSettings/GetAll', { headers: { 'Accept': 'application/json' } });
+                if (!response.ok) return [];
+
+                return flattenMenuItems(parseApiData(await response.json()) || []);
+            } catch (error) {
+                console.warn('[home_index] Tum menu aktiflik bilgisi alinamadi.', error);
+                return [];
+            }
+        };
+
+        const pruneMenusByGlobalActiveState = (items, allMenus) => {
+            const flatItems = Array.isArray(items) ? items : [];
+            const flatAllMenus = Array.isArray(allMenus) ? allMenus : [];
+            if (!flatAllMenus.length) {
+                return pruneInactiveMenuItems(flatItems);
+            }
+
+            const allById = new Map();
+            const allByKey = new Map();
+            const inactiveIds = new Set();
+            const inactiveKeys = new Set();
+
+            flatAllMenus.forEach(menu => {
+                const id = menuIdOf(menu);
+                const key = menuIdentityKeyOf(menu);
+                if (id !== undefined && id !== null) {
+                    allById.set(String(id), menu);
+                }
+                if (key) {
+                    allByKey.set(key, menu);
+                }
+                if (!menuIsActiveOf(menu)) {
+                    if (id !== undefined && id !== null) {
+                        inactiveIds.add(String(id));
+                    }
+                    if (key) {
+                        inactiveKeys.add(key);
+                    }
+                }
+            });
+
+            const allMenuFor = item => {
+                const id = menuIdOf(item);
+                if (id !== undefined && id !== null && allById.has(String(id))) {
+                    return allById.get(String(id));
+                }
+
+                return allByKey.get(menuIdentityKeyOf(item));
+            };
+
+            const hasInactiveParentInAllMenus = item => {
+                let current = allMenuFor(item) || item;
+                let parentId = menuParentIdOf(current);
+                const visited = new Set();
+
+                while (parentId !== undefined && parentId !== null && parentId !== 0) {
+                    const key = String(parentId);
+                    if (inactiveIds.has(key)) return true;
+                    if (visited.has(key) || !allById.has(key)) return false;
+
+                    visited.add(key);
+                    current = allById.get(key);
+                    parentId = menuParentIdOf(current);
+                }
+
+                return false;
+            };
+
+            return flatItems.filter(item => {
+                const allMenu = allMenuFor(item);
+                const key = menuIdentityKeyOf(item);
+                const id = allMenu ? menuIdOf(allMenu) : menuIdOf(item);
+
+                if (allMenu && !menuIsActiveOf(allMenu)) return false;
+                if (id !== undefined && id !== null && inactiveIds.has(String(id))) return false;
+                if (inactiveKeys.has(key)) return false;
+
+                return menuIsActiveOf(item) && !hasInactiveParentInAllMenus(item);
+            });
+        };
+
+        const loadCurrentRoleIds = async () => {
+            try {
+                const response = await fetch('/MenuSettings/GetCurrentRoleIds', { headers: { 'Accept': 'application/json' } });
+                if (!response.ok) return [];
+
+                return (parseApiData(await response.json()) || [])
+                    .map(id => String(id).trim())
+                    .filter(Boolean);
+            } catch (error) {
+                console.warn('[home_index] Rol bilgisi alinamadi.', error);
+                return [];
+            }
+        };
+
+        const canUseFullFallbackMenu = roleIds => roleIds.includes('1') || roleIds.includes('3');
+        const hasSystemAdminRole = roleIds => roleIds.includes('1') || roleIds.includes('3');
+
+        const isSystemAdminOnlyMenu = item => {
+            const title = String(menuTitleOf(item) || '').trim().toLocaleLowerCase('tr-TR');
+            const code = String(getValue(item, 'code', 'Code', 'requiredPermissionCode', 'RequiredPermissionCode') || '').trim().toUpperCase();
+            const url = menuUrlOf(item).toLowerCase();
+
+            return url.includes('/menusettings') ||
+                url.includes('/pageactionsettings') ||
+                code.includes('MENU_SETTINGS') ||
+                code.includes('PAGE_ACTION_SETTINGS') ||
+                title.includes('menü ayarları') ||
+                title.includes('menu ayarları') ||
+                title.includes('sayfa aksiyon');
+        };
+
+        const pruneSystemAdminOnlyMenus = (items, roleIds) => {
+            const canShowSystemAdminOnly = hasSystemAdminRole(roleIds);
+            return (Array.isArray(items) ? items : []).filter(item => canShowSystemAdminOnly || !isSystemAdminOnlyMenu(item));
+        };
+
+        const applyRoleRestrictedLinks = async (currentRoleIds = null) => {
+            const restrictedLinks = Array.from(document.querySelectorAll('[data-role-ids]'));
+            if (!restrictedLinks.length) return;
+
+            restrictedLinks.forEach(link => link.classList.add('hidden'));
+
+            try {
+                const roleIds = Array.isArray(currentRoleIds) ? currentRoleIds : await loadCurrentRoleIds();
+
+                restrictedLinks.forEach(link => {
+                    const allowedRoles = String(link.dataset.roleIds || '').split(',').map(id => id.trim()).filter(Boolean);
+                    const canShow = allowedRoles.some(roleId => roleIds.includes(roleId));
+                    link.classList.toggle('hidden', !canShow);
+                });
+            } catch (error) {
+                console.warn('[home_index] Rol bazli statik menu kontrolu yapilamadi.', error);
+            }
+        };
+
+        const flattenMenuItems = (items, parentId = null) => {
+            const result = [];
+            (items || []).forEach(item => {
+                const children = getValue(item, 'menus', 'Menus', 'children', 'Children') || [];
+                if (parentId !== null && (menuParentIdOf(item) === undefined || menuParentIdOf(item) === null)) {
+                    item.ParentId = parentId;
+                }
+                result.push(item);
+                if (Array.isArray(children) && children.length) {
+                    result.push(...flattenMenuItems(children, menuIdOf(item)));
+                }
+            });
+            return result;
+        };
+
+        const decodeHtmlEntities = value => {
+            const textarea = document.createElement('textarea');
+            textarea.innerHTML = String(value || '');
+            return textarea.value;
+        };
+
+        const renderMenuIcon = (icon, isChild) => {
+            let normalizedIcon = decodeHtmlEntities(icon || 'fas fa-circle').trim();
+            const classMatch = normalizedIcon.match(/class\s*=\s*["']([^"']+)["']/i);
+            if (classMatch && classMatch[1]) {
+                normalizedIcon = classMatch[1];
+            }
+
+            const isImage = !/^</.test(normalizedIcon) && (/^(https?:)?\/\//i.test(normalizedIcon) || normalizedIcon.includes('/') || /\.(png|jpe?g|gif|webp|svg)$/i.test(normalizedIcon));
+            if (isImage) {
+                const sizeClass = isChild ? 'w-5 h-5 mr-2' : 'w-6 h-6';
+                return `<img src="${escapeHtml(normalizedIcon)}" alt="" class="${sizeClass} object-contain flex-shrink-0">`;
+            }
+
+            const className = isChild
+                ? `${normalizedIcon} w-5 text-center text-gray-400 mr-2 group-hover:text-green-600 transition-colors`
+                : `${normalizedIcon} w-6 text-center text-xl text-gray-500`;
+
+            return `<i class="${escapeHtml(className)}"></i>`;
+        };
+
+        const buildMenuLink = (item, isChild) => {
+            const title = escapeHtml(menuTitleOf(item));
+            const icon = menuIconOf(item);
+            const url = escapeHtml(menuUrlOf(item));
+            const titleForJs = title.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+            const urlForJs = url.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+            const iconMarkup = renderMenuIcon(icon, isChild);
+
+            if (isChild) {
+                return `<a href="javascript:void(0);" onclick="openTab('${urlForJs}', '${titleForJs}')" class="flex items-center px-4 py-2.5 text-xs font-medium text-gray-600 hover:bg-gray-50 hover:text-green-700 transition-colors border-l-2 border-transparent hover:border-green-600 group">
+                    ${iconMarkup}<span>${title}</span>
+                </a>`;
+            }
+
+            return `<div class="sidebar-link-container">
+                <a href="javascript:void(0);" onclick="openTab('${urlForJs}', '${titleForJs}')" class="sidebar-link flex items-center px-5 py-2.5 text-gray-700 transition-colors">
+                    ${iconMarkup}
+                    <span class="ml-3 font-semibold text-sm sidebar-text whitespace-nowrap">${title}</span>
+                </a>
+            </div>`;
+        };
+
+        const buildMenuGroup = (item, children) => {
+            const title = escapeHtml(menuTitleOf(item));
+            const icon = menuIconOf(item);
+            const iconMarkup = renderMenuIcon(icon, false);
+            const submenu = children.map(child => buildMenuLink(child, true)).join('');
+
+            return `<div class="sidebar-link-container">
+                <div class="sidebar-link flex items-center px-5 py-2.5 text-gray-700 transition-colors cursor-pointer">
+                    ${iconMarkup}
+                    <span class="ml-3 font-semibold text-sm sidebar-text whitespace-nowrap">${title}</span>
+                    <i class="fas fa-chevron-right ml-auto sidebar-text chevron-icon text-xs"></i>
+                </div>
+                <div class="submenu hidden">${submenu}</div>
+            </div>`;
+        };
+
+        const loadDynamicSidebarMenu = async () => {
+            const container = document.getElementById('menu-links-container');
+            const menuUrl = container && container.dataset.authorizedMenuUrl;
+            if (!container || !menuUrl) return;
+
+            try {
+                const staticMenuMarkup = Array.from(container.querySelectorAll('[data-static-menu]'))
+                    .map(element => element.outerHTML)
+                    .join('');
+                const roleIdsForCheck = await loadCurrentRoleIds();
+                let targetUrl = menuUrl;
+                if (roleIdsForCheck.includes('1') || roleIdsForCheck.includes('3') || roleIdsForCheck.includes(1) || roleIdsForCheck.includes(3)) {
+                    targetUrl = '/MenuSettings/GetAll';
+                }
+                const response = await fetch(targetUrl, { headers: { 'Accept': 'application/json' } });
+                if (!response.ok) return;
+
+                const raw = await response.json();
+                const roleIds = await loadCurrentRoleIds();
+                const allMenus = await loadAllMenuItems();
+                const items = pruneSystemAdminOnlyMenus(
+                    pruneMenusByGlobalActiveState(
+                        mergeFallbackSidebarItems(flattenMenuItems(parseApiData(raw)), canUseFullFallbackMenu(roleIds)),
+                        allMenus
+                    ),
+                    roleIds
+                );
+                if (!Array.isArray(items) || items.length === 0) return;
+
+                const activeItems = items.slice().sort((a, b) => menuOrderOf(a) - menuOrderOf(b));
+                const childMap = new Map();
+                activeItems.forEach(item => {
+                    const parentId = menuParentIdOf(item);
+                    if (parentId === undefined || parentId === null || parentId === 0) return;
+                    const key = String(parentId);
+                    if (!childMap.has(key)) childMap.set(key, []);
+                    childMap.get(key).push(item);
+                });
+
+                const roots = activeItems.filter(item => {
+                    const parentId = menuParentIdOf(item);
+                    return parentId === undefined || parentId === null || parentId === 0 || !activeItems.some(x => String(menuIdOf(x)) === String(parentId));
+                });
+
+                const searchMarkup = `<div class="sidebar-link-container">
+                    <div class="relative flex items-center px-5 py-2 text-gray-700 transition-colors overflow-hidden">
+                        <i class="fas fa-search w-6 text-center text-xl text-gray-500 flex-shrink-0"></i>
+                        <div class="ml-3 flex-grow sidebar-text">
+                            <input type="text" id="sidebar-search" placeholder="Menüde Ara..." class="w-full bg-gray-100 border border-gray-200 rounded-md py-1.5 px-3 text-xs focus:outline-none focus:ring-1 focus:ring-green-700">
+                        </div>
+                    </div>
+                </div>`;
+
+                const dynamicMenuMarkup = roots.map(root => {
+                    const children = (childMap.get(String(menuIdOf(root))) || []).sort((a, b) => menuOrderOf(a) - menuOrderOf(b));
+                    return children.length ? buildMenuGroup(root, children) : buildMenuLink(root, false);
+                }).join('');
+
+                container.innerHTML = searchMarkup + dynamicMenuMarkup + staticMenuMarkup;
+                await applyRoleRestrictedLinks(roleIds);
+            } catch (error) {
+                console.warn('[home_index] Dinamik menü yüklenemedi, statik menü kullanılacak.', error);
+                await applyRoleRestrictedLinks();
+            }
+        };
+
+        await loadDynamicSidebarMenu();
+        searchInput = document.getElementById('sidebar-search');
 
         // Mobil hamburger davranışları
         if (mobileTopHamburger) {
@@ -284,10 +710,10 @@
             link.addEventListener('click', () => {
                 const container = link.closest('.sidebar-link-container');
                 const hasSubmenu = container && container.querySelector('.submenu') !== null;
-                
+
                 // Eğer doğrudan bir link ise veya onclick ile bir sayfa açıyorsa sidebar'ı kapat
                 const isDirectLink = !hasSubmenu || link.hasAttribute('onclick');
-                
+
                 if (isDirectLink) {
                     // Mobil ekranlarda her zaman, masaüstünde isPinned değilse kapat
                     if (isMobileView() || !isPinned) {
@@ -356,6 +782,8 @@
 
         // Sekme / iframe yönetimi
         window.openTab = function (url, title) {
+            url = normalizeNavigationUrl(url || dashboardUrl);
+            title = title || 'Ana Sayfa';
             console.log('[home_index] openTab called:', url);
             // Mobil görünümde herhangi bir sekme açıldığında sidebar'ı kapat (Overlay'i kaldırmak için)
             if (isMobileView()) {
@@ -364,7 +792,7 @@
             }
 
             const normalizeUrl = (u) => u.replace(/\/$/, '').toLowerCase();
-            const existingTab = openTabs.find(tab => tab.title === title || normalizeUrl(tab.url) === normalizeUrl(url));
+            const existingTab = openTabs.find(tab => normalizeUrl(tab.url) === normalizeUrl(url));
 
             if (existingTab) { switchTab(existingTab.id); return; }
             if (openTabs.length >= MAX_TABS) { alert(`Maksimum ${MAX_TABS} sekme açabilirsiniz.`); return; }
@@ -375,7 +803,7 @@
             const tabButton = document.createElement('button');
             tabButton.className = 'tab-button flex items-center px-3 py-1.5 text-xs font-medium';
             tabButton.dataset.tabId = tabId;
-            const isDashboard = url === dashboardUrl;
+            const isDashboard = normalizeUrl(url) === normalizeUrl(dashboardUrl);
             tabButton.innerHTML = `<span>${title}</span>` + (isDashboard ? '' : `<span class="close-tab-btn ml-2 text-gray-500 hover:text-gray-800">&times;</span>`);
             tabsContainer && tabsContainer.appendChild(tabButton);
 
@@ -423,7 +851,7 @@
                 const button = document.querySelector(`.tab-button[data-tab-id="${tab.id}"]`);
                 const frame = tab.frameId ? document.getElementById(tab.frameId) : null;
                 if (button) button.classList.toggle('active', tab.id === tabId);
-                
+
                 if (tab.id === tabId) {
                     activeTab = tab;
                     if (tab.isNative) {
@@ -532,7 +960,7 @@
                     try {
                         const tabUrlLower = activeTab.url.replace(/\/$/, '').toLowerCase();
                         const hrefLower = hrefAttr.replace(/\/$/, '').toLowerCase();
-                        
+
                         // Eşleştirme logic'i
                         let isMatch = false;
                         if (onclickAttr.includes(`'${activeTab.url}'`) || onclickAttr.includes(`"${activeTab.url}"`)) {
@@ -568,14 +996,14 @@
 
                 let title = 'Ana Sayfa';
                 let isDashboard = locPath.includes(normalizedDashboard) || pageHasDashboardMarkup;
-                
+
                 if (!isDashboard) {
                     const allLinks = document.querySelectorAll('.sidebar-link-container a');
                     for (const link of allLinks) {
                         const href = link.getAttribute('href');
                         const onclickAttr = link.getAttribute('onclick') || '';
                         let targetUrl = '';
-                        
+
                         if (onclickAttr.includes('openTab(')) {
                             // Extract URL from openTab('/Url', 'Title')
                             const match = onclickAttr.match(/openTab\(['"]([^'"]+)['"]/);
@@ -602,22 +1030,23 @@
                 tabButton.className = 'tab-button flex items-center px-3 py-1.5 text-xs font-medium active';
                 tabButton.dataset.tabId = tabId;
                 tabButton.innerHTML = `<span>${title}</span>` + (isDashboard ? '' : `<span class="close-tab-btn ml-2 text-gray-500 hover:text-gray-800">&times;</span>`);
-                
+
                 if (tabsContainer) {
                     tabsContainer.appendChild(tabButton);
                 }
-                
-                openTabs.push({ id: tabId, url: window.location.pathname, title: title, isNative: true });
-                
+
+                const nativeUrl = isDashboard ? dashboardUrl : normalizeNavigationUrl(window.location.pathname || dashboardUrl);
+                openTabs.push({ id: tabId, url: nativeUrl, title: title, isNative: true });
+
                 if (!isDashboard) {
                     const closeBtn = tabButton.querySelector('.close-tab-btn');
                     closeBtn && closeBtn.addEventListener('click', (e) => { e.stopPropagation(); closeTab(tabId); });
                 }
-                
+
                 tabButton.addEventListener('click', () => switchTab(tabId));
-                
+
                 switchTab(tabId);
-                
+
             } catch (e) {
                 console.error("Tab açılış hatası:", e);
                 openTab(dashboardUrl, 'Ana Sayfa');

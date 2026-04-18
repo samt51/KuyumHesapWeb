@@ -1,0 +1,86 @@
+.form-group .form-label {
+    position: absolute;
+    top: 0.65rem;
+    left: 0.75rem;
+    color: #6b7280;
+    pointer-events: none;
+    transition: all 0.2s ease-in-out;
+    background-color: white;
+    padding: 0 0.25rem;
+}
+
+.form-group .form-input:focus + .form-label,
+.form-group .form-input:not(:placeholder-shown) + .form-label,
+.form-group .form-input.has-value + .form-label {
+    top: -0.7rem;
+    left: 0.5rem;
+    font-size: 0.75rem;
+    color: #1f2937;
+}
+
+.form-input:required:invalid {
+    color: #6b7280;
+}
+
+.menu-switch {
+    position: relative;
+    display: inline-flex;
+    width: 3.25rem;
+    height: 1.75rem;
+    flex-shrink: 0;
+    cursor: pointer;
+}
+
+.menu-switch input {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.menu-switch-slider {
+    position: absolute;
+    inset: 0;
+    border-radius: 999px;
+    background-color: #d1d5db;
+    transition: background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.menu-switch-slider::before {
+    content: "";
+    position: absolute;
+    width: 1.25rem;
+    height: 1.25rem;
+    left: 0.25rem;
+    top: 0.25rem;
+    border-radius: 999px;
+    background-color: #fff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+    transition: transform 0.2s ease;
+}
+
+.menu-switch input:checked + .menu-switch-slider {
+    background-color: #22c55e;
+}
+
+.menu-switch input:checked + .menu-switch-slider::before {
+    transform: translateX(1.5rem);
+}
+
+.menu-switch input:focus-visible + .menu-switch-slider {
+    box-shadow: 0 0 0 3px rgba(76, 151, 121, 0.25);
+}
+
+.menu-switch.menu-switch-sm {
+    width: 2.75rem;
+    height: 1.5rem;
+}
+
+.menu-switch.menu-switch-sm .menu-switch-slider::before {
+    width: 1rem;
+    height: 1rem;
+}
+
+.menu-switch.menu-switch-sm input:checked + .menu-switch-slider::before {
+    transform: translateX(1.25rem);
+}

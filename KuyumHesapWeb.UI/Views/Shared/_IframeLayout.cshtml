@@ -30,6 +30,8 @@
 <body class="bg-gray-100 overflow-hidden flex flex-col h-full w-full m-0 box-border" style="height: 100%; overflow: hidden; display: flex; flex-direction: column;">
     @RenderBody()
     <script src="https://cdn.jsdelivr.net/npm/slim-select@1.27.0/dist/slimselect.min.js"></script>
+    <script src="~/js/common.js" asp-append-version="true"></script>
+    <script src="~/js/permission_guard.js" asp-append-version="true"></script>
     @RenderSection("Scripts", required: false)
 </body>
 </html>

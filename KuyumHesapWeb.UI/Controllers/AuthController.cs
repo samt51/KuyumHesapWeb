@@ -1,9 +1,11 @@
-﻿using KuyumHesapWeb.Core.Feature.AuthFeature.Commands.Login;
+using KuyumHesapWeb.Core.Feature.AuthFeature.Commands.Login;
 using MediatR;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using System.Text;
+using System.Text.Json;
 
 namespace KuyumHesapWeb.UI.Controllers
 {
@@ -22,17 +24,38 @@ namespace KuyumHesapWeb.UI.Controllers
         private CookieOptions BuildAuthCookieOptions(DateTimeOffset expires)
         {
             var host = Request.Host.Host;
-            var isLocalhost = host.Equals("localhost", StringComparison.OrdinalIgnoreCase);
+            var isProdDomain = host.EndsWith("kuyumhesap.com", StringComparison.OrdinalIgnoreCase);
 
             return new CookieOptions
             {
                 HttpOnly = true,
-                Secure = !isLocalhost,                    // prod true
-                SameSite = isLocalhost ? SameSiteMode.Lax : SameSiteMode.None,
-                Domain = isLocalhost ? null : ".kuyumhesap.com",
+                Secure = isProdDomain,
+                SameSite = isProdDomain ? SameSiteMode.None : SameSiteMode.Lax,
+                Domain = isProdDomain ? ".kuyumhesap.com" : null,
                 Path = "/",
                 Expires = expires,
                 IsEssential = true
+            };
+        }
+
+        private CookieOptions BuildClientAuthCookieOptions(DateTimeOffset expires)
+        {
+            var options = BuildAuthCookieOptions(expires);
+            options.HttpOnly = false;
+            return options;
+        }
+
+        private CookieOptions BuildAuthCookieDeleteOptions()
+        {
+            var host = Request.Host.Host;
+            var isProdDomain = host.EndsWith("kuyumhesap.com", StringComparison.OrdinalIgnoreCase);
+
+            return new CookieOptions
+            {
+                Secure = isProdDomain,
+                SameSite = isProdDomain ? SameSiteMode.None : SameSiteMode.Lax,
+                Domain = isProdDomain ? ".kuyumhesap.com" : null,
+                Path = "/"
             };
         }
 
@@ -56,11 +79,21 @@ namespace KuyumHesapWeb.UI.Controllers
                 return View("Login", request);
             }
 
+            // Backend'den gelen TokenExpireDate eğer UTC destekli değilse (Saat dilimi farkı sebebiyle)
+            // Tarayıcı direkt çerezi "Süresi dolmuş" olarak çöpe atıyor! 
+            // Bunu aşmak için manuel ve güvenli bir son kullanma tarihi (3 Günlük) atıyoruz!
+            var safeExpireDate = DateTime.UtcNow.AddDays(3);
+
             // JWT cookie
             Response.Cookies.Append("AuthToken", data.data.token, BuildAuthCookieOptions(data.data.tokenExpireDate));
 
             // MVC cookie (Authorize bunu okur)
-            var claims = new List<Claim> { new Claim(ClaimTypes.Name, request.Email) };
+            var claims = BuildClaimsFromToken(data.data.token, request.UserName);
+            
+            // Çift boyut şişkinliğini (Header Bloat Limits) engellemek için Token stringini kimliklerden atıyoruz!
+            // Zaten "AuthToken" Cookie'si aracılığıyla IHttpContextAccessor'dan gerektiğinde okunabiliyor.
+            claims.RemoveAll(c => c.Type == "access_token");
+
             var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
 
             await HttpContext.SignInAsync(
@@ -69,7 +102,7 @@ namespace KuyumHesapWeb.UI.Controllers
                 new AuthenticationProperties
                 {
                     IsPersistent = true,
-                    ExpiresUtc = data.data.tokenExpireDate
+                    ExpiresUtc = safeExpireDate
                 });
 
             if (!string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl))
@@ -87,12 +120,97 @@ namespace KuyumHesapWeb.UI.Controllers
 
             if (Request.Cookies.ContainsKey("AuthToken"))
             {
-                Response.Cookies.Delete("AuthToken", new CookieOptions
-                {
-                    Path = "/"
-                });
+                Response.Cookies.Delete("AuthToken", BuildAuthCookieDeleteOptions());
+            }
+
+            if (Request.Cookies.ContainsKey("AuthTokenClient"))
+            {
+                Response.Cookies.Delete("AuthTokenClient", BuildAuthCookieDeleteOptions());
             }
             return RedirectToAction("Login", "Auth");
+        }
+
+        private static List<Claim> BuildClaimsFromToken(string token, string userName)
+        {
+            var claims = new List<Claim>
+            {
+                new Claim("userName", userName)
+            };
+
+            if (string.IsNullOrWhiteSpace(token))
+            {
+                return claims;
+            }
+
+            claims.Add(new Claim("access_token", token));
+
+            var parts = token.Split('.');
+            if (parts.Length < 2)
+            {
+                return claims;
+            }
+
+            try
+            {
+                var payload = parts[1].Replace('-', '+').Replace('_', '/');
+                payload = payload.PadRight(payload.Length + (4 - payload.Length % 4) % 4, '=');
+                using var doc = JsonDocument.Parse(Encoding.UTF8.GetString(Convert.FromBase64String(payload)));
+
+                foreach (var property in doc.RootElement.EnumerateObject())
+                {
+                    AddClaim(claims, property.Name, property.Value);
+                }
+
+                AddAliasClaim(claims, "Id", ClaimTypes.NameIdentifier);
+                AddAliasClaim(claims, "id", ClaimTypes.NameIdentifier);
+                AddAliasClaim(claims, "roleId", "roleId");
+                AddAliasClaim(claims, "roleName", ClaimTypes.Role);
+            }
+            catch
+            {
+                return claims;
+            }
+
+            return claims
+                .GroupBy(x => new { x.Type, x.Value })
+                .Select(x => x.First())
+                .ToList();
+        }
+
+        private static void AddClaim(List<Claim> claims, string type, JsonElement value)
+        {
+            if (value.ValueKind == JsonValueKind.String)
+            {
+                var stringValue = value.GetString();
+                if (!string.IsNullOrWhiteSpace(stringValue))
+                {
+                    claims.Add(new Claim(type, stringValue));
+                }
+                return;
+            }
+
+            if (value.ValueKind == JsonValueKind.Number || value.ValueKind == JsonValueKind.True || value.ValueKind == JsonValueKind.False)
+            {
+                claims.Add(new Claim(type, value.ToString()));
+                return;
+            }
+
+            if (value.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var item in value.EnumerateArray())
+                {
+                    AddClaim(claims, type, item);
+                }
+            }
+        }
+
+        private static void AddAliasClaim(List<Claim> claims, string sourceType, string targetType)
+        {
+            var value = claims.FirstOrDefault(x => string.Equals(x.Type, sourceType, StringComparison.OrdinalIgnoreCase))?.Value;
+            if (!string.IsNullOrWhiteSpace(value) && !claims.Any(x => x.Type == targetType && x.Value == value))
+            {
+                claims.Add(new Claim(targetType, value));
+            }
         }
     }
 }

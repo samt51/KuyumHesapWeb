@@ -1,0 +1,98 @@
+@{
+    ViewData["Title"] = "Sayfa Aksiyonları";
+    var noLayout = Context.Request.Query["noLayout"] == "1";
+    Layout = noLayout ? "~/Views/Shared/_IframeLayout.cshtml" : "~/Views/Shared/_Layout.cshtml";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/menu_settings.css" asp-append-version="true" />
+}
+
+<div class="flex flex-col xl:flex-row gap-5 w-full h-[calc(100vh-2.5rem)]">
+    <div class="flex flex-col flex-[3]">
+        <div class="panel bg-white rounded-lg shadow-sm border border-rolex-green p-6 flex flex-col flex-grow min-h-0">
+            <h2 class="text-xl font-semibold text-gray-800 mb-6 pb-2 border-b border-rolex-green flex-shrink-0">Sayfa Aksiyonu Tanımlama</h2>
+
+            <form id="page-action-form" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <input type="hidden" id="pageActionId">
+
+                <div class="relative form-group">
+                    <input type="text" id="actionName" required class="form-input mt-1 block w-full p-2.5 border border-rolex-green rounded-md shadow-sm focus:border-black focus:ring-0 peer" placeholder=" ">
+                    <label for="actionName" class="form-label">Aksiyon Adı</label>
+                </div>
+
+                <div class="relative form-group">
+                    <input type="text" id="actionCode" required class="form-input mt-1 block w-full p-2.5 border border-rolex-green rounded-md shadow-sm focus:border-black focus:ring-0 peer" placeholder=" ">
+                    <label for="actionCode" class="form-label">Aksiyon Kodu</label>
+                </div>
+
+                <div class="relative form-group">
+                    <input type="text" id="pageCode" required class="form-input mt-1 block w-full p-2.5 border border-rolex-green rounded-md shadow-sm focus:border-black focus:ring-0 peer" placeholder=" ">
+                    <label for="pageCode" class="form-label">Sayfa Kodu</label>
+                </div>
+
+                <div class="relative form-group">
+                    <input type="text" id="iconUrl" class="form-input mt-1 block w-full p-2.5 border border-rolex-green rounded-md shadow-sm focus:border-black focus:ring-0 peer" placeholder=" ">
+                    <label for="iconUrl" class="form-label">Icon Class / Url</label>
+                </div>
+
+                <div class="relative form-group">
+                    <input type="number" id="orderNo" min="0" class="form-input mt-1 block w-full p-2.5 border border-rolex-green rounded-md shadow-sm focus:border-black focus:ring-0 peer" placeholder=" ">
+                    <label for="orderNo" class="form-label">Sıra</label>
+                </div>
+
+                <div class="relative form-group">
+                    <input type="text" id="requiredPermissionCode" required class="form-input mt-1 block w-full p-2.5 border border-rolex-green rounded-md shadow-sm focus:border-black focus:ring-0 peer" placeholder=" ">
+                    <label for="requiredPermissionCode" class="form-label">Gerekli Yetki Kodu</label>
+                </div>
+            </form>
+
+            <div class="mt-4 p-3 rounded-md bg-gray-50 border border-gray-200 text-xs text-gray-600">
+                Örnek: Sayfa Kodu <b>SATIS_CARI</b>, Aksiyon Kodu <b>NAKIT_TAHSILAT</b>, Yetki Kodu <b>SATIS_CARI_NAKIT_TAHSILAT</b>.
+            </div>
+
+            <div class="flex justify-end gap-4 pt-4 mt-4 border-t border-gray-200 flex-shrink-0">
+                <div id="add-mode-buttons">
+                    <button type="button" id="reset-btn" class="px-8 py-2 bg-secondary text-white font-semibold rounded-lg hover:bg-opacity-90 shadow-sm">VAZGEÇ</button>
+                    <button type="submit" form="page-action-form" class="px-8 py-2 bg-success text-white font-semibold rounded-lg hover:bg-opacity-90 shadow-sm">EKLE</button>
+                </div>
+                <div id="edit-mode-buttons" class="hidden">
+                    <button type="button" id="delete-btn" class="px-8 py-2 bg-danger text-white font-semibold rounded-lg hover:bg-opacity-90 shadow-sm">SİL</button>
+                    <button type="button" id="cancel-edit-btn" class="px-8 py-2 bg-secondary text-white font-semibold rounded-lg hover:bg-opacity-90 shadow-sm">VAZGEÇ</button>
+                    <button type="submit" form="page-action-form" class="px-8 py-2 bg-rolex-green text-white font-semibold rounded-lg hover:bg-opacity-90 shadow-sm">GÜNCELLE</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="flex flex-col flex-[2]">
+        <div class="panel bg-white rounded-lg shadow-sm border border-rolex-green p-4 flex flex-col flex-grow min-h-0">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4 pb-2 border-b border-rolex-green flex-shrink-0">Aksiyon Listesi</h2>
+            <div class="flex-grow overflow-y-auto">
+                <div class="flex justify-between items-center text-sm font-semibold text-gray-500 px-3 py-2 border-b sticky top-0 bg-white z-10">
+                    <span>Aksiyon</span>
+                    <span>Sıra</span>
+                </div>
+                <div id="page-action-list" class="space-y-1"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="delete-modal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center hidden z-50 transition-opacity duration-300">
+    <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-sm transform transition-all duration-300 scale-95">
+        <h3 class="text-lg font-semibold text-gray-800">Aksiyonu Sil</h3>
+        <p class="mt-2 text-sm text-gray-600">Bu sayfa aksiyonunu silmek istediğinizden emin misiniz?</p>
+        <div id="modal-action-name" class="mt-2 font-bold text-rolex-green"></div>
+        <div class="mt-6 flex justify-end gap-4">
+            <button id="cancel-delete-btn" class="px-4 py-2 bg-secondary text-white font-semibold rounded-lg hover:bg-opacity-90 shadow-sm">İptal</button>
+            <button id="confirm-delete-btn" class="px-4 py-2 bg-danger text-white font-semibold rounded-lg hover:bg-opacity-90 shadow-sm">Sil</button>
+        </div>
+    </div>
+</div>
+
+<div id="toast-container" class="fixed bottom-5 right-5 z-50"></div>
+
+@section Scripts {
+    <script src="~/js/page_action_settings.js" asp-append-version="true"></script>
+}

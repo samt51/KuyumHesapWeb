@@ -15,7 +15,7 @@ namespace KuyumHesapWeb.Core.Feature.ExchangeFeature.Commands.Create
         {
             var data = await _apiService.PostAsync<CreateExchangeCommandRequest, CreateExchangeCommandResponse>("Exchange/Create", request);
 
-            return new ResponseDto<CreateExchangeCommandResponse>().Success(data.data);
+            return data;
         }
     }
 }

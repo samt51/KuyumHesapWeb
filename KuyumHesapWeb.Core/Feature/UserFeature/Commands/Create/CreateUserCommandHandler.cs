@@ -13,9 +13,9 @@ namespace KuyumHesapWeb.Core.Feature.UserFeature.Commands.Create
 
         public async Task<ResponseDto<CreateUserCommandResponse>> Handle(CreateUserCommandRequest request, CancellationToken cancellationToken)
         {
-            var data = await _apiService.PostAsync<CreateUserCommandRequest, CreateUserCommandResponse>("Users/Create", request);
+            var data = await _apiService.PostAsync<CreateUserCommandRequest, CreateUserCommandResponse>("Auth/register", request);
 
-            return new ResponseDto<CreateUserCommandResponse>().Success(data.data);
+            return data;
         }
     }
 }

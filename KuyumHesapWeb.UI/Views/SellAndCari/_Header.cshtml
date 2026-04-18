@@ -1,6 +1,6 @@
 @* Header & Main Layout: Masaustu ve Mobil uyumlu Grid *@
 
-<main class="flex flex-col flex-1 min-h-0 min-w-0 h-full w-full lg:grid lg:grid-cols-12 lg:grid-rows-[auto_1fr] gap-0 lg:gap-4 relative pb-2 lg:pb-0 overflow-y-auto lg:overflow-hidden px-2 lg:px-0">
+<main data-page-code="SATIS_CARI_SATIS" data-page-code-satis="SATIS_CARI_SATIS" data-page-code-cari="SATIS_CARI_CARI" class="flex flex-col flex-1 min-h-0 min-w-0 h-full w-full lg:grid lg:grid-cols-12 lg:grid-rows-[auto_1fr] gap-0 lg:gap-4 relative pb-2 lg:pb-0 overflow-y-auto lg:overflow-hidden px-2 lg:px-0">
 
     <!-- Ust Kisim / Header (Masaustunde Sol Ustte, Mobilde En Ustte) -->
     <header id="header-box" class="bg-white p-2 md:p-3 rounded-xl shadow-sm theme-border mb-2 lg:mb-0 lg:col-span-4 lg:col-start-1 lg:row-start-1 h-auto z-20">
@@ -25,9 +25,9 @@
             <!-- Buttons and Salesperson -->
             <div class="flex flex-row flex-wrap gap-2 items-center">
                 <div class="flex gap-1 flex-shrink-0">
-                    <button class="bg-white hover:bg-gray-100 text-gray-800 font-semibold py-1.5 px-2 border border-gray-300 rounded-lg shadow-sm text-xs flex items-center justify-center min-w-[38px] h-[38px] outline-none"><i class="fas fa-users xl:mr-1.5"></i><span class="hidden xl:inline">CRM</span></button>
-                    <button id="ekstre-button" class="bg-white hover:bg-gray-100 text-gray-800 font-semibold py-1.5 px-2 border border-gray-300 rounded-lg shadow-sm text-xs flex items-center justify-center min-w-[38px] h-[38px] outline-none"><i class="fas fa-file-invoice xl:mr-1.5"></i><span class="hidden xl:inline">Ekstre</span></button>
-                    <button id="sales-list-button" class="bg-white hover:bg-gray-100 text-gray-800 font-semibold py-1.5 px-2 border border-gray-300 rounded-lg shadow-sm text-xs flex items-center justify-center min-w-[38px] h-[38px] outline-none"><i class="fas fa-list xl:mr-1.5"></i><span class="hidden xl:inline">Liste</span></button>
+                    <button data-permission-code="SATIS_CARI_CRM" class="bg-white hover:bg-gray-100 text-gray-800 font-semibold py-1.5 px-2 border border-gray-300 rounded-lg shadow-sm text-xs flex items-center justify-center min-w-[38px] h-[38px] outline-none"><i class="fas fa-users xl:mr-1.5"></i><span class="hidden xl:inline">CRM</span></button>
+                    <button id="ekstre-button" data-permission-code="SATIS_CARI_EKSTRE" class="bg-white hover:bg-gray-100 text-gray-800 font-semibold py-1.5 px-2 border border-gray-300 rounded-lg shadow-sm text-xs flex items-center justify-center min-w-[38px] h-[38px] outline-none"><i class="fas fa-file-invoice xl:mr-1.5"></i><span class="hidden xl:inline">Ekstre</span></button>
+                    <button id="sales-list-button" data-permission-code="SATIS_CARI_LISTE" class="bg-white hover:bg-gray-100 text-gray-800 font-semibold py-1.5 px-2 border border-gray-300 rounded-lg shadow-sm text-xs flex items-center justify-center min-w-[38px] h-[38px] outline-none"><i class="fas fa-list xl:mr-1.5"></i><span class="hidden xl:inline">Liste</span></button>
                 </div>
                 <div class="flex-grow min-w-0">
                     <select id="salesperson-select" name="salesperson-select"></select>
@@ -64,22 +64,22 @@
             <div id="action-buttons-container" class="transition-opacity duration-300 opacity-50 pointer-events-none flex-grow">
                 <div class="border-b pb-2 mb-2">
                     <div class="grid grid-cols-2 gap-2">
-                        <button id="btn-nakit-tahsilat" class="flex flex-col items-center justify-center p-2 bg-white hover:bg-gray-50 rounded-lg theme-border-50 action-btn"><i id="icon-nakit-tahsilat" class="fas fa-hand-holding-dollar text-xl mb-1 theme-icon-color income" style="transform: scaleX(-1);"></i><span id="label-nakit-tahsilat" class="block text-xs font-semibold"></span></button>
-                        <button id="btn-nakit-odeme" class="flex flex-col items-center justify-center p-2 bg-white hover:bg-gray-50 rounded-lg theme-border-50 action-btn"><i id="icon-nakit-odeme" class="fas fa-hand-holding-dollar text-xl mb-1 theme-icon-color expense"></i><span id="label-nakit-odeme" class="block text-xs font-semibold"></span></button>
+                        <button id="btn-nakit-tahsilat" data-action-code="NAKIT_TAHSILAT" data-action-code-satis="NAKIT_TAHSILAT" data-action-code-cari="NAKIT_GIRIS" data-permission-code="SATIS_CARI_NAKIT_TAHSILAT" data-permission-code-satis="SATIS_CARI_NAKIT_TAHSILAT" data-permission-code-cari="SATIS_CARI_NAKIT_GIRIS" class="flex flex-col items-center justify-center p-2 bg-white hover:bg-gray-50 rounded-lg theme-border-50 action-btn"><i id="icon-nakit-tahsilat" class="fas fa-hand-holding-dollar text-xl mb-1 theme-icon-color income" style="transform: scaleX(-1);"></i><span id="label-nakit-tahsilat" class="block text-xs font-semibold"></span></button>
+                        <button id="btn-nakit-odeme" data-action-code="NAKIT_ODEME" data-action-code-satis="NAKIT_ODEME" data-action-code-cari="NAKIT_CIKIS" data-permission-code="SATIS_CARI_NAKIT_ODEME" data-permission-code-satis="SATIS_CARI_NAKIT_ODEME" data-permission-code-cari="SATIS_CARI_NAKIT_CIKIS" class="flex flex-col items-center justify-center p-2 bg-white hover:bg-gray-50 rounded-lg theme-border-50 action-btn"><i id="icon-nakit-odeme" class="fas fa-hand-holding-dollar text-xl mb-1 theme-icon-color expense"></i><span id="label-nakit-odeme" class="block text-xs font-semibold"></span></button>
                     </div>
                 </div>
                 <div class="border-b pb-2 mb-2">
                     <div class="grid grid-cols-2 gap-2">
-                        <button id="btn-urun-alis" class="flex flex-col items-center justify-center p-2 bg-white hover:bg-gray-50 rounded-lg theme-border-50 action-btn"><i id="icon-urun-alis" class="fas fa-gem text-xl mb-1 theme-icon-color income"></i><span id="label-urun-alis" class="block text-xs font-semibold"></span></button>
-                        <button id="btn-urun-satis" class="flex flex-col items-center justify-center p-2 bg-white hover:bg-gray-50 rounded-lg theme-border-50 action-btn"><i id="icon-urun-satis" class="fas fa-tag text-xl mb-1 theme-icon-color expense"></i><span id="label-urun-satis" class="block text-xs font-semibold"></span></button>
+                        <button id="btn-urun-alis" data-action-code="URUN_ALIS" data-action-code-satis="URUN_ALIS" data-action-code-cari="URUN_GIRIS" data-permission-code="SATIS_CARI_URUN_ALIS" data-permission-code-satis="SATIS_CARI_URUN_ALIS" data-permission-code-cari="SATIS_CARI_URUN_GIRIS" class="flex flex-col items-center justify-center p-2 bg-white hover:bg-gray-50 rounded-lg theme-border-50 action-btn"><i id="icon-urun-alis" class="fas fa-gem text-xl mb-1 theme-icon-color income"></i><span id="label-urun-alis" class="block text-xs font-semibold"></span></button>
+                        <button id="btn-urun-satis" data-action-code="URUN_SATIS" data-action-code-satis="URUN_SATIS" data-action-code-cari="URUN_CIKIS" data-permission-code="SATIS_CARI_URUN_SATIS" data-permission-code-satis="SATIS_CARI_URUN_SATIS" data-permission-code-cari="SATIS_CARI_URUN_CIKIS" class="flex flex-col items-center justify-center p-2 bg-white hover:bg-gray-50 rounded-lg theme-border-50 action-btn"><i id="icon-urun-satis" class="fas fa-tag text-xl mb-1 theme-icon-color expense"></i><span id="label-urun-satis" class="block text-xs font-semibold"></span></button>
                     </div>
                 </div>
                 <div>
                     <div class="grid grid-cols-2 gap-2">
-                        <button id="btn-iskonto" class="flex flex-col items-center justify-center p-2 bg-white hover:bg-gray-50 rounded-lg theme-border-50 action-btn"><i class="fas fa-percent text-xl mb-1 theme-icon-color expense"></i><span class="block text-xs font-semibold">İskonto</span></button>
-                        <button id="btn-virman" class="flex flex-col items-center justify-center p-2 bg-white hover:bg-gray-50 rounded-lg theme-border-50 action-btn"><i class="fas fa-exchange-alt text-xl mb-1 theme-icon-color income"></i><span class="block text-xs font-semibold">Virman</span></button>
-                        <button id="btn-acik-hesap" class="flex flex-col items-center justify-center p-2 bg-white hover:bg-gray-50 rounded-lg theme-border-50 action-btn"><i class="fas fa-book-open text-xl mb-1 theme-icon-color income"></i><span class="block text-xs font-semibold">Açık Hesap</span></button>
-                        <button id="btn-ceviri" class="flex flex-col items-center justify-center p-2 bg-white hover:bg-gray-50 rounded-lg theme-border-50 action-btn"><i class="fas fa-random text-xl mb-1 theme-icon-color income"></i><span class="block text-xs font-semibold">Çeviri</span></button>
+                        <button id="btn-iskonto" data-permission-code="SATIS_CARI_ISKONTO" class="flex flex-col items-center justify-center p-2 bg-white hover:bg-gray-50 rounded-lg theme-border-50 action-btn"><i class="fas fa-percent text-xl mb-1 theme-icon-color expense"></i><span class="block text-xs font-semibold">İskonto</span></button>
+                        <button id="btn-virman" data-permission-code="SATIS_CARI_VIRMAN" class="flex flex-col items-center justify-center p-2 bg-white hover:bg-gray-50 rounded-lg theme-border-50 action-btn"><i class="fas fa-exchange-alt text-xl mb-1 theme-icon-color income"></i><span class="block text-xs font-semibold">Virman</span></button>
+                        <button id="btn-acik-hesap" data-permission-code="SATIS_CARI_ACIK_HESAP" class="flex flex-col items-center justify-center p-2 bg-white hover:bg-gray-50 rounded-lg theme-border-50 action-btn"><i class="fas fa-book-open text-xl mb-1 theme-icon-color income"></i><span class="block text-xs font-semibold">Açık Hesap</span></button>
+                        <button id="btn-ceviri" data-permission-code="SATIS_CARI_CEVIRI" class="flex flex-col items-center justify-center p-2 bg-white hover:bg-gray-50 rounded-lg theme-border-50 action-btn"><i class="fas fa-random text-xl mb-1 theme-icon-color income"></i><span class="block text-xs font-semibold">Çeviri</span></button>
                     </div>
                 </div>
             </div>
@@ -101,8 +101,8 @@
 
             <div id="dynamic-content-area" class="flex-grow p-4 overflow-y-auto custom-scrollbar min-h-0"></div>
             <div class="p-3 border-t border-gray-200 flex justify-end gap-2 flex-shrink-0">
-                <button id="delete-button" class="hidden bg-red-100 hover:bg-red-200 text-red-800 font-semibold py-1.5 px-4 rounded-md text-sm transition-colors border border-red-200"><i class="fas fa-trash mr-1.5"></i>Sil</button>
-                <button id="add-button" class="hidden bg-blue-100 hover:bg-blue-200 text-blue-800 font-semibold py-1.5 px-4 rounded-md text-sm transition-colors border border-blue-200"><i class="fas fa-check mr-1.5"></i>Ekle</button>
+                <button id="delete-button" data-permission-code="SATIS_CARI_KALEM_SIL" class="hidden bg-red-100 hover:bg-red-200 text-red-800 font-semibold py-1.5 px-4 rounded-md text-sm transition-colors border border-red-200"><i class="fas fa-trash mr-1.5"></i>Sil</button>
+                <button id="add-button" data-permission-code="SATIS_CARI_KALEM_EKLE" class="hidden bg-blue-100 hover:bg-blue-200 text-blue-800 font-semibold py-1.5 px-4 rounded-md text-sm transition-colors border border-blue-200"><i class="fas fa-check mr-1.5"></i>Ekle</button>
                 <button id="cancel-button" class="hidden bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold py-1.5 px-4 rounded-md text-sm transition-colors border border-gray-200"><i class="fas fa-times mr-1.5"></i>Vazgeç</button>
             </div>
         </div>
@@ -118,23 +118,22 @@
                 </div>
             </div>
             <div id="receipt-log" class="flex-grow p-3 overflow-y-auto custom-scrollbar min-h-0 bg-white"></div>
-            <div class="receipt-footer flex flex-col flex-shrink-0 border-t border-gray-200 max-h-[50%] lg:max-h-none overflow-y-auto custom-scrollbar bg-gray-50 rounded-b-xl">
-                <div id="receipt-totals" class="p-2 lg:p-3 bg-white">
-                    <div id="satis-totals" class="space-y-1">
-                        <div class="flex justify-between items-center text-xs"><strong class="font-medium text-gray-600">Giren Toplam:</strong><span id="giren-toplam" class="font-bold text-green-600">0,00 TRY</span></div>
-                        <div class="flex justify-between items-center text-xs"><strong class="font-medium text-gray-600">Çıkan Toplam:</strong><span id="cikan-toplam" class="font-bold text-red-600">0,00 TRY</span></div>
-                        <hr class="my-1">
-                        <div class="flex justify-between items-center text-sm"><strong class="font-semibold text-gray-800">Fark:</strong><span id="fark-toplam" class="font-extrabold text-blue-700">0,00 TRY</span></div>
-                    </div>
-                    <div id="cari-totals" class="hidden">
-                    </div>
+            <div id="receipt-totals" class="p-2 lg:p-3 border-t border-gray-200 flex-shrink-0 max-h-40 lg:max-h-48 overflow-y-auto custom-scrollbar bg-white">
+                <div id="satis-totals" class="space-y-1">
+                    <div class="flex justify-between items-center text-xs"><strong class="font-medium text-gray-600">Giren Toplam:</strong><span id="giren-toplam" class="font-bold text-green-600">0,00 TRY</span></div>
+                    <div class="flex justify-between items-center text-xs"><strong class="font-medium text-gray-600">Çıkan Toplam:</strong><span id="cikan-toplam" class="font-bold text-red-600">0,00 TRY</span></div>
+                    <hr class="my-1">
+                    <div class="flex justify-between items-center text-sm"><strong class="font-semibold text-gray-800">Fark:</strong><span id="fark-toplam" class="font-extrabold text-blue-700">0,00 TRY</span></div>
                 </div>
-                <div class="p-2 lg:p-3 border-t border-gray-100 flex-shrink-0 bg-gray-50">
-                    <div class="flex flex-wrap gap-2 justify-start">
-                        <button id="main-save-button" class="bg-green-200 hover:bg-green-300 text-green-800 font-semibold py-1.5 px-4 rounded-lg transition-colors border border-green-300 text-xs w-auto"><i class="fas fa-save mr-2"></i>Kaydet</button>
-                        <button id="main-reset-button" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-1.5 px-4 rounded-lg transition-colors border border-gray-300 text-xs w-auto"><i class="fas fa-sync-alt mr-2"></i>Yeni İşlem</button>
-                        <button id="main-delete-button" class="bg-red-200 hover:bg-red-300 text-red-800 font-semibold py-1.5 px-4 rounded-lg transition-colors border border-red-300 text-xs w-auto hidden"><i class="fas fa-trash mr-2"></i>Sil</button>
-                    </div>
+                <div id="cari-totals" class="hidden">
+                </div>
+            </div>
+            <div class="p-2 lg:p-3 bg-gray-100 border-t border-gray-200 flex-shrink-0 mt-auto rounded-b-xl">
+                <div class="flex flex-wrap gap-2 justify-start">
+                    <button id="main-save-button" data-permission-code="SATIS_CARI_FIS_KAYDET" class="bg-green-200 hover:bg-green-300 text-green-800 font-semibold py-1.5 px-4 rounded-lg transition-colors border border-green-300 text-xs w-auto"><i class="fas fa-save mr-2"></i>Kaydet</button>
+                    <button id="main-reset-button" data-permission-code="SATIS_CARI_YENI_ISLEM" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-1.5 px-4 rounded-lg transition-colors border border-gray-300 text-xs w-auto"><i class="fas fa-sync-alt mr-2"></i>Yeni İşlem</button>
+                    <button id="main-print-button" class="hidden bg-blue-200 hover:bg-blue-300 text-blue-800 font-semibold py-1.5 px-4 rounded-lg transition-colors border border-blue-300 text-xs w-auto"><i class="fas fa-print mr-2"></i>Yazdır</button>
+                    <button id="main-delete-button" data-permission-code="SATIS_CARI_FIS_SIL" class="hidden bg-red-200 hover:bg-red-300 text-red-800 font-semibold py-1.5 px-4 rounded-lg transition-colors border border-red-300 text-xs w-auto"><i class="fas fa-trash mr-2"></i>Sil</button>
                 </div>
             </div>
         </div>

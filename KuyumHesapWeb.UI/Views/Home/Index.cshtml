@@ -1,4 +1,4 @@
-﻿@{
+@{
     Layout = null;
 }
 <!DOCTYPE html>
@@ -190,43 +190,8 @@
             </div>
         </div>
         <div id="menu-links-container" class="py-2 overflow-y-auto overflow-x-hidden flex-grow">
-            <div class="sidebar-link-container">
-                <a href="javascript:void(0);" onclick="openTab('@Url.Action("Dashboard", "Home")', '[ Ana Sayfa ]')" class="sidebar-link flex items-center px-5 py-2.5 text-gray-700 transition-colors">
-                    <i class="fas fa-home w-6 text-center text-xl text-gray-500"></i>
-                    <span class="ml-3 font-semibold text-sm sidebar-text whitespace-nowrap">Ana Sayfa</span>
-                </a>
-            </div>
-            <div class="sidebar-link-container">
-                <a href="javascript:void(0);" onclick="openTab('@Url.Action("Index", "SatisVeCari")','[ Satış&Cari ]')" class="sidebar-link flex items-center px-5 py-2.5 text-gray-700 transition-colors">
-                    <i class="fas fa-cash-register w-6 text-center text-xl text-gray-500"></i>
-                    <span class="ml-3 font-semibold text-sm sidebar-text whitespace-nowrap">Satış&Cari</span>
-                </a>
-            </div>
-            <div class="sidebar-link-container">
-                <a href="javascript:void(0);" onclick="openTab('@Url.Action("Index", "Barkodlama")','[ Ürün Barkodlama ]')" class="sidebar-link flex items-center px-5 py-2.5 text-gray-700 transition-colors">
-                    <i class="fas fa-qrcode w-6 text-center text-xl text-gray-500"></i>
-                    <span class="ml-3 font-semibold text-sm sidebar-text whitespace-nowrap">Ürün Barkodlama</span>
-                </a>
-            </div>
 
-            <div class="sidebar-link-container">
-                <div class="sidebar-link flex items-center px-5 py-2.5 text-gray-700 transition-colors cursor-pointer">
-                    <i class="fas fa-plus w-6 text-center text-xl text-gray-500"></i>
-                    <span class="ml-3 font-semibold text-sm sidebar-text whitespace-nowrap">Tanımlamalar</span>
-                    <i class="fas fa-chevron-right ml-auto sidebar-text chevron-icon text-xs"></i>
-                </div>
-                <div class="submenu hidden">
-                    <a href="javascript:void(0);" onclick="openTab('@Url.Action("Index", "Hesaplar")', '[ Hesap Tanımlama ]')" class="block py-1.5 text-xs text-gray-600 hover:bg-gray-100">[ Hesap Tanımlama ]</a>
-                    <a href="javascript:void(0);" onclick="openTab('@Url.Action("Index", "HesapTipleri")', '[ Hesap Tipleri Tanımlama ]')" class="block py-1.5 text-xs text-gray-600 hover:bg-gray-100">[ Hesap Tipleri Tanımlama ]</a>
-                    <a href="javascript:void(0);" onclick="openTab('@Url.Action("Index", "Doviz")', '[ Döviz Tanımlama ]')" class="block py-1.5 text-xs text-gray-600 hover:bg-gray-100">[ Döviz Tanımlama ]</a>
-                    <a href="javascript:void(0);" onclick="openTab('@Url.Action("Index", "StokGrubu")', '[ Stok Grubu Tanımlama ]')" class="block py-1.5 text-xs text-gray-600 hover:bg-gray-100">[ Stok Grubu Tanımlama ]</a>
-                    <a href="javascript:void(0);" onclick="openTab('@Url.Action("Index", "StokTipleri")', '[ Stok Tipleri Tanımlama ]')" class="block py-1.5 text-xs text-gray-600 hover:bg-gray-100">[ Stok Tipleri Tanımlama ]</a>
-                    <a href="javascript:void(0);" onclick="openTab('@Url.Action("Index", "Stoklar")', '[ Stok Tanımlama ]')" class="block py-1.5 text-xs text-gray-600 hover:bg-gray-100">[ Stok Tanımlama ]</a>
-                    <a href="javascript:void(0);" onclick="openTab('@Url.Action("Index", "UrunTipleri")', '[ Ürün Tipi Tanımlama ]')" class="block py-1.5 text-xs text-gray-600 hover:bg-gray-100">[ Ürün Tipi Tanımlama ]</a>
-                    <a href="javascript:void(0);" onclick="openTab('@Url.Action("Index", "Kullanicilar")', '[ Kullanıcı Tanımlama ]')" class="block py-1.5 text-xs text-gray-600 hover:bg-gray-100">[ Kullanıcı Tanımlama ]</a>
-                    <a href="javascript:void(0);" onclick="openTab('@Url.Action("Index", "HareketTipleri")', '[ Hareket Tipleri Tanımlama ]')" class="block py-1.5 text-xs text-gray-600 hover:bg-gray-100">[ Hareket Tipleri Tanımlama ]</a>
-                </div>
-            </div>
+
         </div>
         <div class="mt-auto flex-shrink-0">
             <!-- YENİ EKLENEN AYARLAR MENÜSÜ -->
@@ -266,13 +231,14 @@
         <div id="content-frames" class="flex-grow relative"></div>
     </main>
 
+    <script src="~/js/common.js" asp-append-version="true"></script>
     <!-- JavaScript Kodları Yeniden Düzenlendi ve Sadeleştirildi -->
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const mainElement = document.getElementById('main-content');
             const loginUrl = mainElement.dataset.loginUrl;
             const dashboardUrl = mainElement.dataset.dashboardUrl;
-            const token = localStorage.getItem('jwt_token');
+            const token = window.khGetAuthToken ? window.khGetAuthToken() : localStorage.getItem('jwt_token');
 
             if (!token) {
                 window.location.href = loginUrl;

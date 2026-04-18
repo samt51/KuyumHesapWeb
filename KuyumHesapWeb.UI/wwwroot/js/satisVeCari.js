@@ -1264,6 +1264,60 @@ document.addEventListener('DOMContentLoaded', () => {
             urunSatisLabel.textContent = 'Ürün Satış';
         }
     };
+    const getPageActionModeKey = () => state.operationType === 'cari' ? 'cari' : 'satis';
+    const getPageActionCode = () => {
+        const main = document.querySelector('[data-page-code]');
+        if (!main) return '';
+        return getPageActionModeKey() === 'cari'
+            ? (main.dataset.pageCodeCari || 'SATIS_CARI_CARI')
+            : (main.dataset.pageCodeSatis || 'SATIS_CARI_SATIS');
+    };
+    const applyPageActionOrder = actions => {
+        const normalizeCode = value => String(value || '').trim().toUpperCase();
+        const orderByCode = new Map();
+        (actions || []).forEach(action => {
+            const orderNo = Number(action && action.orderNo) || 0;
+            if (!orderNo) return;
+            if (action.code) orderByCode.set(normalizeCode(action.code), orderNo);
+            if (action.requiredPermissionCode) orderByCode.set(normalizeCode(action.requiredPermissionCode), orderNo);
+        });
+
+        allActionButtons.forEach((button, index) => {
+            if (!button.dataset.defaultOrder) {
+                button.dataset.defaultOrder = String(index + 1);
+            }
+
+            const code = normalizeCode(button.dataset.actionCode);
+            const permissionCode = normalizeCode(button.dataset.permissionCode);
+            const orderNo = orderByCode.get(code) || orderByCode.get(permissionCode) || Number(button.dataset.defaultOrder);
+            button.style.order = String(orderNo);
+        });
+    };
+    const syncPageActionMode = async () => {
+        const modeKey = getPageActionModeKey();
+        const pageCode = getPageActionCode();
+        const pageElement = document.querySelector('[data-page-code]');
+        if (pageElement) pageElement.dataset.pageCode = pageCode;
+
+        allActionButtons.forEach(button => {
+            const actionCode = modeKey === 'cari' ? button.dataset.actionCodeCari : button.dataset.actionCodeSatis;
+            const permissionCode = modeKey === 'cari' ? button.dataset.permissionCodeCari : button.dataset.permissionCodeSatis;
+            if (actionCode) button.dataset.actionCode = actionCode;
+            if (permissionCode) button.dataset.permissionCode = permissionCode;
+        });
+
+        if (typeof window.applyPageActionPermissions !== 'function') {
+            applyPageActionOrder(window.currentPageActions || []);
+            return;
+        }
+
+        try {
+            const actions = await window.applyPageActionPermissions(pageCode);
+            applyPageActionOrder(actions);
+        } catch (error) {
+            console.warn('Sayfa aksiyon yetkileri moda gore uygulanamadi.', error);
+        }
+    };
     const updateMainButtons = () => {
         const isSlipLoaded = state.loadedFis !== null;
 
@@ -1295,6 +1349,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const overlay = document.getElementById('action-buttons-overlay');
         const container = document.getElementById('action-buttons-container');
         if (!container) return;
+
+        document.querySelectorAll('#header-box [data-permission-code], #action-buttons-container .action-btn').forEach(element => {
+            element.hidden = false;
+            element.classList.remove('hidden');
+        });
 
         // Resolve selection robustly (SlimSelect may return string, array, object)
         const resolveSelectedCustomerId = () => {
@@ -1474,6 +1533,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         updateActiveCurrency();
         updateButtonLabels();
+        void syncPageActionMode();
         resetTransaction(); // Bu fonksiyon zaten başlığı, fişi vs. sıfırlar
         // fetchAndRenderCariBakiye(); // resetTransaction içinde çağrılıyor
         window.salespersonSlimSelect = salespersonSlimSelect;

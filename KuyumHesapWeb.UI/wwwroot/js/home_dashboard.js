@@ -19,9 +19,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     let kullaniciAdi = 'Samet';
 
     // getAuthHeaders artık Authorization göndermiyor; sadece Content-Type
-    const getAuthHeaders = () => ({
-        'Content-Type': 'application/json'
-    });
+    const getAuthHeaders = () => window.khGetAuthHeaders
+        ? window.khGetAuthHeaders({ 'Content-Type': 'application/json' })
+        : { 'Content-Type': 'application/json' };
 
     // --- HIZLI DÜZELTME: Sayfada görünmesini istemediğimiz ekstra "Kasalar" bölümünü kaldır ---
     const removeDuplicateKasalarSection = () => {
@@ -209,7 +209,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         icon.classList.add('fa-spin');
         refreshButton.disabled = true;
         try {
-            const response = await fetch(`${API_BASE_URL}/Cure/CureUpdate`, {
+            const response = await fetch('/Cure/CureUpdate', {
                 method: 'POST',
                 headers: getAuthHeaders(),
                 credentials: 'same-origin'
@@ -247,9 +247,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         try {
             let payload = initialPayload;
             if (!payload) {
-                const apiBaseRaw = (window.API_BASE_URL || '').toString();
-                const apiBase = apiBaseRaw ? apiBaseRaw.replace(/\/+$/, '') : '';
-                const url = apiBase ? `${apiBase}/Report/GetCashReport` : '/Report/GetCashReport';
+                const url = '/Report/GetCashReport';
                 const res = await fetch(url, { method: 'GET', headers: getAuthHeaders(), credentials: 'same-origin' });
                 if (!res.ok) { ozet.innerHTML = '<span class="text-xs text-red-400">Yüklenemedi</span>'; return; }
                 payload = await res.json();
@@ -293,9 +291,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         try {
             let payload = initialPayload;
             if (!payload) {
-                const apiBaseRaw = (window.API_BASE_URL || '').toString();
-                const apiBase = apiBaseRaw ? apiBaseRaw.replace(/\/+$/, '') : '';
-                const url = apiBase ? `${apiBase}/Report/GetBankReport` : '/Report/GetBankReport';
+                const url = '/Report/GetBankReport';
                 const res = await fetch(url, { method: 'GET', headers: getAuthHeaders(), credentials: 'same-origin' });
                 if (!res.ok) { ozet.innerHTML = '<span class="text-xs text-red-400">Yüklenemedi</span>'; return; }
                 payload = await res.json();
@@ -339,9 +335,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         try {
             let payload = initialPayload;
             if (!payload) {
-                const apiBaseRaw = (window.API_BASE_URL || '').toString();
-                const apiBase = apiBaseRaw ? apiBaseRaw.replace(/\/+$/, '') : '';
-                const url = apiBase ? `${apiBase}/Report/GetPosReport` : '/Report/GetPosReport';
+                const url = '/Report/GetPosReport';
                 const res = await fetch(url, { method: 'GET', headers: getAuthHeaders(), credentials: 'same-origin' });
                 if (!res.ok) { ozet.innerHTML = '<span class="text-xs text-red-400">Yüklenemedi</span>'; return; }
                 payload = await res.json();

@@ -1,5 +1,7 @@
-﻿using KuyumHesapWeb.Core.Commond.Abstract.ApiClient;
+using KuyumHesapWeb.Core.Commond.Abstract.ApiClient;
 using KuyumHesapWeb.Core.Commond.Models;
+using Microsoft.AspNetCore.Http;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 
@@ -8,34 +10,30 @@ namespace KuyumHesapWeb.Core.Commond.Concrete.ApiClient
     public class ApiService : IApiService
     {
         private readonly HttpClient _httpClient;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
         private static readonly JsonSerializerOptions JsonOpt = new()
         {
             PropertyNameCaseInsensitive = true
         };
 
-        public ApiService(HttpClient httpClient)
+        public ApiService(HttpClient httpClient, IHttpContextAccessor httpContextAccessor)
         {
             _httpClient = httpClient;
+            _httpContextAccessor = httpContextAccessor;
         }
 
-        // 🔹 GET
         public Task<ResponseDto<TResponse>> GetAsync<TResponse>(string url)
-            => SendAsync<TResponse>(() => _httpClient.GetAsync(url));
+            => SendAsync<TResponse>(() => SendWithAuthAsync(HttpMethod.Get, url));
 
-        // 🔹 POST
         public Task<ResponseDto<TResponse>> PostAsync<TRequest, TResponse>(string url, TRequest data)
-            => SendAsync<TResponse>(() => _httpClient.PostAsync(url, CreateJsonContent(data)));
+            => SendAsync<TResponse>(() => SendWithAuthAsync(HttpMethod.Post, url, CreateJsonContent(data)));
 
-        // 🔹 PUT
         public Task<ResponseDto<TResponse>> PutAsync<TRequest, TResponse>(string url, TRequest data)
-            => SendAsync<TResponse>(() => _httpClient.PutAsync(url, CreateJsonContent(data)));
+            => SendAsync<TResponse>(() => SendWithAuthAsync(HttpMethod.Put, url, CreateJsonContent(data)));
 
-        // 🔹 DELETE
         public Task<ResponseDto<TResponse>> DeleteAsync<TResponse>(string url)
-            => SendAsync<TResponse>(() => _httpClient.DeleteAsync(url));
-
-        // ================= CORE =================
+            => SendAsync<TResponse>(() => SendWithAuthAsync(HttpMethod.Delete, url));
 
         private async Task<ResponseDto<TResponse>> SendAsync<TResponse>(Func<Task<HttpResponseMessage>> send)
         {
@@ -50,7 +48,7 @@ namespace KuyumHesapWeb.Core.Commond.Concrete.ApiClient
                 {
                     isSuccess = false,
                     statusCode = 408,
-                    errors = new List<string> { "İstek zaman aşımına uğradı. Lütfen tekrar deneyiniz." }
+                    errors = new List<string> { "Istek zaman asimina ugradi. Lutfen tekrar deneyiniz." }
                 };
             }
             catch (HttpRequestException)
@@ -59,22 +57,56 @@ namespace KuyumHesapWeb.Core.Commond.Concrete.ApiClient
                 {
                     isSuccess = false,
                     statusCode = 503,
-                    errors = new List<string> { "Servise şu an ulaşılamıyor. Lütfen daha sonra tekrar deneyiniz." }
+                    errors = new List<string> { "Servise su an ulasilamiyor. Lutfen daha sonra tekrar deneyiniz." }
                 };
             }
             catch (Exception)
             {
-                // İstersen bunu kaldırabilirsin, ama prod'da güvenli olur:
                 return new ResponseDto<TResponse>
                 {
                     isSuccess = false,
                     statusCode = 500,
-                    errors = new List<string> { "Beklenmeyen bir hata oluştu. Lütfen daha sonra tekrar deneyiniz." }
+                    errors = new List<string> { "Beklenmeyen bir hata olustu. Lutfen daha sonra tekrar deneyiniz." }
                 };
             }
         }
 
-        // ================= HELPERS =================
+        private Task<HttpResponseMessage> SendWithAuthAsync(HttpMethod method, string url, HttpContent? content = null)
+        {
+            var request = new HttpRequestMessage(method, url)
+            {
+                Content = content
+            };
+
+            var token = ResolveToken();
+            if (!string.IsNullOrWhiteSpace(token))
+            {
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            }
+
+            return _httpClient.SendAsync(request);
+        }
+
+        private string? ResolveToken()
+        {
+            var httpContext = _httpContextAccessor.HttpContext;
+            var token = httpContext?.Request.Cookies["AuthToken"];
+            var incomingAuthorization = httpContext?.Request.Headers["Authorization"].ToString();
+
+            if (string.IsNullOrWhiteSpace(token)
+                && !string.IsNullOrWhiteSpace(incomingAuthorization)
+                && incomingAuthorization.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+            {
+                token = incomingAuthorization["Bearer ".Length..].Trim();
+            }
+
+            if (string.IsNullOrWhiteSpace(token))
+            {
+                token = httpContext?.User.FindFirst("access_token")?.Value;
+            }
+
+            return string.IsNullOrWhiteSpace(token) ? null : token;
+        }
 
         private static StringContent CreateJsonContent<T>(T data)
         {
@@ -91,41 +123,36 @@ namespace KuyumHesapWeb.Core.Commond.Concrete.ApiClient
             }
             catch
             {
-                // body okunamazsa da fallback döneceğiz
             }
 
-            // Body boşsa
             if (string.IsNullOrWhiteSpace(json))
             {
                 return new ResponseDto<T>
                 {
                     isSuccess = response.IsSuccessStatusCode,
                     statusCode = (int)response.StatusCode,
-                    errors = response.IsSuccessStatusCode ? new List<string>() : new List<string> { "Sunucudan geçersiz yanıt alındı." }
+                    errors = response.IsSuccessStatusCode ? new List<string>() : new List<string> { "Sunucudan gecersiz yanit alindi." }
                 };
             }
 
             var result = JsonSerializer.Deserialize<ResponseDto<T>>(json, JsonOpt);
 
-            // Deserialize başarısızsa
             if (result == null)
             {
                 return new ResponseDto<T>
                 {
                     isSuccess = false,
                     statusCode = (int)response.StatusCode,
-                    errors = new List<string> { "Sunucudan geçersiz yanıt alındı." }
+                    errors = new List<string> { "Sunucudan gecersiz yanit alindi." }
                 };
             }
 
-            // API isSuccess set etmiyorsa güvene al
             result.statusCode = result.statusCode == 0 ? (int)response.StatusCode : result.statusCode;
 
-            // Eğer API 500/404 vs döndüyse ama body içinde isSuccess gelmediyse yine güvene al
             if (!response.IsSuccessStatusCode && (result.errors == null || result.errors.Count == 0))
             {
                 result.isSuccess = false;
-                result.errors = new List<string> { "İşlem sırasında sunucu hatası oluştu." };
+                result.errors = new List<string> { "Islem sirasinda sunucu hatasi olustu." };
             }
 
             return result;
