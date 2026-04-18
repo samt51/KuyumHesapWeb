@@ -53,7 +53,7 @@ namespace KuyumHesapWeb.UI.Controllers
             return await _mediator.Send(new GetByIdStockQueryRequest(id));
         }
 
-        [HttpPost("Create")]
+        [HttpPost]
         public async Task<ResponseDto<CreateStockCommandResponse>> Create([FromBody] CreateStockCommandRequest request)
         {
             var data = await _mediator.Send(request);
@@ -71,7 +71,7 @@ namespace KuyumHesapWeb.UI.Controllers
                 UpdateStockCommandRequest = map
             });
         }
-        [HttpPut("Update")]
+        [HttpPut]
         public async Task<ResponseDto<UpdateStockCommandResponse>> Update([FromBody] UpdateStockCommandRequest request)
         {
             var data = await _mediator.Send(request);
