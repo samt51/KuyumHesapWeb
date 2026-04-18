@@ -85,8 +85,7 @@ namespace KuyumHesapWeb.UI.Controllers
             var safeExpireDate = DateTime.UtcNow.AddDays(3);
 
             // JWT cookie
-            Response.Cookies.Append("AuthToken", data.data.token, BuildAuthCookieOptions(safeExpireDate));
-            Response.Cookies.Append("AuthTokenClient", data.data.token, BuildClientAuthCookieOptions(safeExpireDate));
+            Response.Cookies.Append("AuthToken", data.data.token, BuildAuthCookieOptions(data.data.tokenExpireDate));
 
             // MVC cookie (Authorize bunu okur)
             var claims = BuildClaimsFromToken(data.data.token, request.UserName);
