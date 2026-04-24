@@ -26,8 +26,13 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        const printWindow = window.open('', 'PRINT', 'height=600,width=400');
+        const iframe = document.createElement('iframe');
+        iframe.style.display = 'none';
+        document.body.appendChild(iframe);
+
+        const printWindow = iframe.contentWindow;
         
+        printWindow.document.open();
         printWindow.document.write(`
             <html>
             <head>
@@ -102,7 +107,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // 300ms gecikme: Renderin termal yazıcı formatına işlemesi için gerekli tolerans!
         setTimeout(() => {
             printWindow.print();
-            printWindow.close();
+            setTimeout(() => {
+                document.body.removeChild(iframe);
+            }, 500); // Wait a bit before removing to ensure it prints successfully
         }, 300);
     });
 });

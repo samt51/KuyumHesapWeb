@@ -3297,7 +3297,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return {
             selectedStok: () => selectedStok,
             getValues: () => { if (!selectedStok) return null; const visibleLayout = [defaultLayout, altinLayout, hurdaLayout].find(l => !l.classList.contains('hidden')); const descriptionInput = visibleLayout ? visibleLayout.querySelector('.product-description-input') : null; const description = descriptionInput ? descriptionInput.value.trim() : ''; if (selectedStok.stokGrupAdi === 'MADEN GRUBU' && (selectedStok.stokTipAdi === 'ALTIN' || selectedStok.stokTipAdi === 'SARRAFİYE')) { return { stok: selectedStok, miktar: parseFormattedNumber(altinMiktarInput.value), milyem: parseFormattedNumber(altinMilyemInput.value), birim: selectedStok.birim, toplamHas: parseFormattedNumber(altinToplamHasInput.value), currency: 'HAS', type: 'altin', birimIscilik: parseFormattedNumber(altinBirimIscilikInput.value), iscilikTipi: isAdetMode ? 'Adet' : 'Gram', toplamIscilik: parseFormattedNumber(altinIscilikTutariInput.value), iscilikBirimi: altinBirimInput.value, adet: isAdetMode ? (parseInt(altinAdetInput.value) || 0) : 0, iscilikDahil: iscilikDahilToggle.checked, description: description }; } else if (selectedStok.stokGrupAdi === 'HURDA GRUBU') { return { stok: selectedStok, miktar: parseFormattedNumber(hurdaMiktarInput.value), birim: 'GR', toplamHas: parseFormattedNumber(hurdaToplamHasInput.value), currency: 'HAS', type: 'hurda', milyem: parseFormattedNumber(hurdaMilyemInput.value), birimIscilik: 0, iscilikTipi: 'Gram', toplamIscilik: 0, iscilikBirimi: 'HAS', adet: null, iscilikDahil: false, description: description }; } else { return { stok: selectedStok, miktar: parseFormattedNumber(digerMiktarInput.value), birim: selectedStok.birim, toplamTutar: parseFormattedNumber(digerToplamTutarInput.value), currency: digerTutarBirimiInput.value, type: 'diger', description: description }; } },
-            setValues: (details) => { if (!details || !details.stokId) return; handleStokSelection(details.stokId); const visibleLayout = [defaultLayout, altinLayout, hurdaLayout].find(l => !l.classList.contains('hidden')); if (visibleLayout) { const descriptionInput = visibleLayout.querySelector('.product-description-input'); if (descriptionInput) descriptionInput.value = details.description || ''; } if (altinLayout.classList.contains('hidden') === false) { altinMiktarInput.value = formatCurrency(details.miktar); const isAdet = details.iscilikTipi === 'Adet'; if (isAdet) { altinAdetInput.value = details.adet || 1; } setIscilikMode(isAdet); altinBirimIscilikInput.value = formatCurrency(details.birimIscilik, isAdet ? 2 : 3); iscilikDahilToggle.checked = details.iscilikDahil; iscilikDahilToggle.dispatchEvent(new Event('change')); calculateAltinTotals(); } else if (hurdaLayout.classList.contains('hidden') === false) { hurdaMiktarInput.value = formatCurrency(details.miktar); hurdaMilyemInput.value = formatCurrency(details.milyem, 3); calculateHurdaTotals(); } },
+            setValues: (details) => { const resolvedStokId = details.stokId || (details.stok && details.stok.stokID); if (!details || !resolvedStokId) return; handleStokSelection(resolvedStokId); const visibleLayout = [defaultLayout, altinLayout, hurdaLayout].find(l => !l.classList.contains('hidden')); if (visibleLayout) { const descriptionInput = visibleLayout.querySelector('.product-description-input'); if (descriptionInput) descriptionInput.value = details.description || ''; } if (altinLayout.classList.contains('hidden') === false) { altinMiktarInput.value = formatCurrency(details.miktar); const isAdet = details.iscilikTipi === 'Adet'; if (isAdet) { altinAdetInput.value = details.adet || 1; } setIscilikMode(isAdet); altinBirimIscilikInput.value = formatCurrency(details.birimIscilik, isAdet ? 2 : 3); iscilikDahilToggle.checked = details.iscilikDahil; iscilikDahilToggle.dispatchEvent(new Event('change')); calculateAltinTotals(); } else if (hurdaLayout.classList.contains('hidden') === false) { hurdaMiktarInput.value = formatCurrency(details.miktar); hurdaMilyemInput.value = formatCurrency(details.milyem, 3); calculateHurdaTotals(); } else { digerMiktarInput.value = formatCurrency(details.miktar); digerBirimFiyatInput.value = formatCurrency(details.birimFiyat || (details.toplamTutar / details.miktar)); calculateDefaultTotals(); } },
             reset: resetProductForm
         };
     };
@@ -3418,7 +3418,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return {
             selectedStok: () => selectedStok,
             getValues: () => { if (!selectedStok) return null; const visibleLayout = [defaultLayout, altinLayout, hurdaLayout].find(l => !l.classList.contains('hidden')); const descriptionInput = visibleLayout ? visibleLayout.querySelector('.product-description-input') : null; const description = descriptionInput ? descriptionInput.value.trim() : ''; if (selectedStok.stokGrupAdi === 'MADEN GRUBU' && (selectedStok.stokTipAdi === 'ALTIN' || selectedStok.stokTipAdi === 'SARRAFİYE')) { return { stok: selectedStok, miktar: parseFormattedNumber(altinMiktarInput.value), milyem: parseFormattedNumber(altinMilyemInput.value), birim: selectedStok.birim, toplamHas: parseFormattedNumber(altinToplamHasInput.value), currency: 'HAS', type: 'altin', birimIscilik: parseFormattedNumber(altinBirimIscilikInput.value), iscilikTipi: isAdetMode ? 'Adet' : 'Gram', toplamIscilik: parseFormattedNumber(altinIscilikTutariInput.value), iscilikBirimi: altinBirimInput.value, adet: isAdetMode ? (parseInt(altinAdetInput.value) || 0) : 0, iscilikDahil: iscilikDahilToggle.checked, description: description }; } else if (selectedStok.stokGrupAdi === 'HURDA GRUBU') { return { stok: selectedStok, miktar: parseFormattedNumber(hurdaMiktarInput.value), birim: 'GR', toplamHas: parseFormattedNumber(hurdaToplamHasInput.value), currency: 'HAS', type: 'hurda', milyem: parseFormattedNumber(hurdaMilyemInput.value), birimIscilik: 0, iscilikTipi: 'Gram', toplamIscilik: 0, iscilikBirimi: 'HAS', adet: null, iscilikDahil: false, description: description }; } else { return { stok: selectedStok, miktar: parseFormattedNumber(digerMiktarInput.value), birim: selectedStok.birim, toplamTutar: parseFormattedNumber(digerToplamTutarInput.value), currency: digerTutarBirimiInput.value, type: 'diger', description: description }; } },
-            setValues: (details) => { if (!details || !details.stokId) return; handleStokSelection(details.stokId); const visibleLayout = [defaultLayout, altinLayout, hurdaLayout].find(l => !l.classList.contains('hidden')); if (visibleLayout) { const descriptionInput = visibleLayout.querySelector('.product-description-input'); if (descriptionInput) descriptionInput.value = details.description || ''; } if (altinLayout.classList.contains('hidden') === false) { altinMiktarInput.value = formatCurrency(details.miktar); const isAdet = details.iscilikTipi === 'Adet'; if (isAdet) { altinAdetInput.value = details.adet || 1; } setIscilikMode(isAdet); altinBirimIscilikInput.value = formatCurrency(details.birimIscilik, isAdet ? 2 : 3); iscilikDahilToggle.checked = details.iscilikDahil; iscilikDahilToggle.dispatchEvent(new Event('change')); calculateAltinTotals(); } else if (hurdaLayout.classList.contains('hidden') === false) { hurdaMiktarInput.value = formatCurrency(details.miktar); hurdaMilyemInput.value = formatCurrency(details.milyem, 3); calculateHurdaTotals(); } },
+            setValues: (details) => { const resolvedStokId = details.stokId || (details.stok && details.stok.stokID); if (!details || !resolvedStokId) return; handleStokSelection(resolvedStokId); const visibleLayout = [defaultLayout, altinLayout, hurdaLayout].find(l => !l.classList.contains('hidden')); if (visibleLayout) { const descriptionInput = visibleLayout.querySelector('.product-description-input'); if (descriptionInput) descriptionInput.value = details.description || ''; } if (altinLayout.classList.contains('hidden') === false) { altinMiktarInput.value = formatCurrency(details.miktar); const isAdet = details.iscilikTipi === 'Adet'; if (isAdet) { altinAdetInput.value = details.adet || 1; } setIscilikMode(isAdet); altinBirimIscilikInput.value = formatCurrency(details.birimIscilik, isAdet ? 2 : 3); iscilikDahilToggle.checked = details.iscilikDahil; iscilikDahilToggle.dispatchEvent(new Event('change')); calculateAltinTotals(); } else if (hurdaLayout.classList.contains('hidden') === false) { hurdaMiktarInput.value = formatCurrency(details.miktar); hurdaMilyemInput.value = formatCurrency(details.milyem, 3); calculateHurdaTotals(); } else { digerMiktarInput.value = formatCurrency(details.miktar); digerBirimFiyatInput.value = formatCurrency(details.birimFiyat || (details.toplamTutar / details.miktar)); calculateDefaultTotals(); } },
             reset: resetProductForm
         };
     };
@@ -4957,7 +4957,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const miktar = parseFloat(get(hareket, 'Quantity', 'quantity', 'miktar') ?? 0) || 0;
 
         // RAW birim alanları (response içinde Unit / CounterUnit isimli alanlar isteniyordu)
-        const rawUnit = get(hareket, 'Unit', 'unit', 'birim', 'birimKod') ?? get(hareket, 'CurrencyCode', 'currencyCode') ?? '';
+        const rawUnit = get(hareket, 'StockUnit', 'stockUnit', 'Unit', 'unit', 'birim', 'birimKod') ?? get(hareket, 'CurrencyCode', 'currencyCode') ?? '';
         const rawCounterUnit = get(hareket, 'CounterUnit', 'counterUnit', 'karsilikBirim') ?? '';
 
         // Eğer API numeric id dönerse allCurrencies üzerinden döviz kodunu almaya çalış
@@ -5007,12 +5007,14 @@ document.addEventListener('DOMContentLoaded', () => {
         // Özel: Nakit için iki sütunlu gösterim — ürün mü kontrolü
         let detayHTML = '';
         if (get(hareket, 'StockName', 'stockName', 'stokAdi')) {
-            // (ürün branch aynı kaldı)
             const stokAdi = get(hareket, 'StockName', 'stockName', 'stokAdi') || '';
             const milyem = parseFloat(get(hareket, 'MillRate', 'millRate', 'milyem') ?? 0) || 0;
-            const iscilik = parseFloat(get(hareket, 'LaborCost', 'laborCost', 'iscilik') ?? 0) || 0;
-            const urunHasDegeri = parseFloat(get(hareket, 'NetProductValue', 'netProductValue', 'urunHasDegeri') ?? 0) || 0;
-            const toplamHas = urunHasDegeri + (parseFloat(get(hareket, 'TotalLaborCost', 'totalLaborCost', 'toplamIscilik') ?? 0) || 0);
+            const iscilikBirimiStr = parseFloat(get(hareket, 'LaborCost', 'laborCost', 'iscilik', 'birimIscilik') ?? 0) || 0;
+            const iscilikToplamStr = parseFloat(get(hareket, 'TotalLaborCost', 'totalLaborCost', 'toplamIscilik') ?? 0) || 0;
+            const toplamHas = parseFloat(get(hareket, 'BalanceEffectAmount', 'balanceEffectAmount', 'Tutar_BPBR', 'baseAmount') ?? 0) || 0;
+            
+            const nPV = get(hareket, 'NetProductValue', 'netProductValue', 'urunHasDegeri');
+            const urunHasDegeri = (nPV !== undefined && nPV !== null) ? parseFloat(nPV) : (toplamHas - iscilikToplamStr);
 
             detayHTML = `
             <div class="ekstre-v3-sol">
@@ -5022,7 +5024,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="ekstre-v3-orta">
                 <div class="ekstre-v3-detay-grup flex-grow">
                     <span class="font-semibold text-xs leading-none">${stokAdi} ${formatCurrency(miktar, 2)} ${birim} (${formatCurrency(milyem, 3)})</span>
-                    <span class="text-[10px] text-gray-500 leading-tight">İşçilik: (${formatCurrency(get(hareket, 'LaborCosmt', 'laborCost', 'iscilik') || 0, 3)}) ${get(hareket, 'LaborUnit', 'laborUnit', 'iscilikBirimi') || ''} ${formatCurrency(iscilik, 2)} HAS</span>
+                    <span class="text-[10px] text-gray-500 leading-tight">İşçilik: (${formatCurrency(iscilikBirimiStr, 3)}) ${get(hareket, 'LaborUnit', 'laborUnit', 'iscilikBirim', 'iscilikBirimi', 'laborCostCurrency') || 'HAS'} ${formatCurrency(iscilikToplamStr, 2)} HAS</span>
                 </div>
                 <div class="ekstre-v3-detay-grup text-right min-w-[70px]">
                     <span class="text-xs font-semibold text-gray-600">${formatCurrency(urunHasDegeri, 2)} HAS</span>
@@ -5151,16 +5153,21 @@ document.addEventListener('DOMContentLoaded', () => {
                 const stok = allStoklar.find(s => s.stokID == musteriHareketi.stokID) || {};
 
                 const isIncome = musteriHareketi.girisMi;
-                const miktar = musteriHareketi.miktar ?? 0;
-                const milyem = musteriHareketi.milyem ?? 0;
-                const birimIscilik = musteriHareketi.iscilik ?? 0;
-                const toplamIscilik = musteriHareketi.toplamIscilik ?? 0;
+                const miktar = musteriHareketi.urunMiktari || musteriHareketi.miktar || 0;
+                const milyem = musteriHareketi.milyem || 0;
+                const birimIscilik = musteriHareketi.iscilik || 0;
                 const iscilikBirimi = musteriHareketi.iscBrm || 'HAS';
                 const iscilikTipi = (musteriHareketi.iscAdet && musteriHareketi.iscAdet > 0) ? 'Adet' : 'Gram';
                 const adet = musteriHareketi.iscAdet || 0;
                 const iscilikDahil = musteriHareketi.iscDahil || false;
-                const urunHasDegeri = musteriHareketi.urunHasDegeri ?? 0;
-                const toplamHas = urunHasDegeri + toplamIscilik;
+                const urunHasDegeri = miktar * milyem;
+                let toplamIscilik = 0;
+                if (iscilikTipi === 'Adet') {
+                    toplamIscilik = adet * birimIscilik;
+                } else {
+                    toplamIscilik = miktar * birimIscilik;
+                }
+                const toplamHas = musteriHareketi.miktar || (urunHasDegeri + toplamIscilik);
 
                 items.push({
                     itemClass: 'product',
@@ -5440,7 +5447,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     kur2: Number(tryKeys(m, ['CounterExchangeRate', 'counterExchangeRate', 'karsilikKuru']) ?? 0),
                     girisMi: inferredGiris,
                     oldBalance: Number(tryKeys(m, ['OldBalance', 'oldBalance', 'eskiBakiye']) ?? 0),
-                    finalBalance: Number(tryKeys(m, ['FinalBalance', 'finalBalance', 'sonBakiye']) ?? 0)
+                    finalBalance: Number(tryKeys(m, ['FinalBalance', 'finalBalance', 'sonBakiye']) ?? 0),
+                    urunMiktari: Number(tryKeys(m, ['Quantity', 'quantity']) || 0),
+                    milyem: Number(tryKeys(m, ['MillRate', 'millRate', 'milyem']) || 0),
+                    iscilik: Number(tryKeys(m, ['LaborCost', 'laborCost', 'iscilik']) || 0),
+                    iscBrm: tryKeys(m, ['LaborUnit', 'laborUnit', 'iscBrm']),
+                    iscAdet: Number(tryKeys(m, ['LaborQuantity', 'laborQuantity', 'iscAdet']) || 0),
+                    iscDahil: Boolean(tryKeys(m, ['IsLaborIncluded', 'isLaborIncluded', 'iscDahil']))
                 };
             });
 
@@ -5907,7 +5920,6 @@ document.addEventListener('DOMContentLoaded', () => {
         // Silinmiş kalemleri de dahil ediyoruz ki IsDeleted: true olarak gitsinler
         for (const item of state.receiptItems.filter(i => i.itemClass !== 'acik-hesap')) {
             if (item.itemClass === 'cash') {
-                // Ana müşteri hareketi
                 const itemCurrency = allCurrencies.find(c => c.dovizKodu === item.currency);
                 const itemCurrencyId = itemCurrency ? parseInt(itemCurrency.id, 10) : (nationalCurrencyId || null);
                 const counterCurrencyId = parseInt(item.equivalentCurrencyId || itemCurrencyId, 10);
@@ -5915,7 +5927,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const customerTransactionType = item.isIncome ? NAKIT_GIRIS_ID : NAKIT_CIKIS_ID;
                 const financialTransactionType = item.isIncome ? NAKIT_CIKIS_ID : NAKIT_GIRIS_ID;
 
-                // müşteri hareketi
+                // tek hareket olarak backend'e payload ile gonderilir
                 pushDTO({
                     MovementId: item.movementId || 0,
                     IsDeleted: !!item.isDeleted,
@@ -5932,7 +5944,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     BaseCurrencyAmount: (item.equivalentTotal ?? item.total) * (item.hesapKuru ?? 1),
                     CostAmount: 0,
                     ProfitAmount: 0,
-                    CounterTransactionId: null,
                     Quantity: 0,
                     MillRate: 0,
                     LaborCost: null,
@@ -5941,36 +5952,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     IsLaborIncluded: null,
                     IsReconciled: false,
                     NetProductValue: 0,
-                    TotalLaborCost: 0
-                });
-
-                // karşı finansal hesap hareketi
-                pushDTO({
-                    MovementId: item.counterMovementId || 0,
-                    IsDeleted: !!item.isDeleted,
-                    TransactionTypeId: financialTransactionType,
-                    AccountId: parseInt(item.details.accountId, 10),
-                    StockId: null,
-                    Description: `Karşı Hesap: ${selectedCustomerId} - ${item.description || ''}`,
-                    ForeignCurrencyAmount: item.equivalentTotal ?? item.total,
-                    ForeignCurrencyId: counterCurrencyId,
-                    ForeignExchangeRate: item.hesapKuru ?? item.miktarKuru ?? 1,
-                    CounterCurrencyAmount: item.total,
-                    CounterCurrencyId: itemCurrencyId,
-                    CounterExchangeRate: item.miktarKuru ?? 1,
-                    BaseCurrencyAmount: (item.equivalentTotal ?? item.total) * (item.hesapKuru ?? 1),
-                    CostAmount: 0,
-                    ProfitAmount: 0,
-                    CounterTransactionId: null,
-                    Quantity: 0,
-                    MillRate: 0,
-                    LaborCost: null,
-                    LaborUnit: null,
-                    LaborQuantity: null,
-                    IsLaborIncluded: null,
-                    IsReconciled: false,
-                    NetProductValue: 0,
-                    TotalLaborCost: 0
+                    TotalLaborCost: 0,
+                    CounterTransactionId: null
                 });
             }
             else if (item.itemClass === 'iskonto') {
@@ -5998,7 +5981,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     BaseCurrencyAmount: (item.details?.bilancoDegeri ?? (item.total * (item.miktarKuru ?? 1))),
                     CostAmount: 0,
                     ProfitAmount: 0,
-                    CounterTransactionId: null,
                     Quantity: 0,
                     MillRate: 0,
                     LaborCost: null,
@@ -6007,39 +5989,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     IsLaborIncluded: false,
                     IsReconciled: false,
                     NetProductValue: 0,
-                    TotalLaborCost: 0
-                });
-
-                pushDTO({
-                    MovementId: item.counterMovementId || 0,
-                    IsDeleted: !!item.isDeleted,
-                    TransactionTypeId: iskontoType,
-                    AccountId: parseInt(item.details.accountId, 10),
-                    StockId: null,
-                    Description: `Karşı Hesap: ${selectedCustomerId} - ${item.description || ''}`,
-                    ForeignCurrencyAmount: item.details?.bilancoDegeri ?? 0,
-                    ForeignCurrencyId: bilancoCurrencyId,
-                    ForeignExchangeRate: item.details?.bilancoKuru ?? 1,
-                    CounterCurrencyAmount: item.total,
-                    CounterCurrencyId: itemCurrencyId,
-                    CounterExchangeRate: item.miktarKuru ?? 1,
-                    BaseCurrencyAmount: (item.details?.bilancoDegeri ?? 0),
-                    CostAmount: 0,
-                    ProfitAmount: 0,
-                    CounterTransactionId: null,
-                    Quantity: 0,
-                    MillRate: 0,
-                    LaborCost: null,
-                    LaborUnit: null,
-                    LaborQuantity: null,
-                    IsLaborIncluded: false,
-                    IsReconciled: false,
-                    NetProductValue: 0,
-                    TotalLaborCost: 0
+                    TotalLaborCost: 0,
+                    CounterTransactionId: null
                 });
             }
             else if (item.itemClass === 'virman') {
-                // Virman: iki hareket (müşteri ve karşı hesap) — aynı birimlerde genelde
                 const itemCurrency = allCurrencies.find(c => c.dovizKodu === item.currency);
                 const itemCurrencyId = itemCurrency ? parseInt(itemCurrency.id, 10) : (nationalCurrencyId || null);
 
@@ -6075,39 +6029,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     IsLaborIncluded: false,
                     IsReconciled: false,
                     NetProductValue: 0,
-                    TotalLaborCost: 0
-                });
-
-                pushDTO({
-                    MovementId: item.counterMovementId || 0,
-                    IsDeleted: !!item.isDeleted,
-                    TransactionTypeId: karsiType,
-                    AccountId: parseInt(item.details.karsiHesapId, 10),
-                    StockId: null,
-                    Description: `Virman - Karşı Hesap: ${selectedCustomerId} - ${item.description || ''}`,
-                    ForeignCurrencyAmount: item.details?.karsilikDegeri ?? item.equivalentTotal ?? item.total,
-                    ForeignCurrencyId: karsilikCurrencyId,
-                    ForeignExchangeRate: item.details?.karsilikKuru ?? item.hesapKuru ?? 1,
-                    CounterCurrencyAmount: item.total,
-                    CounterCurrencyId: itemCurrencyId,
-                    CounterExchangeRate: item.miktarKuru ?? 1,
-                    BaseCurrencyAmount: (item.total * (item.miktarKuru ?? 1)),
-                    CostAmount: 0,
-                    ProfitAmount: 0,
-                    CounterTransactionId: null,
-                    Quantity: 0,
-                    MillRate: 0,
-                    LaborCost: null,
-                    LaborUnit: null,
-                    LaborQuantity: null,
-                    IsLaborIncluded: false,
-                    IsReconciled: false,
-                    NetProductValue: 0,
-                    TotalLaborCost: 0
+                    TotalLaborCost: 0,
+                    CounterTransactionId: null
                 });
             }
             else if (item.itemClass === 'product') {
-                // Ürün: müşteri + stok hesabı hareketi
                 const stok = item.details?.stok || {};
                 const stokId = item.details?.stokId || stok.stokID;
                 if (!stokId) {
@@ -6117,6 +6043,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 const musteriType = item.isIncome ? URUN_GIRIS_ID : URUN_CIKIS_ID;
                 const stokType = getOppositeHareketTipID(musteriType) || (item.isIncome ? URUN_CIKIS_ID : URUN_GIRIS_ID);
+
+                const stokHesaplari = allAccounts.filter(a => a.hesapTipiID === 17);
+                let dynamicStokHesapId = null;
+                if (stokHesaplari.length > 0) {
+                    const exactMatch = stokHesaplari.find(a => a.hesapAdi.includes((item.details?.stokGrupAdi || '').toUpperCase()));
+                    dynamicStokHesapId = exactMatch ? exactMatch.hesapID : stokHesaplari[0].hesapID;
+                } else {
+                    const ismindeStokGecen = allAccounts.find(a => a.hesapAdi.toUpperCase().includes('STOK'));
+                    if (ismindeStokGecen) dynamicStokHesapId = ismindeStokGecen.hesapID;
+                }
+
+                if (!dynamicStokHesapId) {
+                    showToast(`HATA: Stok hesabı bulunamadı (${item.details?.stokGrupAdi}). Kayıt iptal edildi.`, 'danger');
+                    return;
+                }
 
                 pushDTO({
                     MovementId: item.movementId || 0,
@@ -6134,7 +6075,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     BaseCurrencyAmount: item.details?.toplamHas ?? item.total ?? 0,
                     CostAmount: 0,
                     ProfitAmount: 0,
-                    CounterTransactionId: null,
                     Quantity: item.details?.miktar ?? 0,
                     MillRate: item.details?.milyem ?? 0,
                     LaborCost: item.details?.birimIscilik ?? 0,
@@ -6143,55 +6083,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     IsLaborIncluded: item.details?.iscilikDahil ?? false,
                     IsReconciled: false,
                     NetProductValue: item.details?.urunHasDegeri ?? 0,
-                    TotalLaborCost: item.details?.toplamIscilik ?? 0
-                });
-
-                // stok hesabı tarafı (stok hesabı id dinamik bulunuyor; burada önceki mantık korunur)
-                const stokHesaplari = allAccounts.filter(a => a.hesapTipiID === 17);
-                let dynamicStokHesapId = null;
-                if (stokHesaplari.length > 0) {
-                    const exactMatch = stokHesaplari.find(a => a.hesapAdi.includes((item.details?.stokGrupAdi || '').toUpperCase()));
-                    dynamicStokHesapId = exactMatch ? exactMatch.hesapID : stokHesaplari[0].hesapID;
-                } else {
-                    const ismindeStokGecen = allAccounts.find(a => a.hesapAdi.toUpperCase().includes('STOK'));
-                    if (ismindeStokGecen) dynamicStokHesapId = ismindeStokGecen.hesapID;
-                }
-
-                if (!dynamicStokHesapId) {
-                    showToast(`HATA: Stok hesabı bulunamadı (${item.details?.stokGrupAdi}). Kayıt iptal edildi.`, 'danger');
-                    return;
-                }
-
-                pushDTO({
-                    MovementId: item.counterMovementId || 0,
-                    IsDeleted: !!item.isDeleted,
-                    TransactionTypeId: stokType,
-                    AccountId: parseInt(dynamicStokHesapId, 10),
-                    StockId: parseInt(stokId, 10),
-                    Description: `Cari: ${selectedCustomerId} - ${item.description || stok.stokAdi || ''}`,
-                    ForeignCurrencyAmount: 0,
-                    ForeignCurrencyId: hasCurrencyId,
-                    ForeignExchangeRate: 1,
-                    CounterCurrencyAmount: item.details?.toplamHas ?? item.total ?? 0,
-                    CounterCurrencyId: hasCurrencyId,
-                    CounterExchangeRate: 1,
-                    BaseCurrencyAmount: item.details?.toplamHas ?? item.total ?? 0,
-                    CostAmount: 0,
-                    ProfitAmount: 0,
-                    CounterTransactionId: null,
-                    Quantity: item.details?.miktar ?? 0,
-                    MillRate: item.details?.milyem ?? 0,
-                    LaborCost: item.details?.birimIscilik ?? 0,
-                    LaborUnit: item.details?.iscilikBirimi ?? 'HAS',
-                    LaborQuantity: item.details?.adet ?? 0,
-                    IsLaborIncluded: item.details?.iscilikDahil ?? false,
-                    IsReconciled: false,
-                    NetProductValue: item.details?.urunHasDegeri ?? 0,
-                    TotalLaborCost: item.details?.toplamIscilik ?? 0
+                    TotalLaborCost: item.details?.toplamIscilik ?? 0,
+                    CounterTransactionId: null
                 });
             }
             else if (item.itemClass === 'ceviri') {
-                // Çeviri: iki hareket (kaynak ve hedef)
                 const musteriType = item.isIncome ? CEVIRME_GIRIS_ID : CEVIRME_CIKIS_ID;
                 const karsiType = getOppositeHareketTipID(musteriType) || (item.isIncome ? CEVIRME_CIKIS_ID : CEVIRME_GIRIS_ID);
 
@@ -6220,38 +6116,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     IsLaborIncluded: false,
                     IsReconciled: false,
                     NetProductValue: 0,
-                    TotalLaborCost: 0
-                });
-
-                pushDTO({
-                    MovementId: item.counterMovementId || 0,
-                    IsDeleted: !!item.isDeleted,
-                    TransactionTypeId: karsiType,
-                    AccountId: parseInt(selectedCustomerId, 10), // karşı taraf genellikle yine cari içinde ters kayıt
-                    StockId: null,
-                    Description: item.description || '',
-                    ForeignCurrencyAmount: item.equivalentTotal,
-                    ForeignCurrencyId: allCurrencies.find(c => c.dovizKodu === item.equivalentCurrency)?.id ?? null,
-                    ForeignExchangeRate: item.hesapKuru ?? 1,
-                    CounterCurrencyAmount: item.total,
-                    CounterCurrencyId: allCurrencies.find(c => c.dovizKodu === item.currency)?.id ?? null,
-                    CounterExchangeRate: item.miktarKuru ?? 1,
-                    BaseCurrencyAmount: (item.equivalentTotal ?? 0) * (item.hesapKuru ?? 1),
-                    CostAmount: 0,
-                    ProfitAmount: 0,
-                    CounterTransactionId: null,
-                    Quantity: 0,
-                    MillRate: 0,
-                    LaborCost: null,
-                    LaborUnit: null,
-                    LaborQuantity: null,
-                    IsLaborIncluded: false,
-                    IsReconciled: false,
-                    NetProductValue: 0,
-                    TotalLaborCost: 0
+                    TotalLaborCost: 0,
+                    CounterTransactionId: null
                 });
             }
         }
+
 
         console.log("SUNUCUYA GÖNDERİLEN REQUEST MODEL:", JSON.stringify(requestModel, null, 2));
 

@@ -1,4 +1,4 @@
-﻿@using KuyumHesapWeb.Core.Feature.AuthFeature.Commands.Login
+@using KuyumHesapWeb.Core.Feature.AuthFeature.Commands.Login
 @model LoginCommandRequest
 
 @{
@@ -235,5 +235,42 @@
     </div>
 
 </body>
-</html>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const companyCodeInput = document.getElementById("CompanyCode");
+            const branchCodeInput = document.getElementById("BranchCode");
+            const userNameInput = document.getElementById("UserName");
+            const passwordInput = document.getElementById("Password");
+            const rememberMeCheck = document.getElementById("remember-me");
+            const loginForm = document.querySelector("form");
 
+            // Load saved data
+            if (localStorage.getItem("rememberMe") === "true") {
+                rememberMeCheck.checked = true;
+                if (companyCodeInput) companyCodeInput.value = localStorage.getItem("CompanyCode") || "";
+                if (branchCodeInput) branchCodeInput.value = localStorage.getItem("BranchCode") || "";
+                if (userNameInput) userNameInput.value = localStorage.getItem("UserName") || "";
+                if (passwordInput) passwordInput.value = localStorage.getItem("Password") || "";
+            }
+
+            // On submit, save or remove data
+            if(loginForm) {
+                loginForm.addEventListener("submit", function () {
+                    if (rememberMeCheck.checked) {
+                        localStorage.setItem("rememberMe", "true");
+                        if (companyCodeInput) localStorage.setItem("CompanyCode", companyCodeInput.value);
+                        if (branchCodeInput) localStorage.setItem("BranchCode", branchCodeInput.value);
+                        if (userNameInput) localStorage.setItem("UserName", userNameInput.value);
+                        if (passwordInput) localStorage.setItem("Password", passwordInput.value);
+                    } else {
+                        localStorage.removeItem("rememberMe");
+                        localStorage.removeItem("CompanyCode");
+                        localStorage.removeItem("BranchCode");
+                        localStorage.removeItem("UserName");
+                        localStorage.removeItem("Password");
+                    }
+                });
+            }
+        });
+    </script>
+</html>

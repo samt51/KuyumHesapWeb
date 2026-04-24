@@ -16,7 +16,24 @@ document.addEventListener('DOMContentLoaded', async () => {
     window.kurlar = kurlar;
 
     // ─── JWT parse (şimdilik pasif) ───────────────────────────────────────────
-    let kullaniciAdi = 'Samet';
+    let kullaniciAdi = 'Kullanıcı';
+    const displayUsernameEl = document.getElementById('display-username');
+    if (displayUsernameEl && displayUsernameEl.innerText && displayUsernameEl.innerText.trim() !== 'Kullanıcı') {
+        kullaniciAdi = displayUsernameEl.innerText.trim();
+    } else {
+        try {
+            const token = window.khGetAuthToken ? window.khGetAuthToken() : localStorage.getItem('jwt_token');
+            if (token) {
+                const payloadStr = atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'));
+                const payload = JSON.parse(decodeURIComponent(escape(payloadStr)));
+                kullaniciAdi = payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name'] || 
+                       payload.userName || payload.username || 
+                       payload.unique_name || payload.name || payload.given_name || 'Kullanıcı';
+            }
+        } catch (e) {
+            console.warn('Token çözülemedi', e);
+        }
+    }
 
     // getAuthHeaders artık Authorization göndermiyor; sadece Content-Type
     const getAuthHeaders = () => window.khGetAuthHeaders

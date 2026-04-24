@@ -41,6 +41,16 @@ namespace KuyumHesapWeb.UI.Controllers
         }
 
         [HttpGet]
+        public IActionResult Index()
+        {
+            if (!string.IsNullOrEmpty(Request.Query["noLayout"]))
+            {
+                return RedirectToAction(nameof(General), new { noLayout = Request.Query["noLayout"].ToString() });
+            }
+            return RedirectToAction(nameof(General));
+        }
+
+        [HttpGet]
         public async Task<IActionResult> General(CancellationToken token)
         {
 

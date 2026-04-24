@@ -219,8 +219,21 @@ document.addEventListener('DOMContentLoaded', function () {
                 setInputValue('userName', getValue(user, 'userName', 'UserName'));
                 // Password should remain empty unless changing
                 setInputValue('password', '');
-                document.getElementById('roleID').value = roleIdOf(user);
-                document.getElementById('roleID').classList.add('has-value');
+                
+                let rId = String(roleIdOf(user) || '');
+                if (!rId) {
+                    const cachedUser = allUsers.find(u => String(getValue(u, 'id', 'Id')) === String(id));
+                    if (cachedUser) {
+                        rId = String(roleIdOf(cachedUser) || '');
+                    }
+                }
+                const roleSelectEl = document.getElementById('roleID');
+                roleSelectEl.value = rId;
+                if (rId) {
+                    roleSelectEl.classList.add('has-value');
+                } else {
+                    roleSelectEl.classList.remove('has-value');
+                }
                 setInputValue('phone', getValue(user, 'phone', 'Phone'));
                 setInputValue('companyCode', getValue(user, 'companyCode', 'CompanyCode'));
                 setInputValue('branchCode', getValue(user, 'branchCode', 'BranchCode'));
