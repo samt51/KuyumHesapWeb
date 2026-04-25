@@ -1,4 +1,5 @@
 @using KuyumHesapWeb.Core.Feature.DashboardFeature.Queries.GetAllDashboard
+@inject Microsoft.Extensions.Configuration.IConfiguration Configuration
 @model GetAllDashboardQueryResponse
 @{
     ViewData["Title"] = "Index";
@@ -8,63 +9,169 @@
 @section Styles {
     <link rel="stylesheet" href="~/css/home_dashboard.css" asp-append-version="true" />
 }
-<div class="p-6 flex-1 overflow-y-auto min-h-0 min-w-0">
-    <p id="welcome-text" class="text-base font-semibold text-gray-600"></p>
-
-    <div class="mt-6 flex flex-wrap gap-5">
-        <div id="kasalar-card"
-             class="bg-white rounded-xl shadow-md border-t-4 border-green-500 cursor-pointer hover:shadow-lg transition-shadow"
-             style="width: 320px;">
-            <div class="flex items-center justify-between px-5 pt-4 pb-2">
-                <div>
-                    <h2 class="text-sm font-bold text-gray-700 uppercase tracking-wide">Kasalar</h2>
-                    <p class="text-xs text-gray-400 mt-0.5">Nakit Toplam (HAS)</p>
-                </div>
-                <i class="fas fa-wallet text-xl text-green-500"></i>
+<div class="p-6 flex-1 overflow-y-auto min-h-0 min-w-0 bg-gray-50/30">
+    <!-- 1. Hoş Geldin Alanı -->
+    <div class="mb-8">
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 relative overflow-hidden">
+            <!-- Arka plan motifi -->
+            <div class="absolute right-0 top-0 opacity-5 pointer-events-none transform translate-x-1/3 -translate-y-1/4">
+                <i class="fas fa-chart-line" style="font-size: 15rem;"></i>
             </div>
-            <div class="px-5 pb-4">
-                <div id="kasalar-ozet" class="flex items-end gap-2 mt-1">
-                    <i class="fas fa-spinner fa-spin text-gray-300 text-xl"></i>
-                </div>
-                <p class="text-xs text-gray-400 mt-3">Detaylar için tıklayın →</p>
+            
+            <div class="relative z-10">
+                <div id="welcome-text" class="text-xl md:text-2xl font-bold text-gray-800"></div>
+                <p class="text-gray-500 mt-1 text-sm">İşletmenizin güncel finansal ve stok durumuna buradan hızlıca göz atabilirsiniz.</p>
             </div>
-        </div>
-        <div id="bankalar-card"
-             class="bg-white rounded-xl shadow-md border-t-4 border-green-500 cursor-pointer hover:shadow-lg transition-shadow"
-             style="width: 320px;">
-            <div class="flex items-center justify-between px-5 pt-4 pb-2">
-                <div>
-                    <h2 class="text-sm font-bold text-gray-700 uppercase tracking-wide">Bankalar</h2>
-                    <p class="text-xs text-gray-400 mt-0.5">Nakit Toplam (HAS)</p>
+            
+            <div class="relative z-10 hidden md:flex items-center gap-3">
+                <div class="text-right">
+                    <p class="text-xs font-semibold text-gray-400 uppercase">Tarih</p>
+                    <p class="text-sm font-bold text-gray-700">@DateTime.Now.ToString("dd MMMM yyyy")</p>
                 </div>
-                <i class="fas fa-wallet text-xl text-green-500"></i>
-            </div>
-            <div class="px-5 pb-4">
-                <div id="bankalar-ozet" class="flex items-end gap-2 mt-1">
-                    <i class="fas fa-spinner fa-spin text-gray-300 text-xl"></i>
+                <div class="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-500">
+                    <i class="far fa-calendar-alt"></i>
                 </div>
-                <p class="text-xs text-gray-400 mt-3">Detaylar için tıklayın →</p>
-            </div>
-        </div>
-        <div id="poslar-card"
-             class="bg-white rounded-xl shadow-md border-t-4 border-green-500 cursor-pointer hover:shadow-lg transition-shadow"
-             style="width: 320px;">
-            <div class="flex items-center justify-between px-5 pt-4 pb-2">
-                <div>
-                    <h2 class="text-sm font-bold text-gray-700 uppercase tracking-wide">Poslar</h2>
-                    <p class="text-xs text-gray-400 mt-0.5">Nakit Toplam (HAS)</p>
-                </div>
-                <i class="fas fa-wallet text-xl text-green-500"></i>
-            </div>
-            <div class="px-5 pb-4">
-                <div id="poslar-ozet" class="flex items-end gap-2 mt-1">
-                    <i class="fas fa-spinner fa-spin text-gray-300 text-xl"></i>
-                </div>
-                <p class="text-xs text-gray-400 mt-3">Detaylar için tıklayın →</p>
             </div>
         </div>
     </div>
-    
+
+    <!-- 2. Finansal Özet -->
+    <div class="mb-8">
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-lg font-bold text-gray-800 flex items-center gap-2">
+                <i class="fas fa-coins text-yellow-500"></i> Finansal Özet
+            </h2>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+            <div id="kasalar-card" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden cursor-pointer hover:shadow-md transition-all group relative">
+                <div class="absolute top-0 left-0 w-full h-1 bg-green-500"></div>
+                <div class="flex items-center justify-between px-5 pt-5 pb-2">
+                    <div>
+                        <h2 class="text-sm font-bold text-gray-700 uppercase tracking-wide">Kasalar</h2>
+                        <p class="text-xs text-gray-400 mt-0.5">Nakit Toplam (HAS)</p>
+                    </div>
+                    <div class="w-10 h-10 rounded-full bg-green-50 flex items-center justify-center text-green-500 group-hover:scale-110 transition-transform">
+                        <i class="fas fa-wallet text-lg"></i>
+                    </div>
+                </div>
+                <div class="px-5 pb-5">
+                    <div id="kasalar-ozet" class="flex items-end gap-2 mt-1">
+                        <i class="fas fa-spinner fa-spin text-gray-300 text-xl"></i>
+                    </div>
+                    <p class="text-xs text-gray-400 mt-4 group-hover:text-green-600 transition-colors">Detaylar için tıklayın <i class="fas fa-arrow-right ml-1"></i></p>
+                </div>
+            </div>
+
+            <div id="bankalar-card" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden cursor-pointer hover:shadow-md transition-all group relative">
+                <div class="absolute top-0 left-0 w-full h-1 bg-blue-500"></div>
+                <div class="flex items-center justify-between px-5 pt-5 pb-2">
+                    <div>
+                        <h2 class="text-sm font-bold text-gray-700 uppercase tracking-wide">Bankalar</h2>
+                        <p class="text-xs text-gray-400 mt-0.5">Nakit Toplam (HAS)</p>
+                    </div>
+                    <div class="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-500 group-hover:scale-110 transition-transform">
+                        <i class="fas fa-university text-lg"></i>
+                    </div>
+                </div>
+                <div class="px-5 pb-5">
+                    <div id="bankalar-ozet" class="flex items-end gap-2 mt-1">
+                        <i class="fas fa-spinner fa-spin text-gray-300 text-xl"></i>
+                    </div>
+                    <p class="text-xs text-gray-400 mt-4 group-hover:text-blue-600 transition-colors">Detaylar için tıklayın <i class="fas fa-arrow-right ml-1"></i></p>
+                </div>
+            </div>
+
+            <div id="poslar-card" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden cursor-pointer hover:shadow-md transition-all group relative">
+                <div class="absolute top-0 left-0 w-full h-1 bg-purple-500"></div>
+                <div class="flex items-center justify-between px-5 pt-5 pb-2">
+                    <div>
+                        <h2 class="text-sm font-bold text-gray-700 uppercase tracking-wide">Poslar</h2>
+                        <p class="text-xs text-gray-400 mt-0.5">Nakit Toplam (HAS)</p>
+                    </div>
+                    <div class="w-10 h-10 rounded-full bg-purple-50 flex items-center justify-center text-purple-500 group-hover:scale-110 transition-transform">
+                        <i class="fas fa-credit-card text-lg"></i>
+                    </div>
+                </div>
+                <div class="px-5 pb-5">
+                    <div id="poslar-ozet" class="flex items-end gap-2 mt-1">
+                        <i class="fas fa-spinner fa-spin text-gray-300 text-xl"></i>
+                    </div>
+                    <p class="text-xs text-gray-400 mt-4 group-hover:text-purple-600 transition-colors">Detaylar için tıklayın <i class="fas fa-arrow-right ml-1"></i></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. Stok Grup Özeti -->
+    <div class="mb-6">
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-lg font-bold text-gray-800 flex items-center gap-2">
+                <i class="fas fa-boxes text-indigo-500"></i> Stok Grup Özeti
+            </h2>
+        </div>
+        
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+            <!-- Mamul Grubu -->
+            <div id="mamul-card" class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 hover:shadow-md transition-shadow relative overflow-hidden cursor-pointer group">
+                <div class="absolute -right-4 -bottom-4 opacity-5 text-indigo-500 group-hover:scale-110 transition-transform">
+                    <i class="fas fa-ring text-5xl"></i>
+                </div>
+                <div class="flex items-center justify-between mb-3 relative z-10">
+                    <h3 class="text-sm font-bold text-gray-700">Mamul</h3>
+                    <div class="w-8 h-8 rounded-md bg-indigo-50 flex items-center justify-center text-indigo-500">
+                        <i class="fas fa-ring text-sm"></i>
+                    </div>
+                </div>
+                <div class="space-y-1 relative z-10">
+                    <div id="mamul-ozet" class="text-xl font-bold text-gray-800">
+                        <i class="fas fa-spinner fa-spin text-gray-300"></i>
+                        <div class="text-xs text-gray-400 italic group-hover:text-indigo-600 transition-colors mt-1">Detaylar için tıklayın <i class="fas fa-arrow-right ml-1"></i></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Maden Grubu -->
+            <div id="maden-card" class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 hover:shadow-md transition-shadow relative overflow-hidden cursor-pointer group">
+                <div class="absolute -right-4 -bottom-4 opacity-5 text-yellow-600 group-hover:scale-110 transition-transform">
+                    <i class="fas fa-cubes text-5xl"></i>
+                </div>
+                <div class="flex items-center justify-between mb-3 relative z-10">
+                    <h3 class="text-sm font-bold text-gray-700">Maden</h3>
+                    <div class="w-8 h-8 rounded-md bg-yellow-50 flex items-center justify-center text-yellow-600">
+                        <i class="fas fa-cubes text-sm"></i>
+                    </div>
+                </div>
+                <div class="space-y-1 relative z-10">
+                    <div id="maden-ozet" class="text-xl font-bold text-gray-800">
+                        <i class="fas fa-spinner fa-spin text-gray-300"></i>
+                        <div class="text-xs text-gray-400 italic group-hover:text-yellow-600 transition-colors mt-1">Detaylar için tıklayın <i class="fas fa-arrow-right ml-1"></i></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Hurda Grubu -->
+            <div id="hurda-card" class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 hover:shadow-md transition-shadow relative overflow-hidden cursor-pointer group">
+                <div class="absolute -right-4 -bottom-4 opacity-5 text-orange-500 group-hover:scale-110 transition-transform">
+                    <i class="fas fa-recycle text-5xl"></i>
+                </div>
+                <div class="flex items-center justify-between mb-3 relative z-10">
+                    <h3 class="text-sm font-bold text-gray-700">Hurda</h3>
+                    <div class="w-8 h-8 rounded-md bg-orange-50 flex items-center justify-center text-orange-500">
+                        <i class="fas fa-recycle text-sm"></i>
+                    </div>
+                </div>
+                <div class="space-y-1 relative z-10">
+                    <div id="hurda-ozet" class="text-xl font-bold text-gray-800">
+                        <i class="fas fa-spinner fa-spin text-gray-300"></i>
+                        <div class="text-xs text-gray-400 italic group-hover:text-orange-500 transition-colors mt-1">Detaylar için tıklayın <i class="fas fa-arrow-right ml-1"></i></div>
+                    </div>
+                </div>
+            </div>
+
+
+        </div>
+    </div>
 </div>
 
 <!-- Modal ve toastlar (aynı) -->
@@ -125,6 +232,63 @@
     </div>
 </div>
 
+<!-- Maden Modal -->
+<div id="maden-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center">
+    <div class="absolute inset-0 bg-black bg-opacity-50" id="maden-modal-bg"></div>
+    <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 z-10 overflow-hidden">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+            <div class="flex items-center gap-3">
+                <i class="fas fa-cubes text-yellow-600 text-xl"></i>
+                <h3 class="font-bold text-gray-800 text-lg">Maden Grubu Detayları</h3>
+            </div>
+            <button id="maden-modal-close" class="text-gray-400 hover:text-gray-700 text-2xl leading-none">&times;</button>
+        </div>
+        <div id="maden-modal-body" class="p-6 space-y-3 max-h-96 overflow-y-auto">
+            <div class="flex items-center justify-center py-8">
+                <i class="fas fa-spinner fa-spin text-gray-300 text-3xl"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Mamul Modal -->
+<div id="mamul-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center">
+    <div class="absolute inset-0 bg-black bg-opacity-50" id="mamul-modal-bg"></div>
+    <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 z-10 overflow-hidden">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+            <div class="flex items-center gap-3">
+                <i class="fas fa-ring text-indigo-600 text-xl"></i>
+                <h3 class="font-bold text-gray-800 text-lg">Mamul Grubu Detayları</h3>
+            </div>
+            <button id="mamul-modal-close" class="text-gray-400 hover:text-gray-700 text-2xl leading-none">&times;</button>
+        </div>
+        <div id="mamul-modal-body" class="p-6 space-y-3 max-h-96 overflow-y-auto">
+            <div class="flex items-center justify-center py-8">
+                <i class="fas fa-spinner fa-spin text-gray-300 text-3xl"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Hurda Modal -->
+<div id="hurda-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center">
+    <div class="absolute inset-0 bg-black bg-opacity-50" id="hurda-modal-bg"></div>
+    <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 z-10 overflow-hidden">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+            <div class="flex items-center gap-3">
+                <i class="fas fa-recycle text-orange-500 text-xl"></i>
+                <h3 class="font-bold text-gray-800 text-lg">Hurda Grubu Detayları</h3>
+            </div>
+            <button id="hurda-modal-close" class="text-gray-400 hover:text-gray-700 text-2xl leading-none">&times;</button>
+        </div>
+        <div id="hurda-modal-body" class="p-6 space-y-3 max-h-96 overflow-y-auto">
+            <div class="flex items-center justify-center py-8">
+                <i class="fas fa-spinner fa-spin text-gray-300 text-3xl"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div id="toast-container" class="fixed top-5 right-5 z-50 flex flex-col items-end gap-2"></div>
 
 <!-- removed left-0 and w-full; positioning handled by CSS var and JS -->
@@ -145,6 +309,11 @@
             cashReport: @Html.Raw(Model?.CashReport != null ? System.Text.Json.JsonSerializer.Serialize(Model.CashReport) : "null"),
             bankReport: @Html.Raw(Model?.BankReport != null ? System.Text.Json.JsonSerializer.Serialize(Model.BankReport) : "null"),
             posReport: @Html.Raw(Model?.PosReport != null ? System.Text.Json.JsonSerializer.Serialize(Model.PosReport) : "null")
+        };
+        window.StockGroupIds = {
+            MamulGrupId: @(Configuration["StockGroupIds:MamulGrupId"] ?? "39"),
+            MadenGrupId: @(Configuration["StockGroupIds:MadenGrupId"] ?? "37"),
+            HurdaGrupId: @(Configuration["StockGroupIds:HurdaGrupId"] ?? "34")
         };
     </script>
 

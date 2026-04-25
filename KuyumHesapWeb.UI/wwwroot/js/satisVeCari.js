@@ -751,13 +751,21 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         return false;
     }
-    const showToast = (message, type = 'warning') => {
+    const showToast = (message, type = 'warning', onCloseCallback = null) => {
         console.log(`${type.toUpperCase()}: ${message}`);
 
         const titleContainer = toastModal.querySelector('div');
         const titleEl = toastModal.querySelector('h3');
         const messageEl = toastModal.querySelector('p');
-        const okButton = toastModal.querySelector('button');
+        const btnContainer = toastModal.querySelector('.flex.justify-end');
+        
+        // Doğru 'Tamam' butonunu bul
+        let okButton = Array.from(btnContainer.querySelectorAll('button')).find(b => !b.classList.contains('toast-custom-btn'));
+        if (!okButton) okButton = btnContainer.querySelector('button');
+
+        // Varsa önceki özel butonları temizle
+        const oldBtns = btnContainer.querySelectorAll('.toast-custom-btn');
+        oldBtns.forEach(b => b.remove());
 
         messageEl.textContent = message;
         titleEl.className = 'text-lg font-bold mb-4';
@@ -782,6 +790,32 @@ document.addEventListener('DOMContentLoaded', () => {
                 break;
         }
 
+        // Eğer başarıyla kaydedildi/güncellendi ise Yazdır ve Paylaş butonlarını modalın içine ekle:
+        if (message.includes('başarıyla kaydedildi') || message.includes('başarıyla güncellendi')) {
+            const printBtn = document.createElement('button');
+            printBtn.className = 'toast-custom-btn flex-1 border border-gray-300 text-gray-700 hover:bg-gray-100 font-bold py-2 px-4 rounded-lg transition duration-150 mr-2 flex items-center justify-center gap-2';
+            printBtn.innerHTML = '<i class="fas fa-print"></i> Yazdır';
+            printBtn.onclick = () => {
+                const mainPrinter = document.getElementById('main-print-button');
+                if (mainPrinter) {
+                    mainPrinter.click();
+                } else {
+                    window.print();
+                }
+            };
+
+            const shareBtn = document.createElement('button');
+            shareBtn.className = 'toast-custom-btn flex-1 bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg focus:outline-none transition duration-150 mr-2 flex items-center justify-center gap-2';
+            shareBtn.innerHTML = '<i class="fab fa-whatsapp"></i> Paylaş';
+            shareBtn.onclick = () => {
+                const text = encodeURIComponent("KuyumHesap İşlem Dekontu Özeti\n\nBu işlem başarıyla gerçekleştirilmiştir.");
+                window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
+            };
+
+            btnContainer.insertBefore(printBtn, okButton);
+            btnContainer.insertBefore(shareBtn, okButton);
+        }
+
         toastModal.classList.remove('hidden');
         setTimeout(() => {
             titleContainer.classList.remove('scale-95', 'opacity-0');
@@ -793,11 +827,12 @@ document.addEventListener('DOMContentLoaded', () => {
             titleContainer.classList.remove('scale-100', 'opacity-100');
             setTimeout(() => {
                 toastModal.classList.add('hidden');
+                if (typeof onCloseCallback === 'function') onCloseCallback();
             }, 300);
         };
 
         const newOkButton = okButton.cloneNode(true);
-        okButton.parentNode.replaceChild(newOkButton, okButton);
+        btnContainer.replaceChild(newOkButton, okButton);
         newOkButton.addEventListener('click', closeToast);
     };
     const formatCurrency = (amount, digits = 2) => {
@@ -1043,6 +1078,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 const kalan = devir + giren - cikan;
 
+                if (Math.abs(devir) < 0.001 && Math.abs(giren) < 0.001 && Math.abs(cikan) < 0.001) {
+                    continue;
+                }
+
                 hasData = true;
                 const formatAndColor = (val) => {
                     const color = val < 0 ? 'text-red-600' : 'text-green-600';
@@ -1170,14 +1209,24 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
             } else if (item.itemClass === 'product') {
-                // Ürün kodu (Değişiklik yok)
-                const urunSafHasDegeri = (item.details?.toplamHas || 0) - (item.details?.toplamIscilik || 0);
-                const toplamBakiyeEtkisi = item.details?.toplamHas || 0;
-                let iscilikDiv = '';
-                if ((item.details?.toplamIscilik || 0) > 0) { iscilikDiv = `<div class="text-xs text-gray-500 mt-1">İşçilik: (${formatCurrency(item.details.birimIscilik, 3)}) <span class="font-semibold ml-1">${formatCurrency(item.details.toplamIscilik)} HAS</span></div>`; }
-                else if (item.details?.stok && item.details.stok.stokGrupAdi !== 'HURDA GRUBU') { iscilikDiv = `<div class="text-xs text-gray-500 mt-1">İşçiliksiz</div>`; }
-                const urunAdi = item.details?.stok ? item.details.stok.stokAdi : item.details?.stokAdi;
-                itemHTML = `<div class="font-mono"><div class="text-sm font-bold ${amountClass}">${urunAdi} ${formatCurrency(item.details?.miktar)} ${item.details?.birim} (${formatCurrency(item.details?.milyem, 3)}) <span class="ml-2 font-semibold text-gray-700">${formatCurrency(urunSafHasDegeri)} HAS</span><span class="float-right">${formatCurrency(toplamBakiyeEtkisi)} HAS</span></div>${iscilikDiv}</div>`;
+                // Ürün kodu
+                const isDiger = item.details?.type === 'diger';
+                const urunAdi = item.details?.stok ? item.details.stok.stokAdi : (item.details?.stokAdi || '');
+                const miktarBirimHTML = `${formatCurrency(item.details?.miktar)} ${item.details?.birim}`;
+                
+                if (isDiger) {
+                    const tutar = item.details?.toplamTutar || item.total || 0;
+                    const doviz = item.currency || item.details?.currency || 'USD';
+                    itemHTML = `<div class="font-mono"><div class="text-sm font-bold ${amountClass}">${urunAdi} ${miktarBirimHTML} <span class="ml-2 font-semibold text-gray-700">${formatCurrency(tutar)} ${doviz}</span><span class="float-right">${formatCurrency(tutar)} ${doviz}</span></div></div>`;
+                } else {
+                    const urunSafHasDegeri = (item.details?.toplamHas || 0) - (item.details?.toplamIscilik || 0);
+                    const toplamBakiyeEtkisi = item.details?.toplamHas || 0;
+                    let iscilikDiv = '';
+                    if ((item.details?.toplamIscilik || 0) > 0) { iscilikDiv = `<div class="text-xs text-gray-500 mt-1">İşçilik: (${formatCurrency(item.details.birimIscilik, 3)}) <span class="font-semibold ml-1">${formatCurrency(item.details.toplamIscilik)} HAS</span></div>`; }
+                    else if (item.details?.stok && item.details.stok.stokGrupAdi !== 'HURDA GRUBU') { iscilikDiv = `<div class="text-xs text-gray-500 mt-1">İşçiliksiz</div>`; }
+                    const milyemHTML = item.details?.milyem ? `(${formatCurrency(item.details?.milyem, 3)}) ` : '';
+                    itemHTML = `<div class="font-mono"><div class="text-sm font-bold ${amountClass}">${urunAdi} ${miktarBirimHTML} ${milyemHTML}<span class="ml-2 font-semibold text-gray-700">${formatCurrency(urunSafHasDegeri)} HAS</span><span class="float-right">${formatCurrency(toplamBakiyeEtkisi)} HAS</span></div>${iscilikDiv}</div>`;
+                }
             }
 
             return `<div class="receipt-item text-xs p-2 rounded-md transition-colors cursor-pointer hover:bg-gray-50 ${selectedClass}" data-index="${originalIndex}">${itemHTML}</div>`;
@@ -3296,7 +3345,7 @@ document.addEventListener('DOMContentLoaded', () => {
         hurdaMilyemInput.addEventListener('blur', (event) => { const input = event.target; let value = input.value; if (!value) return; if (!value.includes(',') && !value.includes('.')) { let number = parseInt(value, 10); if (!isNaN(number) && number > 0) input.value = formatCurrency(number / 1000.0, 3); } else { input.value = formatCurrency(parseFormattedNumber(value), 3); } calculateHurdaTotals(); });
         return {
             selectedStok: () => selectedStok,
-            getValues: () => { if (!selectedStok) return null; const visibleLayout = [defaultLayout, altinLayout, hurdaLayout].find(l => !l.classList.contains('hidden')); const descriptionInput = visibleLayout ? visibleLayout.querySelector('.product-description-input') : null; const description = descriptionInput ? descriptionInput.value.trim() : ''; if (selectedStok.stokGrupAdi === 'MADEN GRUBU' && (selectedStok.stokTipAdi === 'ALTIN' || selectedStok.stokTipAdi === 'SARRAFİYE')) { return { stok: selectedStok, miktar: parseFormattedNumber(altinMiktarInput.value), milyem: parseFormattedNumber(altinMilyemInput.value), birim: selectedStok.birim, toplamHas: parseFormattedNumber(altinToplamHasInput.value), currency: 'HAS', type: 'altin', birimIscilik: parseFormattedNumber(altinBirimIscilikInput.value), iscilikTipi: isAdetMode ? 'Adet' : 'Gram', toplamIscilik: parseFormattedNumber(altinIscilikTutariInput.value), iscilikBirimi: altinBirimInput.value, adet: isAdetMode ? (parseInt(altinAdetInput.value) || 0) : 0, iscilikDahil: iscilikDahilToggle.checked, description: description }; } else if (selectedStok.stokGrupAdi === 'HURDA GRUBU') { return { stok: selectedStok, miktar: parseFormattedNumber(hurdaMiktarInput.value), birim: 'GR', toplamHas: parseFormattedNumber(hurdaToplamHasInput.value), currency: 'HAS', type: 'hurda', milyem: parseFormattedNumber(hurdaMilyemInput.value), birimIscilik: 0, iscilikTipi: 'Gram', toplamIscilik: 0, iscilikBirimi: 'HAS', adet: null, iscilikDahil: false, description: description }; } else { return { stok: selectedStok, miktar: parseFormattedNumber(digerMiktarInput.value), birim: selectedStok.birim, toplamTutar: parseFormattedNumber(digerToplamTutarInput.value), currency: digerTutarBirimiInput.value, type: 'diger', description: description }; } },
+            getValues: () => { if (!selectedStok) return null; const visibleLayout = [defaultLayout, altinLayout, hurdaLayout].find(l => !l.classList.contains('hidden')); const descriptionInput = visibleLayout ? visibleLayout.querySelector('.product-description-input') : null; const description = descriptionInput ? descriptionInput.value.trim() : ''; if (selectedStok.stokGrupAdi === 'MADEN GRUBU' && (selectedStok.stokTipAdi === 'ALTIN' || selectedStok.stokTipAdi === 'SARRAFİYE')) { return { stok: selectedStok, miktar: parseFormattedNumber(altinMiktarInput.value), milyem: parseFormattedNumber(altinMilyemInput.value), birim: selectedStok.birim, toplamHas: parseFormattedNumber(altinToplamHasInput.value), currency: 'HAS', type: 'altin', birimIscilik: parseFormattedNumber(altinBirimIscilikInput.value), iscilikTipi: isAdetMode ? 'Adet' : 'Gram', toplamIscilik: parseFormattedNumber(altinIscilikTutariInput.value), iscilikBirimi: altinBirimInput.value, adet: isAdetMode ? (parseInt(altinAdetInput.value) || 0) : 0, iscilikDahil: iscilikDahilToggle.checked, description: description }; } else if (selectedStok.stokGrupAdi === 'HURDA GRUBU') { return { stok: selectedStok, miktar: parseFormattedNumber(hurdaMiktarInput.value), birim: 'GR', toplamHas: parseFormattedNumber(hurdaToplamHasInput.value), currency: 'HAS', type: 'hurda', milyem: parseFormattedNumber(hurdaMilyemInput.value), birimIscilik: 0, iscilikTipi: 'Gram', toplamIscilik: 0, iscilikBirimi: 'HAS', adet: null, iscilikDahil: false, description: description }; } else { return { stok: selectedStok, miktar: parseFormattedNumber(digerMiktarInput.value), birim: selectedStok.birim, birimFiyat: parseFormattedNumber(digerBirimFiyatInput.value), toplamTutar: parseFormattedNumber(digerToplamTutarInput.value), currency: digerTutarBirimiInput.value, type: 'diger', description: description }; } },
             setValues: (details) => { const resolvedStokId = details.stokId || (details.stok && details.stok.stokID); if (!details || !resolvedStokId) return; handleStokSelection(resolvedStokId); const visibleLayout = [defaultLayout, altinLayout, hurdaLayout].find(l => !l.classList.contains('hidden')); if (visibleLayout) { const descriptionInput = visibleLayout.querySelector('.product-description-input'); if (descriptionInput) descriptionInput.value = details.description || ''; } if (altinLayout.classList.contains('hidden') === false) { altinMiktarInput.value = formatCurrency(details.miktar); const isAdet = details.iscilikTipi === 'Adet'; if (isAdet) { altinAdetInput.value = details.adet || 1; } setIscilikMode(isAdet); altinBirimIscilikInput.value = formatCurrency(details.birimIscilik, isAdet ? 2 : 3); iscilikDahilToggle.checked = details.iscilikDahil; iscilikDahilToggle.dispatchEvent(new Event('change')); calculateAltinTotals(); } else if (hurdaLayout.classList.contains('hidden') === false) { hurdaMiktarInput.value = formatCurrency(details.miktar); hurdaMilyemInput.value = formatCurrency(details.milyem, 3); calculateHurdaTotals(); } else { digerMiktarInput.value = formatCurrency(details.miktar); digerBirimFiyatInput.value = formatCurrency(details.birimFiyat || (details.toplamTutar / details.miktar)); calculateDefaultTotals(); } },
             reset: resetProductForm
         };
@@ -3417,7 +3466,7 @@ document.addEventListener('DOMContentLoaded', () => {
         hurdaMilyemInput.addEventListener('blur', (event) => { const input = event.target; let value = input.value; if (!value) return; if (!value.includes(',') && !value.includes('.')) { let number = parseInt(value, 10); if (!isNaN(number) && number > 0) input.value = formatCurrency(number / 1000.0, 3); } else { input.value = formatCurrency(parseFormattedNumber(value), 3); } calculateHurdaTotals(); });
         return {
             selectedStok: () => selectedStok,
-            getValues: () => { if (!selectedStok) return null; const visibleLayout = [defaultLayout, altinLayout, hurdaLayout].find(l => !l.classList.contains('hidden')); const descriptionInput = visibleLayout ? visibleLayout.querySelector('.product-description-input') : null; const description = descriptionInput ? descriptionInput.value.trim() : ''; if (selectedStok.stokGrupAdi === 'MADEN GRUBU' && (selectedStok.stokTipAdi === 'ALTIN' || selectedStok.stokTipAdi === 'SARRAFİYE')) { return { stok: selectedStok, miktar: parseFormattedNumber(altinMiktarInput.value), milyem: parseFormattedNumber(altinMilyemInput.value), birim: selectedStok.birim, toplamHas: parseFormattedNumber(altinToplamHasInput.value), currency: 'HAS', type: 'altin', birimIscilik: parseFormattedNumber(altinBirimIscilikInput.value), iscilikTipi: isAdetMode ? 'Adet' : 'Gram', toplamIscilik: parseFormattedNumber(altinIscilikTutariInput.value), iscilikBirimi: altinBirimInput.value, adet: isAdetMode ? (parseInt(altinAdetInput.value) || 0) : 0, iscilikDahil: iscilikDahilToggle.checked, description: description }; } else if (selectedStok.stokGrupAdi === 'HURDA GRUBU') { return { stok: selectedStok, miktar: parseFormattedNumber(hurdaMiktarInput.value), birim: 'GR', toplamHas: parseFormattedNumber(hurdaToplamHasInput.value), currency: 'HAS', type: 'hurda', milyem: parseFormattedNumber(hurdaMilyemInput.value), birimIscilik: 0, iscilikTipi: 'Gram', toplamIscilik: 0, iscilikBirimi: 'HAS', adet: null, iscilikDahil: false, description: description }; } else { return { stok: selectedStok, miktar: parseFormattedNumber(digerMiktarInput.value), birim: selectedStok.birim, toplamTutar: parseFormattedNumber(digerToplamTutarInput.value), currency: digerTutarBirimiInput.value, type: 'diger', description: description }; } },
+            getValues: () => { if (!selectedStok) return null; const visibleLayout = [defaultLayout, altinLayout, hurdaLayout].find(l => !l.classList.contains('hidden')); const descriptionInput = visibleLayout ? visibleLayout.querySelector('.product-description-input') : null; const description = descriptionInput ? descriptionInput.value.trim() : ''; if (selectedStok.stokGrupAdi === 'MADEN GRUBU' && (selectedStok.stokTipAdi === 'ALTIN' || selectedStok.stokTipAdi === 'SARRAFİYE')) { return { stok: selectedStok, miktar: parseFormattedNumber(altinMiktarInput.value), milyem: parseFormattedNumber(altinMilyemInput.value), birim: selectedStok.birim, toplamHas: parseFormattedNumber(altinToplamHasInput.value), currency: 'HAS', type: 'altin', birimIscilik: parseFormattedNumber(altinBirimIscilikInput.value), iscilikTipi: isAdetMode ? 'Adet' : 'Gram', toplamIscilik: parseFormattedNumber(altinIscilikTutariInput.value), iscilikBirimi: altinBirimInput.value, adet: isAdetMode ? (parseInt(altinAdetInput.value) || 0) : 0, iscilikDahil: iscilikDahilToggle.checked, description: description }; } else if (selectedStok.stokGrupAdi === 'HURDA GRUBU') { return { stok: selectedStok, miktar: parseFormattedNumber(hurdaMiktarInput.value), birim: 'GR', toplamHas: parseFormattedNumber(hurdaToplamHasInput.value), currency: 'HAS', type: 'hurda', milyem: parseFormattedNumber(hurdaMilyemInput.value), birimIscilik: 0, iscilikTipi: 'Gram', toplamIscilik: 0, iscilikBirimi: 'HAS', adet: null, iscilikDahil: false, description: description }; } else { return { stok: selectedStok, miktar: parseFormattedNumber(digerMiktarInput.value), birim: selectedStok.birim, birimFiyat: parseFormattedNumber(digerBirimFiyatInput.value), toplamTutar: parseFormattedNumber(digerToplamTutarInput.value), currency: digerTutarBirimiInput.value, type: 'diger', description: description }; } },
             setValues: (details) => { const resolvedStokId = details.stokId || (details.stok && details.stok.stokID); if (!details || !resolvedStokId) return; handleStokSelection(resolvedStokId); const visibleLayout = [defaultLayout, altinLayout, hurdaLayout].find(l => !l.classList.contains('hidden')); if (visibleLayout) { const descriptionInput = visibleLayout.querySelector('.product-description-input'); if (descriptionInput) descriptionInput.value = details.description || ''; } if (altinLayout.classList.contains('hidden') === false) { altinMiktarInput.value = formatCurrency(details.miktar); const isAdet = details.iscilikTipi === 'Adet'; if (isAdet) { altinAdetInput.value = details.adet || 1; } setIscilikMode(isAdet); altinBirimIscilikInput.value = formatCurrency(details.birimIscilik, isAdet ? 2 : 3); iscilikDahilToggle.checked = details.iscilikDahil; iscilikDahilToggle.dispatchEvent(new Event('change')); calculateAltinTotals(); } else if (hurdaLayout.classList.contains('hidden') === false) { hurdaMiktarInput.value = formatCurrency(details.miktar); hurdaMilyemInput.value = formatCurrency(details.milyem, 3); calculateHurdaTotals(); } else { digerMiktarInput.value = formatCurrency(details.miktar); digerBirimFiyatInput.value = formatCurrency(details.birimFiyat || (details.toplamTutar / details.miktar)); calculateDefaultTotals(); } },
             reset: resetProductForm
         };
@@ -4957,8 +5006,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const miktar = parseFloat(get(hareket, 'Quantity', 'quantity', 'miktar') ?? 0) || 0;
 
         // RAW birim alanları (response içinde Unit / CounterUnit isimli alanlar isteniyordu)
-        const rawUnit = get(hareket, 'StockUnit', 'stockUnit', 'Unit', 'unit', 'birim', 'birimKod') ?? get(hareket, 'CurrencyCode', 'currencyCode') ?? '';
-        const rawCounterUnit = get(hareket, 'CounterUnit', 'counterUnit', 'karsilikBirim') ?? '';
+        const rawUnit = get(hareket, 'Unit', 'unit') || get(hareket, 'StockUnit', 'stockUnit') || get(hareket, 'CurrencyCode', 'currencyCode') || get(hareket, 'birim', 'birimKod') || '';
+        const rawCounterUnit = get(hareket, 'CounterUnit', 'counterUnit') || get(hareket, 'CounterCurrencyCode', 'counterCurrencyCode') || get(hareket, 'karsilikBirim') || '';
 
         // Eğer API numeric id dönerse allCurrencies üzerinden döviz kodunu almaya çalış
         const mapUnit = (raw) => {
@@ -5012,9 +5061,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const iscilikBirimiStr = parseFloat(get(hareket, 'LaborCost', 'laborCost', 'iscilik', 'birimIscilik') ?? 0) || 0;
             const iscilikToplamStr = parseFloat(get(hareket, 'TotalLaborCost', 'totalLaborCost', 'toplamIscilik') ?? 0) || 0;
             const toplamHas = parseFloat(get(hareket, 'BalanceEffectAmount', 'balanceEffectAmount', 'Tutar_BPBR', 'baseAmount') ?? 0) || 0;
-            
             const nPV = get(hareket, 'NetProductValue', 'netProductValue', 'urunHasDegeri');
             const urunHasDegeri = (nPV !== undefined && nPV !== null) ? parseFloat(nPV) : (toplamHas - iscilikToplamStr);
+            const karsilikGosterimBirim = karsilikBirimi || 'HAS';
+            const iscilikHtml = iscilikToplamStr > 0 
+                ? `İşçilik: (${formatCurrency(iscilikBirimiStr, 3)}) ${get(hareket, 'LaborUnit', 'laborUnit', 'iscilikBirim', 'iscilikBirimi', 'laborCostCurrency') || 'HAS'} ${formatCurrency(iscilikToplamStr, 2)} HAS`
+                : `İşçiliksiz`;
 
             detayHTML = `
             <div class="ekstre-v3-sol">
@@ -5024,13 +5076,13 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="ekstre-v3-orta">
                 <div class="ekstre-v3-detay-grup flex-grow">
                     <span class="font-semibold text-xs leading-none">${stokAdi} ${formatCurrency(miktar, 2)} ${birim} (${formatCurrency(milyem, 3)})</span>
-                    <span class="text-[10px] text-gray-500 leading-tight">İşçilik: (${formatCurrency(iscilikBirimiStr, 3)}) ${get(hareket, 'LaborUnit', 'laborUnit', 'iscilikBirim', 'iscilikBirimi', 'laborCostCurrency') || 'HAS'} ${formatCurrency(iscilikToplamStr, 2)} HAS</span>
+                    <span class="text-[10px] text-gray-500 leading-tight">${iscilikHtml}</span>
                 </div>
                 <div class="ekstre-v3-detay-grup text-right min-w-[70px]">
-                    <span class="text-xs font-semibold text-gray-600">${formatCurrency(urunHasDegeri, 2)} HAS</span>
+                    <span class="text-xs font-semibold text-gray-600">${formatCurrency(urunHasDegeri, 2)} ${karsilikGosterimBirim}</span>
                 </div>
                 <div class="ekstre-v3-detay-grup text-right min-w-[80px]">
-                    <span class="font-bold text-sm ${colorClass}">${formatCurrency(toplamHas, 2)} HAS</span>
+                    <span class="font-bold text-sm ${colorClass}">${formatCurrency(toplamHas, 2)} ${karsilikGosterimBirim}</span>
                 </div>
             </div>`;
         } else {
@@ -5041,8 +5093,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const foreignAmountText = `${sign}${formatCurrency(miktar, 2)} ${birim || ''}`.trim();
             const baseAmountText = `${formatCurrency(baseAmount, 2)} ${karsilikBirimi || ''}`.trim();
 
-            const kurTextPrimary = (kur && kur > 0) ? `${birim || ''} Kuru: ${formatCurrency(kur, 4)}` : '';
-            const kurTextCounter = (karsilikKuru && karsilikKuru > 0) ? `${karsilikBirimi || ''} Kuru: ${formatCurrency(karsilikKuru, 4)}` : '';
+            const kurTextPrimary = (kur && kur > 0) ? `Kur: ${formatCurrency(kur, 4)}` : '';
+            const kurTextCounter = (karsilikKuru && karsilikKuru > 0) ? `Kur: ${formatCurrency(karsilikKuru, 4)}` : '';
 
             detayHTML = `
             <div class="ekstre-v3-sol">
@@ -5153,31 +5205,50 @@ document.addEventListener('DOMContentLoaded', () => {
                 const stok = allStoklar.find(s => s.stokID == musteriHareketi.stokID) || {};
 
                 const isIncome = musteriHareketi.girisMi;
-                const miktar = musteriHareketi.urunMiktari || musteriHareketi.miktar || 0;
                 const milyem = musteriHareketi.milyem || 0;
                 const birimIscilik = musteriHareketi.iscilik || 0;
                 const iscilikBirimi = musteriHareketi.iscBrm || 'HAS';
                 const iscilikTipi = (musteriHareketi.iscAdet && musteriHareketi.iscAdet > 0) ? 'Adet' : 'Gram';
                 const adet = musteriHareketi.iscAdet || 0;
                 const iscilikDahil = musteriHareketi.iscDahil || false;
-                const urunHasDegeri = miktar * milyem;
+
+                const isPirlantaEkstre = ((stok.stokTipAdi || '') + ' ' + (stok.stokGrupAdi || '') + ' ' + (stok.stokAdi || '')).toUpperCase().includes('PIRLANTA');
+                const isHurda = stok.stokGrupAdi === 'HURDA GRUBU';
+                const isAltin = (stok.stokTipAdi === 'ALTIN' || stok.stokTipAdi === 'SARRAFİYE');
+                const typeName = isHurda ? 'hurda' : (isAltin ? 'altin' : 'diger');
+
+                const gercekUrunMiktari = musteriHareketi.urunMiktari || 0; // Quantity goes here
+                const urunHasDegeri = gercekUrunMiktari * milyem;
                 let toplamIscilik = 0;
                 if (iscilikTipi === 'Adet') {
                     toplamIscilik = adet * birimIscilik;
                 } else {
-                    toplamIscilik = miktar * birimIscilik;
+                    toplamIscilik = gercekUrunMiktari * birimIscilik;
                 }
-                const toplamHas = musteriHareketi.miktar || (urunHasDegeri + toplamIscilik);
+
+                let toplamHas = 0;
+                let currencyStr = 'HAS';
+                let birimFiyat = 0;
+                let toplamTutar = 0;
+
+                if (typeName === 'diger') {
+                    currencyStr = musteriHareketi.karsilikBirim || musteriHareketi.birim || 'USD';
+                    if (currencyStr === 'HAS' && isPirlantaEkstre) currencyStr = 'USD'; // safety fallback
+                    birimFiyat = musteriHareketi.miktar || 0; // ForeignCurrencyAmount
+                    toplamTutar = musteriHareketi.karsilikMiktar || 0; // CounterCurrencyAmount
+                } else {
+                    toplamHas = musteriHareketi.karsilikMiktar || (urunHasDegeri + toplamIscilik);
+                }
 
                 items.push({
                     itemClass: 'product',
                     type: isIncome ? 'urun-giris' : 'urun-cikis',
-                    total: toplamHas,
-                    equivalentTotal: toplamHas,
+                    total: typeName === 'diger' ? toplamTutar : toplamHas,
+                    equivalentTotal: typeName === 'diger' ? toplamTutar : toplamHas,
                     isIncome: isIncome,
                     description: musteriHareketi.aciklama || stok.stokAdi || 'Bilinmeyen Ürün',
-                    currency: 'HAS',
-                    equivalentCurrency: 'HAS',
+                    currency: currencyStr,
+                    equivalentCurrency: currencyStr,
                     movementId: musteriHareketi.movementId,
                     counterMovementId: karsiTaraf.movementId,
                     details: {
@@ -5186,18 +5257,19 @@ document.addEventListener('DOMContentLoaded', () => {
                         stokAdi: stok.stokAdi || 'Bilinmeyen',
                         stokTipAdi: stok.stokTipAdi || 'DİĞER',
                         stokGrupAdi: stok.stokGrupAdi || 'GENEL',
-                        miktar: miktar,
+                        miktar: gercekUrunMiktari,
                         milyem: milyem,
                         birim: stok.birim || 'GR',
-                        toplamHas: toplamHas,
-                        type: (stok.stokGrupAdi === 'HURDA GRUBU') ? 'hurda' :
-                            ((stok.stokTipAdi === 'ALTIN' || stok.stokTipAdi === 'SARRAFİYE') ? 'altin' : 'diger'),
+                        toplamHas: typeName === 'diger' ? 0 : toplamHas,
+                        type: typeName,
                         birimIscilik: birimIscilik,
                         iscilikTipi: iscilikTipi,
                         toplamIscilik: toplamIscilik,
                         iscilikBirimi: iscilikBirimi,
                         adet: adet,
-                        iscilikDahil: iscilikDahil
+                        iscilikDahil: iscilikDahil,
+                        birimFiyat: birimFiyat,
+                        toplamTutar: toplamTutar
                     }
                 });
 
@@ -5773,11 +5845,12 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             const result = await response.json().catch(() => null);
-            showToast(isUpdate ? 'Fiş başarıyla güncellendi!' : 'Fiş başarıyla kaydedildi!', 'success');
-            resetTransaction();
-            if (state.operationType === 'cari') {
-                await fetchAndRenderCariBakiye();
-            }
+            showToast(isUpdate ? 'Fiş başarıyla güncellendi!' : 'Fiş başarıyla kaydedildi!', 'success', async () => {
+                resetTransaction();
+                if (state.operationType === 'cari') {
+                    await fetchAndRenderCariBakiye();
+                }
+            });
             return result;
         } catch (error) {
             console.error('saveReceiptToServer hata detay:', error);
@@ -5804,11 +5877,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 const errorText = await response.text();
                 throw new Error(`Sunucu hatası: ${response.status} - ${errorText}`);
             }
-            showToast(`Fiş ID ${fisId} başarıyla güncellendi!`, 'success');
-            resetTransaction();
-            if (state.operationType === 'cari') {
-                await fetchAndRenderCariBakiye();
-            }
+            showToast(`Fiş ID ${fisId} başarıyla güncellendi!`, 'success', async () => {
+                resetTransaction();
+                if (state.operationType === 'cari') {
+                    await fetchAndRenderCariBakiye();
+                }
+            });
         } catch (error) {
             showToast(`Güncelleme sırasında bir hata oluştu: ${error.message}`, 'danger');
         } finally {
@@ -5932,7 +6006,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     MovementId: item.movementId || 0,
                     IsDeleted: !!item.isDeleted,
                     TransactionTypeId: customerTransactionType,
-                    AccountId: parseInt(selectedCustomerId, 10),
+                    AccountId: parseInt(item.details?.accountId || selectedCustomerId, 10),
                     StockId: null,
                     Description: item.description || (item.isIncome ? 'Nakit Giriş' : 'Nakit Çıkış'),
                     ForeignCurrencyAmount: item.total,
@@ -5969,7 +6043,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     MovementId: item.movementId || 0,
                     IsDeleted: !!item.isDeleted,
                     TransactionTypeId: musteriType,
-                    AccountId: parseInt(selectedCustomerId, 10),
+                    AccountId: parseInt(item.details?.accountId || selectedCustomerId, 10),
                     StockId: null,
                     Description: item.description || '',
                     ForeignCurrencyAmount: item.total,
@@ -6008,9 +6082,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     MovementId: item.movementId || 0,
                     IsDeleted: !!item.isDeleted,
                     TransactionTypeId: musteriType,
-                    AccountId: parseInt(selectedCustomerId, 10),
+                    AccountId: parseInt(item.details?.karsiHesapId || item.details?.accountId || selectedCustomerId, 10),
                     StockId: null,
-                    Description: `Virman - Karşı Hesap: ${item.details.karsiHesapAdi || ''} - ${item.description || ''}`,
+                    Description: `Virman - Karşı Hesap: ${item.details?.karsiHesapAdi || ''} - ${item.description || ''}`,
                     ForeignCurrencyAmount: item.total,
                     ForeignCurrencyId: itemCurrencyId,
                     ForeignExchangeRate: item.miktarKuru ?? 1,
@@ -6059,20 +6133,33 @@ document.addEventListener('DOMContentLoaded', () => {
                     return;
                 }
 
+                let resolvedCurrencyId = hasCurrencyId;
+                let resolvedAmount = item.details?.toplamHas ?? item.total ?? 0;
+                let foreignCurrencyAmount = 0;
+                if (item.details?.type === 'diger') {
+                    const c = allCurrencies.find(x => x.dovizKodu === item.currency);
+                    if (c) resolvedCurrencyId = parseInt(c.id, 10);
+                    resolvedAmount = item.details?.toplamTutar ?? item.total ?? 0;
+                    const pirlantaMi = ((item.details?.stok?.stokTipAdi || '') + ' ' + (item.details?.stok?.stokGrupAdi || '') + ' ' + (item.details?.stok?.stokAdi || '')).toUpperCase().includes('PIRLANTA');
+                    if (pirlantaMi) {
+                        foreignCurrencyAmount = item.details?.birimFiyat || 0;
+                    }
+                }
+
                 pushDTO({
                     MovementId: item.movementId || 0,
                     IsDeleted: !!item.isDeleted,
                     TransactionTypeId: musteriType,
-                    AccountId: parseInt(selectedCustomerId, 10),
+                    AccountId: parseInt(dynamicStokHesapId || selectedCustomerId, 10),
                     StockId: parseInt(stokId, 10),
                     Description: item.description || stok.stokAdi || '',
-                    ForeignCurrencyAmount: 0,
-                    ForeignCurrencyId: hasCurrencyId,
+                    ForeignCurrencyAmount: foreignCurrencyAmount,
+                    ForeignCurrencyId: resolvedCurrencyId,
                     ForeignExchangeRate: 1,
-                    CounterCurrencyAmount: item.details?.toplamHas ?? item.total ?? 0,
-                    CounterCurrencyId: hasCurrencyId,
+                    CounterCurrencyAmount: resolvedAmount,
+                    CounterCurrencyId: resolvedCurrencyId,
                     CounterExchangeRate: 1,
-                    BaseCurrencyAmount: item.details?.toplamHas ?? item.total ?? 0,
+                    BaseCurrencyAmount: resolvedAmount,
                     CostAmount: 0,
                     ProfitAmount: 0,
                     Quantity: item.details?.miktar ?? 0,
@@ -6095,7 +6182,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     MovementId: item.movementId || 0,
                     IsDeleted: !!item.isDeleted,
                     TransactionTypeId: musteriType,
-                    AccountId: parseInt(selectedCustomerId, 10),
+                    AccountId: parseInt(item.details?.accountId || selectedCustomerId, 10),
                     StockId: null,
                     Description: item.description || '',
                     ForeignCurrencyAmount: item.total,

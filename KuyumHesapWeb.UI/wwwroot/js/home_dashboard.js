@@ -71,7 +71,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             document.querySelectorAll('p,div,span').forEach(el => {
                 const txt = (el.textContent || '').trim();
                 if (txt.startsWith('Detaylar için tıklayın')) {
-                    const isMainCard = el.closest('#kasalar-card') || el.closest('#bankalar-card') || el.closest('#poslar-card');
+                    const isMainCard = el.closest('#kasalar-card') || el.closest('#bankalar-card') || el.closest('#poslar-card') || el.closest('#maden-card');
                     if (!isMainCard) {
                         el.style.display = 'none';
                     }
@@ -82,6 +82,20 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     };
     // --------------------------------------------------------------------------------
+
+    // --- HIZLI DÜZELTME: Derlenmemiş cshtml önbelleği sorununa karşı kullanılmayan kartları JS ile yok et ---
+    const removeUnusedGemsCards = () => {
+        document.querySelectorAll('h3.text-gray-700').forEach(h3 => {
+            const title = (h3.textContent || '').trim();
+            if (title === 'Pırlanta Taş' || title === 'Elmas Taş' || title === 'Renkli Taş') {
+                const card = h3.closest('.bg-white.rounded-xl.shadow-sm');
+                if (card) {
+                    card.style.display = 'none';
+                    card.innerHTML = '';
+                }
+            }
+        });
+    };
 
     // ─── Karşılama metni ─────────────────────────────────────────────────────
     const renderWelcome = async () => {
@@ -256,6 +270,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     let kasaDetaylar = [];
     let bankaDetaylar = [];
     let posDetaylar = [];
+    let madenDetaylar = [];
+    let mamulDetaylar = [];
+    let hurdaDetaylar = [];
 
     // ─── Kasalar - HAS Toplamı ───────────────────────────────────────────────
     const fetchKasalar = async (initialPayload = null) => {
@@ -389,6 +406,243 @@ document.addEventListener('DOMContentLoaded', async () => {
         } catch (e) { ozet.innerHTML = '<span class="text-xs text-red-400">Yüklenemedi</span>'; }
     };
 
+    // ─── Maden Grubu ────────────────────────────────────────────────────────
+    const fetchMaden = async () => {
+        const ozet = document.getElementById('maden-ozet');
+        if (!ozet) return;
+        try {
+            const stockId = window.StockGroupIds?.MadenGrupId || 37;
+            const url = `/Report/GetStockReport?stockGroupAccounId=${stockId}`;
+            const res = await fetch(url, { method: 'GET', headers: getAuthHeaders(), credentials: 'same-origin' });
+            if (!res.ok) { 
+                const fallbackHtml = `<span class="text-gray-800 font-bold text-xl">0</span> <span class="text-xs text-gray-400 font-normal">Adet</span><br/><span class="text-[11px] text-yellow-600 italic mt-1" style="display:inline-block; margin-top:2px;">Detaylar için tıklayın <i class="fas fa-arrow-right ml-1"></i></span>`;
+                ozet.innerHTML = fallbackHtml;
+                ozet.style.display = "block";
+                ozet.style.visibility = "visible";
+                if (ozet.closest('.space-y-1')) { ozet.closest('.space-y-1').style.display = "block"; }
+                return; 
+            }
+            const payload = await res.json();
+            
+            const dataObj = (payload && (payload.data !== undefined || payload.Data !== undefined)) ? (payload.data ?? payload.Data) : payload;
+            const accounts = (dataObj && Array.isArray(dataObj.items ?? dataObj.Items)) ? (dataObj.items ?? dataObj.Items) : [];
+            const overallTotalHas = Number(dataObj?.totalHas ?? dataObj?.TotalHas ?? payload?.totalHas ?? payload?.TotalHas ?? 0) || 0;
+            const overallTotalQty = Number(dataObj?.totalQuantity ?? dataObj?.TotalQuantity ?? payload?.totalQuantity ?? payload?.TotalQuantity ?? 0) || 0;
+            
+            madenDetaylar = [];
+            accounts.forEach(acc => {
+                const accountName = acc.accountName || acc.AccountName || acc.hesapAdi || acc.HesapAdi || 'Bilinmeyen Maden Grubu';
+                const accountTotalHas = Number(acc.totalHas ?? acc.TotalHas ?? acc.hasToplami ?? 0) || 0;
+                
+                const hareketler = acc.hareketler ?? acc.Hareketler;
+                const details = [];
+                let accountTotalQty = 0;
+                
+                if (Array.isArray(hareketler)) {
+                    hareketler.forEach(h => {
+                        const sName = h.stockName ?? h.StockName ?? 'Bilinmeyen Ürün';
+                        const qty = Number(h.quantity ?? h.Quantity ?? 0);
+                        const qtyUnit = h.stockUnit ?? h.StockUnit ?? 'Gr';
+                        const netHas = Number(h.netProductValue ?? h.NetProductValue ?? h.finalBalance ?? 0);
+                        details.push({ stockName: sName, quantity: qty, unit: qtyUnit, netValue: netHas });
+                        accountTotalQty += qty;
+                    });
+                }
+                
+                // If the account has an explicit TotalQuantity, use it; otherwise use the calculated sum, or fallback to overall if it's the only account.
+                const finalAccountQty = Number(acc.totalQuantity ?? acc.TotalQuantity) || accountTotalQty || overallTotalQty;
+                
+                madenDetaylar.push({ ad: accountName, detaylar: details, hasToplamı: accountTotalHas, totalQty: finalAccountQty });
+            });
+            
+            const fmt = (v) => {
+                if (v % 1 === 0) return v.toLocaleString('tr-TR');
+                return v.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            };
+            const renkQty = overallTotalQty >= 0 ? 'text-gray-800' : 'text-red-600';
+            
+            const finalHtml = `<span class="${renkQty} font-bold text-xl">${fmt(overallTotalQty)}</span> <span class="text-xs text-gray-400 font-normal">Adet</span>`;
+            
+            ozet.innerHTML = finalHtml;
+            ozet.style.display = "block";
+            ozet.style.visibility = "visible";
+            if (ozet.closest('.space-y-1')) {
+                ozet.closest('.space-y-1').style.display = "block";
+            }
+            
+            // Gizli kalan yedek Detaylar butonunu bulup gizleyelim (Html derlenmeme krizine karşı)
+            if (ozet.nextElementSibling && ozet.nextElementSibling.innerText.includes('Detaylar')) {
+                ozet.nextElementSibling.style.display = 'none';
+            }
+            
+            // Eğer eksik kalırsa kendimiz detaylar butonunu ekleyelim
+            const btnSpan = document.createElement('span');
+            btnSpan.className = 'text-xs text-yellow-600 italic block mt-1 cursor-pointer';
+            btnSpan.innerHTML = 'Detaylar için tıklayın <i class="fas fa-arrow-right ml-1"></i>';
+            ozet.parentNode.appendChild(btnSpan);
+
+        } catch (e) {
+            console.error(e);
+            const fallbackHtml = `<span class="text-gray-800 font-bold text-xl">0</span> <span class="text-xs text-gray-400 font-normal">Adet</span><br/><span class="text-[11px] text-yellow-600 italic mt-1" style="display:inline-block; margin-top:2px;">Detaylar için tıklayın <i class="fas fa-arrow-right ml-1"></i></span>`;
+            ozet.innerHTML = fallbackHtml;
+            ozet.style.display = "block";
+            ozet.style.visibility = "visible";
+            if (ozet.closest('.space-y-1')) { ozet.closest('.space-y-1').style.display = "block"; }
+        }
+    };
+
+    // ─── Mamul Grubu ────────────────────────────────────────────────────────
+    const fetchMamul = async () => {
+        const ozet = document.getElementById('mamul-ozet');
+        if (!ozet) {
+            alert("HATA: mamul-ozet HTML'de bulunamadı!");
+            return;
+        }
+        try {
+            const stockId = window.StockGroupIds?.MamulGrupId || 39;
+            const url = `/Report/GetStockReport?stockGroupAccounId=${stockId}`;
+            const res = await fetch(url, { method: 'GET', headers: getAuthHeaders(), credentials: 'same-origin' });
+            if (!res.ok) { 
+                const fallbackHtml = `<span class="text-gray-800 font-bold text-xl">0</span> <span class="text-xs text-gray-800 font-normal">Adet</span><br/><span class="text-[11px] text-indigo-600 italic mt-1" style="display:inline-block; margin-top:2px;">Detaylar için tıklayın <i class="fas fa-arrow-right ml-1"></i></span>`;
+                ozet.innerHTML = fallbackHtml;
+                ozet.style.display = "block";
+                ozet.style.visibility = "visible";
+                if (ozet.closest('.space-y-1')) { ozet.closest('.space-y-1').style.display = "block"; }
+                return; 
+            }
+            const payload = await res.json();
+            
+            const dataObj = (payload && (payload.data !== undefined || payload.Data !== undefined)) ? (payload.data ?? payload.Data) : payload;
+            const accounts = (dataObj && Array.isArray(dataObj.items ?? dataObj.Items)) ? (dataObj.items ?? dataObj.Items) : [];
+            const overallTotalHas = Number(dataObj?.totalHas ?? dataObj?.TotalHas ?? payload?.totalHas ?? payload?.TotalHas ?? 0) || 0;
+            const overallTotalQty = Number(dataObj?.totalQuantity ?? dataObj?.TotalQuantity ?? payload?.totalQuantity ?? payload?.TotalQuantity ?? 0) || 0;
+            
+            mamulDetaylar = [];
+            accounts.forEach(acc => {
+                const accountName = acc.accountName || acc.AccountName || acc.hesapAdi || acc.HesapAdi || 'Bilinmeyen Mamul Grubu';
+                const accountTotalHas = Number(acc.totalHas ?? acc.TotalHas ?? acc.hasToplami ?? 0) || 0;
+                
+                const hareketler = acc.hareketler ?? acc.Hareketler;
+                const details = [];
+                let accountTotalQty = 0;
+                
+                if (Array.isArray(hareketler)) {
+                    hareketler.forEach(h => {
+                        const sName = h.stockName ?? h.StockName ?? 'Bilinmeyen Ürün';
+                        const qty = Number(h.quantity ?? h.Quantity ?? 0);
+                        const qtyUnit = h.stockUnit ?? h.StockUnit ?? 'Adet';
+                        const netHas = Number(h.netProductValue ?? h.NetProductValue ?? h.finalBalance ?? 0);
+                        details.push({ stockName: sName, quantity: qty, unit: qtyUnit, netValue: netHas });
+                        accountTotalQty += qty;
+                    });
+                }
+                
+                const finalAccountQty = Number(acc.totalQuantity ?? acc.TotalQuantity) || accountTotalQty || overallTotalQty;
+                mamulDetaylar.push({ ad: accountName, detaylar: details, hasToplamı: accountTotalHas, totalQty: finalAccountQty });
+            });
+            
+            const fmt = (v) => {
+                if (v % 1 === 0) return v.toLocaleString('tr-TR');
+                return v.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            };
+            const renkQty = overallTotalQty >= 0 ? 'text-gray-800' : 'text-red-600';
+            
+            const finalHtml = `<span class="${renkQty} font-bold text-xl">${fmt(overallTotalQty)}</span> <span class="text-xs text-gray-800 font-normal">Adet</span><br/>
+                <span class="text-[11px] text-indigo-600 italic mt-1" style="display:inline-block; margin-top:2px;">Detaylar için tıklayın <i class="fas fa-arrow-right ml-1"></i></span>`;
+            
+            ozet.innerHTML = finalHtml;
+            ozet.style.display = "block";
+            ozet.style.visibility = "visible";
+            if (ozet.closest('.space-y-1')) {
+                ozet.closest('.space-y-1').style.display = "block";
+            }
+
+        } catch (e) {
+            console.error("fetchMamul Exception: ", e);
+            const fallbackHtml = `<span class="text-gray-800 font-bold text-xl">0</span> <span class="text-xs text-gray-800 font-normal">Adet</span><br/><span class="text-[11px] text-indigo-600 italic mt-1" style="display:inline-block; margin-top:2px;">Detaylar için tıklayın <i class="fas fa-arrow-right ml-1"></i></span>`;
+            ozet.innerHTML = fallbackHtml;
+            ozet.style.display = "block";
+            ozet.style.visibility = "visible";
+            if (ozet.closest('.space-y-1')) { ozet.closest('.space-y-1').style.display = "block"; }
+        }
+    };
+
+    // ─── Hurda Grubu ────────────────────────────────────────────────────────
+    const fetchHurda = async () => {
+        const ozet = document.getElementById('hurda-ozet');
+        if (!ozet) {
+            alert("HATA: hurda-ozet HTML'de bulunamadı!");
+            return;
+        }
+        try {
+            const stockId = window.StockGroupIds?.HurdaGrupId || 34;
+            const url = `/Report/GetStockReport?stockGroupAccounId=${stockId}`;
+            const res = await fetch(url, { method: 'GET', headers: getAuthHeaders(), credentials: 'same-origin' });
+            if (!res.ok) {
+                const fallbackHtml = `<span class="text-gray-800 font-bold text-xl">0,00</span> <span class="text-xs text-gray-800 font-normal">Gr</span><br/><span class="text-[11px] text-orange-600 italic mt-1" style="display:inline-block; margin-top:2px;">Detaylar için tıklayın <i class="fas fa-arrow-right ml-1"></i></span>`;
+                ozet.innerHTML = fallbackHtml;
+                ozet.style.display = "block";
+                ozet.style.visibility = "visible";
+                if (ozet.closest('.space-y-1')) { ozet.closest('.space-y-1').style.display = "block"; }
+                return;
+            }
+            const payload = await res.json();
+            
+            const dataObj = (payload && (payload.data !== undefined || payload.Data !== undefined)) ? (payload.data ?? payload.Data) : payload;
+            const accounts = (dataObj && Array.isArray(dataObj.items ?? dataObj.Items)) ? (dataObj.items ?? dataObj.Items) : [];
+            const overallTotalHas = Number(dataObj?.totalHas ?? dataObj?.TotalHas ?? payload?.totalHas ?? payload?.TotalHas ?? 0) || 0;
+            const overallTotalQty = Number(dataObj?.totalQuantity ?? dataObj?.TotalQuantity ?? payload?.totalQuantity ?? payload?.TotalQuantity ?? 0) || 0;
+            
+            hurdaDetaylar = [];
+            accounts.forEach(acc => {
+                const accountName = acc.accountName || acc.AccountName || acc.hesapAdi || acc.HesapAdi || 'Bilinmeyen Hurda Grubu';
+                const accountTotalHas = Number(acc.totalHas ?? acc.TotalHas ?? acc.hasToplami ?? 0) || 0;
+                
+                const hareketler = acc.hareketler ?? acc.Hareketler;
+                const details = [];
+                let accountTotalQty = 0;
+                
+                if (Array.isArray(hareketler)) {
+                    hareketler.forEach(h => {
+                        const sName = h.stockName ?? h.StockName ?? 'Bilinmeyen Ürün';
+                        const qty = Number(h.quantity ?? h.Quantity ?? 0);
+                        const qtyUnit = h.stockUnit ?? h.StockUnit ?? 'Gr';
+                        const netHas = Number(h.netProductValue ?? h.NetProductValue ?? h.finalBalance ?? 0);
+                        details.push({ stockName: sName, quantity: qty, unit: qtyUnit, netValue: netHas });
+                        accountTotalQty += qty;
+                    });
+                }
+                
+                const finalAccountQty = Number(acc.totalQuantity ?? acc.TotalQuantity) || accountTotalQty || overallTotalQty;
+                hurdaDetaylar.push({ ad: accountName, detaylar: details, hasToplamı: accountTotalHas, totalQty: finalAccountQty });
+            });
+            
+            const fmt = (v) => {
+                if (v % 1 === 0) return v.toLocaleString('tr-TR');
+                return v.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            };
+            const renkHas = overallTotalHas >= 0 ? 'text-gray-800' : 'text-red-600';
+            
+            const finalHtml = `<span class="${renkHas} font-bold text-xl">${fmt(overallTotalHas)}</span> <span class="text-xs text-gray-800 font-normal">Gr</span><br/>
+                <span class="text-[11px] text-orange-600 italic mt-1" style="display:inline-block; margin-top:2px;">Detaylar için tıklayın <i class="fas fa-arrow-right ml-1"></i></span>`;
+            
+            ozet.innerHTML = finalHtml;
+            ozet.style.display = "block";
+            ozet.style.visibility = "visible";
+            if (ozet.closest('.space-y-1')) {
+                ozet.closest('.space-y-1').style.display = "block";
+            }
+
+        } catch (e) {
+            console.error("fetchHurda Exception: ", e);
+            const fallbackHtml = `<span class="text-gray-800 font-bold text-xl">0,00</span> <span class="text-xs text-gray-800 font-normal">Gr</span><br/><span class="text-[11px] text-orange-600 italic mt-1" style="display:inline-block; margin-top:2px;">Detaylar için tıklayın <i class="fas fa-arrow-right ml-1"></i></span>`;
+            ozet.innerHTML = fallbackHtml;
+            ozet.style.display = "block";
+            ozet.style.visibility = "visible";
+            if (ozet.closest('.space-y-1')) { ozet.closest('.space-y-1').style.display = "block"; }
+        }
+    };
+
     // ─── Modals Logic ───────────────────────────────────────────────────────
     const setupModal = (cardId, modalId, detailsArray) => {
         const card = document.getElementById(cardId);
@@ -444,9 +698,70 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (bg) bg.addEventListener('click', closeModal);
     };
 
+    const setupStockModal = (cardId, modalId, detailsArray) => {
+        const card = document.getElementById(cardId);
+        const modal = document.getElementById(modalId);
+        const body = document.getElementById(`${modalId}-body`);
+        const close = document.getElementById(`${modalId}-close`);
+        const bg = document.getElementById(`${modalId}-bg`);
+
+        if (!card || !modal || !body) return;
+
+        const fmt = (v, d = 2) => v.toLocaleString('tr-TR', { minimumFractionDigits: d, maximumFractionDigits: d });
+
+        card.addEventListener('click', () => {
+            if (detailsArray.length === 0) {
+                body.innerHTML = '<p class="text-sm text-gray-400 text-center py-6">Veri bulunamadı.</p>';
+            } else {
+                let html = '';
+                detailsArray.forEach(k => {
+                    const renk = k.hasToplamı >= 0 ? 'text-green-600' : 'text-red-600';
+                    html += `
+                        <div class="bg-gray-50 rounded-xl p-4 border border-gray-100 mb-3">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="font-bold text-gray-700 text-sm">${k.ad}</span>
+                                <span class="font-extrabold font-mono text-sm ${renk}">${fmt(k.hasToplamı, 2)} HAS (Net Değer)</span>
+                            </div>
+                            <div class="space-y-2 mt-3">
+                                ${k.detaylar.map(d => {
+                                    return `<div class="flex justify-between items-center text-xs text-gray-500 border-b border-gray-200 pb-1">
+                                                <div class="flex flex-col">
+                                                    <span class="font-semibold text-gray-700">${d.stockName}</span>
+                                                </div>
+                                                <div class="text-right">
+                                                    <span class="font-mono text-[10px] text-gray-400 block leading-tight">Miktar</span>
+                                                    <span class="font-mono font-semibold text-blue-600">
+                                                        ${fmt(d.quantity, 2)} ${d.unit}
+                                                    </span>
+                                                </div>
+                                            </div>`;
+                                }).join('')}
+                                ${k.detaylar.length === 0 ? '<span class="text-xs text-gray-400">İşlem yok</span>' : ''}
+                            </div>
+                        </div>
+                    `;
+                });
+                body.innerHTML = html;
+            }
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            modal.style.display = 'flex';
+        });
+
+        const closeModal = () => {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            modal.style.display = 'none';
+        };
+
+        if (close) close.addEventListener('click', closeModal);
+        if (bg) bg.addEventListener('click', closeModal);
+    };
+
     // ─── İlk yükleme ─────────────────────────────────────────────────────────
     renderWelcome();
     removeDuplicateKasalarSection();
+    removeUnusedGemsCards();
 
     await updateRatesAndTicker(false);
     
@@ -458,10 +773,20 @@ document.addEventListener('DOMContentLoaded', async () => {
         fetchBankalar(initial.bankReport),
         fetchPoslar(initial.posReport)
     ]);
+    
+    // Stokları paralel çekelim (şimdilik sadece maden var)
+    await Promise.all([
+        fetchMaden(),
+        fetchMamul(),
+        fetchHurda()
+    ]);
 
     // Setup all modals
     setupModal('kasalar-card', 'kasalar-modal', kasaDetaylar);
     setupModal('bankalar-card', 'bankalar-modal', bankaDetaylar);
     setupModal('poslar-card', 'poslar-modal', posDetaylar);
+    setupStockModal('maden-card', 'maden-modal', madenDetaylar);
+    setupStockModal('mamul-card', 'mamul-modal', mamulDetaylar);
+    setupStockModal('hurda-card', 'hurda-modal', hurdaDetaylar);
 
 });
