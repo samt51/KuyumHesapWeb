@@ -19,7 +19,21 @@ document.addEventListener('DOMContentLoaded', () => {
         const title = document.getElementById('receipt-title')?.innerText || 'Satış Fişi';
         const dateVal = document.getElementById('fis-tarihi')?.value || new Date().toLocaleString();
         const logHtml = document.getElementById('receipt-log')?.innerHTML || '';
-        const totalsHtml = document.getElementById('satis-totals')?.innerHTML || '';
+        const isCari = document.getElementById('operation-type-toggle')?.checked;
+        const totalsContainerId = isCari ? 'cari-totals' : 'satis-totals';
+        let totalsHtml = document.getElementById(totalsContainerId)?.innerHTML || '';
+
+        // SATIŞ modunda yazdırırken 'Fark' kısmını gizle
+        if (!isCari) {
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = totalsHtml;
+            const farkSpan = tempDiv.querySelector('#fark-toplam');
+            if (farkSpan) {
+                const farkRow = farkSpan.closest('.flex');
+                if (farkRow) farkRow.remove();
+            }
+            totalsHtml = tempDiv.innerHTML;
+        }
 
         if (!logHtml || logHtml.trim() === '') {
             alert('Yazdırılacak fiş detayı bulunamadı.');

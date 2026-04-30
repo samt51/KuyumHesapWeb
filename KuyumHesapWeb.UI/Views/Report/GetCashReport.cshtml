@@ -1,0 +1,578 @@
+@{
+    ViewData["Title"] = "Kasa Raporları";
+    var noLayout = Context.Request.Query["noLayout"].ToString() == "1";
+    Layout = noLayout ? "~/Views/Shared/_IframeLayout.cshtml" : "~/Views/Shared/_Layout.cshtml";
+}
+
+@section Styles {
+    <style>
+        .report-card {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border-radius: 1.25rem;
+            border: 1px solid rgba(229, 231, 235, 0.5);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        .filter-select {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 0.5rem center;
+            background-size: 1.5em 1.5em;
+        }
+
+        .btn-query {
+            background: linear-gradient(135deg, #1e8449 0%, #166534 100%);
+            transition: all 0.3s ease;
+        }
+
+        .btn-query:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(30, 132, 73, 0.3);
+        }
+
+        .table-container {
+            scrollbar-width: thin;
+            scrollbar-color: #e5e7eb transparent;
+        }
+
+        .table-container::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        .table-container::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .table-container::-webkit-scrollbar-thumb {
+            background-color: #e5e7eb;
+            border-radius: 20px;
+        }
+
+        .animate-fade-in {
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        @@keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .row-hover:hover {
+            background-color: rgba(243, 244, 246, 0.8);
+        }
+    </style>
+}
+
+<div class="p-3 md:p-6 flex flex-col gap-4 md:gap-6 min-h-full bg-[#f8fafc]">
+    <!-- Header Section -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div class="min-w-0">
+            <h1 class="text-xl md:text-3xl font-bold text-gray-800 tracking-tight flex items-center gap-2 md:gap-3">
+                <div class="p-2 bg-green-100 rounded-lg text-green-700 shrink-0">
+                    <i class="fas fa-chart-pie"></i>
+                </div>
+                <span class="truncate">Kasa Raporları</span>
+            </h1>
+            <p class="text-xs md:text-sm text-gray-500 mt-1">İşletmenizin detaylı hareketlerini ve ekstrelerini görüntüleyin.</p>
+        </div>
+        <div class="flex items-center gap-2 shrink-0">
+            <button id="export-excel" class="px-3 py-2 md:px-4 md:py-2 bg-white border border-gray-200 text-gray-700 text-[10px] md:text-sm rounded-xl hover:bg-gray-50 transition-colors flex items-center gap-2 shadow-sm">
+                <i class="fas fa-file-excel text-green-600"></i>
+                <span>Excel</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Filter Section (Top Panel) -->
+    <div class="report-card animate-fade-in mb-6">
+        <div id="filter-header" class="p-4 border-b border-gray-100 bg-gray-50/50 flex items-center justify-between rounded-t-2xl cursor-pointer select-none">
+            <h3 class="text-sm font-bold text-gray-700 flex items-center gap-2 uppercase tracking-wider pointer-events-none">
+                <i class="fas fa-filter text-green-600"></i>
+                Filtreleme Seçenekleri
+            </h3>
+            <button id="toggle-filters" class="text-gray-400 hover:text-gray-600 transition-colors p-1 pointer-events-none">
+                <i class="fas fa-chevron-up transition-transform duration-300" id="filter-chevron"></i>
+            </button>
+        </div>
+        <div class="p-4 md:p-6 transition-all duration-300 overflow-visible" id="filter-body">
+            <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4 items-end" id="filter-grid">
+                <!-- Tür Select -->
+                <div class="flex flex-col gap-1.5 col-span-1">
+                    <label class="text-[10px] font-bold text-gray-400 uppercase ml-1">Kayıt Türü</label>
+                    <select id="type-select" class="filter-select w-full h-11 px-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500/20 focus:border-green-600 transition-all outline-none text-xs font-medium">
+                        <option value="">Yükleniyor...</option>
+                    </select>
+                </div>
+
+                <!-- Detay (Hesap) Select -->
+                <div id="account-container" class="hidden flex flex-col gap-1.5 col-span-1">
+                    <label id="detail-label" class="text-[10px] font-bold text-gray-400 uppercase ml-1">Hesap / Grup</label>
+                    <select id="detail-select" class="filter-select w-full h-11 px-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500/20 focus:border-green-600 transition-all outline-none text-xs font-medium">
+                        <option value="">Seçiniz...</option>
+                    </select>
+                </div>
+
+                <!-- Para Birimi Select -->
+                <div id="currency-container" class="hidden flex flex-col gap-1.5 col-span-1">
+                    <label class="text-[10px] font-bold text-gray-400 uppercase ml-1">Birim</label>
+                    <select id="currency-select" class="filter-select w-full h-11 px-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500/20 focus:border-green-600 transition-all outline-none text-xs font-medium">
+                        <option value="">Seçiniz...</option>
+                    </select>
+                </div>
+
+                <!-- Başlangıç Tarihi -->
+                <div class="flex flex-col gap-1.5 col-span-1">
+                    <label class="text-[10px] font-bold text-gray-400 uppercase ml-1">Başlangıç</label>
+                    <input type="date" id="start-date" class="w-full h-11 px-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500/20 focus:border-green-600 transition-all outline-none text-xs font-medium">
+                </div>
+
+                <!-- Bitiş Tarihi -->
+                <div class="flex flex-col gap-1.5 col-span-1">
+                    <label class="text-[10px] font-bold text-gray-400 uppercase ml-1">Bitiş</label>
+                    <input type="date" id="end-date" class="w-full h-11 px-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500/20 focus:border-green-600 transition-all outline-none text-xs font-medium">
+                </div>
+
+                <!-- Sorgula Butonu -->
+                <div class="flex flex-col col-span-2 md:col-span-1">
+                    <button id="btn-query" class="btn-query w-full h-11 px-6 bg-green-700 text-white rounded-xl font-bold flex items-center justify-center gap-2 text-sm shadow-md hover:shadow-green-900/20">
+                        <i class="fas fa-search"></i>
+                        SORGULA
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Table Section -->
+    <div class="report-card overflow-hidden animate-fade-in min-w-0" style="animation-delay: 0.1s;">
+        <div class="p-4 border-b border-gray-100 bg-gray-50/50 flex flex-wrap items-center justify-between gap-2">
+            <h3 class="font-bold text-gray-700 flex items-center gap-2 text-sm md:text-base">
+                <i class="fas fa-list-ul text-gray-400"></i>
+                Hareket Detayları
+            </h3>
+        </div>
+
+        <div class="table-container overflow-x-auto">
+            <table class="w-full text-left border-collapse min-w-[800px]">
+                <thead>
+                    <tr class="bg-gray-50/80 text-gray-500 text-[11px] font-bold uppercase tracking-wider">
+                        <th class="px-6 py-4 border-b border-gray-100">Tarih</th>
+                        <th class="px-6 py-4 border-b border-gray-100">İşlem</th>
+                        <th class="px-6 py-4 border-b border-gray-100">Hesap</th>
+                        <th class="px-6 py-4 border-b border-gray-100">Açıklama</th>
+                        <th class="px-6 py-4 border-b border-gray-100 text-right">Giren</th>
+                        <th class="px-6 py-4 border-b border-gray-100 text-right">Çıkan</th>
+                        <th class="px-6 py-4 border-b border-gray-100 text-center">Birim</th>
+                    </tr>
+                </thead>
+                <tbody id="report-body" class="text-sm text-gray-700 divide-y divide-gray-50">
+                    <tr>
+                        <td colspan="7" class="px-6 py-12 text-center text-gray-400 italic">
+                            <i class="fas fa-info-circle mb-2 text-xl block"></i>
+                            Rapor oluşturmak için yukarıdaki filtreleri kullanın.
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination Section -->
+        <div id="pagination-container" class="hidden p-4 border-t border-gray-100 bg-gray-50/30 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div class="text-[10px] md:text-xs text-gray-500 text-center sm:text-left">
+                Toplam <span id="total-count" class="font-bold text-gray-700">0</span> kayıttan 
+                <span id="showing-range" class="font-bold text-gray-700">0-0</span> arası gösteriliyor
+            </div>
+            <div class="flex flex-wrap items-center justify-center gap-1" id="pagination-buttons">
+                <!-- Buttons injected by JS -->
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Update Tab Title if in dynamic tab system
+            if (window.parent && window.parent.document) {
+                const activeTab = window.parent.document.querySelector('.tab-item.active span');
+                if (activeTab) { activeTab.innerText = 'Kasa Raporu'; }
+            }
+            document.title = 'Kasa Raporu | KuyumHesap';
+            const typeSelect = document.getElementById('type-select');
+            const detailSelect = document.getElementById('detail-select');
+            const currencySelect = document.getElementById('currency-select');
+            const accountContainer = document.getElementById('account-container');
+            const currencyContainer = document.getElementById('currency-container');
+            const startDateInput = document.getElementById('start-date');
+            const endDateInput = document.getElementById('end-date');
+            const queryBtn = document.getElementById('btn-query');
+            const exportExcelBtn = document.getElementById('export-excel');
+            const reportBody = document.getElementById('report-body');
+            const paginationContainer = document.getElementById('pagination-container');
+            const paginationButtons = document.getElementById('pagination-buttons');
+            const totalCountSpan = document.getElementById('total-count');
+            const showingRangeSpan = document.getElementById('showing-range');
+            const toggleFiltersBtn = document.getElementById('filter-header');
+            const filterBody = document.getElementById('filter-body');
+            const filterChevron = document.getElementById('filter-chevron');
+
+            // --- Deep Linking Support ---
+            const urlParams = new URLSearchParams(window.location.search);
+            const paramTypeId = urlParams.get('typeId');
+            const paramDetailId = urlParams.get('detailId');
+
+            let allMovements = [];
+            let currentPage = 1;
+            const pageSize = 100;
+
+            // Toggle Filters
+            toggleFiltersBtn.addEventListener('click', () => {
+                const isHidden = filterBody.classList.contains('hidden');
+                if (isHidden) {
+                    filterBody.classList.remove('hidden');
+                    filterChevron.classList.remove('rotate-180');
+                } else {
+                    filterBody.classList.add('hidden');
+                    filterChevron.classList.add('rotate-180');
+                }
+            });
+
+            // Custom Alert Utilities
+            const showAlert = (title, text, icon = 'info') => {
+                Swal.fire({
+                    title: title,
+                    text: text,
+                    icon: icon,
+                    confirmButtonText: 'Tamam',
+                    confirmButtonColor: '#15803d',
+                    customClass: {
+                        popup: 'rounded-2xl',
+                        confirmButton: 'rounded-xl px-6 py-2.5 font-bold'
+                    }
+                });
+            };
+
+            const showToast = (text, icon = 'success') => {
+                const Toast = Swal.mixin({
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 3000,
+                    timerProgressBar: true,
+                    didOpen: (toast) => {
+                        toast.addEventListener('mouseenter', Swal.stopTimer);
+                        toast.addEventListener('mouseleave', Swal.resumeTimer);
+                    }
+                });
+                Toast.fire({ icon: icon, title: text });
+            };
+
+            // Set default dates
+            const today = new Date().toISOString().split('T')[0];
+            const lastMonth = new Date(new Date().setMonth(new Date().getMonth() - 1)).toISOString().split('T')[0];
+            startDateInput.value = lastMonth;
+            endDateInput.value = today;
+
+            const FilterEnum = {
+                FinancialSummary: 1,
+                StockSummary: 2
+            };
+
+            // Load Filter Types dynamically from service
+            const loadFilterTypes = async () => {
+                try {
+                    typeSelect.innerHTML = '<option value="">Yükleniyor...</option>';
+                    const response = await fetch('/Report/GetFilterTypes');
+                    const res = await response.json();
+                    
+                    if (res.isSuccess && res.data) {
+                        typeSelect.innerHTML = '<option value="">Tür Seçiniz...</option>';
+                        res.data.forEach(item => {
+                            const option = document.createElement('option');
+                            option.value = item.typeId;
+                            option.textContent = item.typeName;
+                            option.dataset.filterEnum = item.filterEnum;
+                            typeSelect.appendChild(option);
+                        });
+                    } else {
+                        typeSelect.innerHTML = '<option value="">Hata!</option>';
+                    }
+                } catch (e) {
+                    console.error('Filtre tipleri yüklenemedi:', e);
+                    typeSelect.innerHTML = '<option value="">Hata!</option>';
+                }
+            };
+
+            // Initial Load
+            loadFilterTypes();
+
+            // --- Deep Linking Implementation ---
+            const applyUrlParams = async () => {
+                if (paramTypeId) {
+                    console.log('[GetCashReport] Deep Link TypeId:', paramTypeId);
+                    
+                    // Wait for typeSelect to have the specific option (e.g., Mamul=1)
+                    let typeAttempts = 0;
+                    const typeInterval = setInterval(() => {
+                        const options = Array.from(typeSelect.options);
+                        const hasOption = options.some(opt => opt.value == paramTypeId); // Loose equality for string/number
+                        
+                        if (hasOption) {
+                            clearInterval(typeInterval);
+                            typeSelect.value = paramTypeId;
+                            console.log('[GetCashReport] TypeId Selected:', paramTypeId);
+                            
+                            // Trigger change to load dependent filters (Stocks/Accounts)
+                            typeSelect.dispatchEvent(new Event('change'));
+                            
+                            // Now wait for detailSelect if a specific product was clicked
+                            if (paramDetailId && paramDetailId !== '0') {
+                                console.log('[GetCashReport] Waiting for DetailId:', paramDetailId);
+                                let detailAttempts = 0;
+                                const detailInterval = setInterval(() => {
+                                    const detailOptions = Array.from(detailSelect.options);
+                                    const hasDetailOption = detailOptions.some(opt => opt.value == paramDetailId);
+                                    
+                                    if (hasDetailOption) {
+                                        clearInterval(detailInterval);
+                                        detailSelect.value = paramDetailId;
+                                        detailSelect.dispatchEvent(new Event('change'));
+                                        console.log('[GetCashReport] DetailId Selected:', paramDetailId);
+                                        
+                                        // Auto-click query button after selection (longer delay for safety)
+                                        setTimeout(() => {
+                                            console.log('[GetCashReport] Auto-clicking Query Button...');
+                                            queryBtn.click();
+                                        }, 800);
+                                    }
+                                    
+                                    if (++detailAttempts > 60) {
+                                        clearInterval(detailInterval);
+                                        console.warn('[GetCashReport] DetailId option not found in time:', paramDetailId);
+                                    }
+                                }, 100);
+                            } else {
+                                // No specific detail, just query by type
+                                setTimeout(() => {
+                                    console.log('[GetCashReport] Auto-clicking Query Button (Type Only)...');
+                                    queryBtn.click();
+                                }, 800);
+                            }
+                        }
+                        
+                        if (++typeAttempts > 60) {
+                            clearInterval(typeInterval);
+                            console.warn('[GetCashReport] TypeId option not found in time:', paramTypeId);
+                        }
+                    }, 100);
+                }
+            };
+
+            applyUrlParams();
+            // -----------------------------------
+
+            typeSelect.addEventListener('change', async () => {
+                const selectedOption = typeSelect.options[typeSelect.selectedIndex];
+                const filterEnum = parseInt(selectedOption?.dataset?.filterEnum || 0);
+                const typeId = typeSelect.value;
+
+                // Reset and hide dependent selects
+                accountContainer.classList.add('hidden');
+                currencyContainer.classList.add('hidden');
+                detailSelect.innerHTML = '<option value="">Seçiniz...</option>';
+                currencySelect.innerHTML = '<option value="">Seçiniz...</option>';
+
+                if (!typeId) return;
+
+                if (filterEnum === FilterEnum.FinancialSummary) {
+                    accountContainer.classList.remove('hidden');
+                    currencyContainer.classList.remove('hidden');
+                    document.getElementById('detail-label').innerText = 'Hesap';
+
+                    // Load Accounts by Type
+                    try {
+                        const accRes = await fetch(`/Account/${typeId}`).then(r => r.json());
+                        if (accRes.isSuccess && accRes.data) {
+                            detailSelect.innerHTML = '<option value="">Hesap Seçiniz...</option>';
+                            accRes.data.forEach(acc => {
+                                detailSelect.innerHTML += `<option value="${acc.accountId}">${acc.accountName}</option>`;
+                            });
+                        }
+                    } catch (e) { console.error('Hesaplar yüklenemedi'); }
+
+                    // Load Currencies
+                    try {
+                        const currRes = await fetch('/Currency/GetAll').then(r => r.json());
+                        if (currRes.isSuccess && currRes.data) {
+                            currencySelect.innerHTML = '<option value="">Birim Seçiniz...</option>';
+                            currRes.data.forEach(curr => {
+                                currencySelect.innerHTML += `<option value="${curr.currencyId}">${curr.currencyCode}</option>`;
+                            });
+                        }
+                    } catch (e) { console.error('Para birimleri yüklenemedi'); }
+                    
+                } else if (filterEnum === FilterEnum.StockSummary) {
+                    accountContainer.classList.remove('hidden');
+                    currencyContainer.classList.add('hidden'); // Stock için para birimi gerekmiyor
+                    document.getElementById('detail-label').innerText = 'Ürün';
+
+                    // Load Stocks by Group Id
+                    try {
+                        detailSelect.innerHTML = '<option value="">Yükleniyor...</option>';
+                        const stockRes = await fetch(`/Stock/${typeId}`).then(r => r.json());
+                        if (stockRes.isSuccess && stockRes.data) {
+                            detailSelect.innerHTML = '<option value="">Ürün Seçiniz...</option>';
+                            stockRes.data.forEach(stock => {
+                                detailSelect.innerHTML += `<option value="${stock.stockId || stock.id}">${stock.stockName}</option>`;
+                            });
+                        } else {
+                            detailSelect.innerHTML = '<option value="">Ürün bulunamadı</option>';
+                        }
+                    } catch (e) { 
+                        console.error('Stoklar yüklenemedi'); 
+                        detailSelect.innerHTML = '<option value="">Hata!</option>';
+                    }
+                }
+            });
+
+
+
+            queryBtn.addEventListener('click', async () => {
+                const selectedOption = typeSelect.options[typeSelect.selectedIndex];
+                const filterEnum = parseInt(selectedOption?.getAttribute('data-filter-enum') || 0);
+                const typeId = parseInt(typeSelect.value || 0);
+                const detailId = parseInt(detailSelect.value || 0);
+                const currencyId = parseInt(currencySelect.value || 0);
+
+                if (!typeId) { 
+                    showAlert('Eksik Bilgi', 'Lütfen sorgulama yapmak için bir Tür seçiniz.', 'warning');
+                    return; 
+                }
+
+                queryBtn.disabled = true;
+                queryBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sorgulanıyor...';
+                
+                try {
+                    const request = {
+                        FilterType: filterEnum,
+                        TypeId: typeId,
+                        TypeValueId: filterEnum === FilterEnum.FinancialSummary ? detailId : 0,
+                        CurrencyId: currencyId ? [currencyId] : [], 
+                        ProductId: filterEnum === FilterEnum.StockSummary ? detailId : 0,
+                        StartDate: startDateInput.value,
+                        EndDate: endDateInput.value
+                    };
+
+                    const res = await fetch('/Report/GetFilterReport', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(request)
+                    }).then(r => r.json());
+
+                    if (res.isSuccess) {
+                        allMovements = res.data || [];
+                        currentPage = 1;
+                        renderPage();
+                        
+                        // Auto-collapse filters only on mobile (responsive)
+                        if (window.innerWidth < 768) {
+                            filterBody.classList.add('hidden');
+                            filterChevron.classList.add('rotate-180');
+                        }
+                        if (allMovements.length > 0) {
+                            showToast(`${allMovements.length} kayıt listelendi.`);
+                        } else {
+                            showToast('Sonuç bulunamadı.', 'info');
+                        }
+                    } else {
+                        showAlert('Hata', res.errors?.join(', ') || 'Rapor alınırken bir hata oluştu.', 'error');
+                    }
+                } catch (e) { 
+                    showAlert('Sistem Hatası', 'Sunucu ile bağlantı kurulamadı. Lütfen daha sonra tekrar deneyiniz.', 'error');
+                }
+                finally {
+                    queryBtn.disabled = false;
+                    queryBtn.innerHTML = '<i class="fas fa-search"></i> Sorgula';
+                }
+            });
+
+            const renderPage = () => {
+                const total = allMovements.length;
+                if (total === 0) {
+                    reportBody.innerHTML = '<tr><td colspan="7" class="px-6 py-12 text-center text-gray-400">Sonuç bulunamadı.</td></tr>';
+                    paginationContainer.classList.add('hidden');
+                    return;
+                }
+
+                paginationContainer.classList.remove('hidden');
+                totalCountSpan.innerText = total;
+                
+                const start = (currentPage - 1) * pageSize;
+                const end = Math.min(start + pageSize, total);
+                showingRangeSpan.innerText = `${start + 1}-${end}`;
+
+                const pageItems = allMovements.slice(start, end);
+                const fmt = (v) => v != null ? v.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0,00';
+
+                reportBody.innerHTML = pageItems.map(m => `
+                    <tr class="row-hover transition-colors">
+                        <td class="px-6 py-4 text-[12px] text-gray-500">${new Date(m.receiptDate).toLocaleDateString('tr-TR')}</td>
+                        <td class="px-6 py-4"><span class="px-2 py-1 rounded-md bg-gray-100 text-[10px] font-bold text-gray-600 uppercase">${m.transactionName}</span></td>
+                        <td class="px-6 py-4 text-xs font-medium text-gray-600">${m.accountName || '-'}</td>
+                        <td class="px-6 py-4 text-xs max-w-[200px] truncate" title="${m.description}">${m.description || '-'}</td>
+                        <td class="px-6 py-4 text-right font-semibold ${m.isEntry ? 'text-green-600' : 'text-gray-400'}">${m.isEntry ? fmt(m.quantity) : '-'}</td>
+                        <td class="px-6 py-4 text-right font-semibold ${!m.isEntry ? 'text-red-600' : 'text-gray-400'}">${!m.isEntry ? fmt(m.quantity) : '-'}</td>
+                        <td class="px-6 py-4 text-center"><span class="text-[10px] font-extrabold text-gray-400">${m.balanceCurrency}</span></td>
+                    </tr>
+                `).join('');
+
+                renderPaginationButtons();
+            };
+
+            const renderPaginationButtons = () => {
+                const totalPages = Math.ceil(allMovements.length / pageSize);
+                let html = '';
+                html += `<button onclick="changePage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''} class="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-30"><i class="fas fa-chevron-left text-xs"></i></button>`;
+                for (let i = 1; i <= totalPages; i++) {
+                    if (i === 1 || i === totalPages || (i >= currentPage - 2 && i <= currentPage + 2)) {
+                        html += `<button onclick="changePage(${i})" class="w-8 h-8 flex items-center justify-center rounded-lg ${i === currentPage ? 'bg-green-700 text-white shadow-md' : 'border border-gray-200 text-gray-600 hover:bg-gray-50'} text-xs font-bold">${i}</button>`;
+                    } else if (i === currentPage - 3 || i === currentPage + 3) { html += `<span class="px-1 text-gray-400">...</span>`; }
+                }
+                html += `<button onclick="changePage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''} class="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-30"><i class="fas fa-chevron-right text-xs"></i></button>`;
+                paginationButtons.innerHTML = html;
+            };
+
+            window.changePage = (p) => { currentPage = p; renderPage(); };
+
+            exportExcelBtn.addEventListener('click', () => {
+                if (allMovements.length === 0) { 
+                    showAlert('Uyarı', 'Dışa aktarmak için önce bir sorgulama yapmalısınız.', 'warning');
+                    return; 
+                }
+                
+                showToast('Excel dosyası hazırlanıyor...');
+                
+                const data = allMovements.map(m => ({
+                    'Tarih': new Date(m.receiptDate).toLocaleDateString('tr-TR'),
+                    'İşlem': m.transactionName,
+                    'Hesap': m.accountName,
+                    'Açıklama': m.description,
+                    'Giriş': m.isEntry ? m.quantity : 0,
+                    'Çıkış': !m.isEntry ? m.quantity : 0,
+                    'Birim': m.balanceCurrency
+                }));
+                const ws = XLSX.utils.json_to_sheet(data);
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "KasaRaporu");
+                XLSX.writeFile(wb, `KasaRaporu_${new Date().toLocaleDateString('tr-TR')}.xlsx`);
+            });
+        });
+    </script>
+}
+
+

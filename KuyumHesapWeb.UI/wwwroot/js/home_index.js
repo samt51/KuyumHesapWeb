@@ -780,21 +780,38 @@
             window.location.href = loginUrl;
         });
 
+        const normalizeUrl = (u) => u ? u.replace(/\/$/, '').toLowerCase() : '';
+
         // Sekme / iframe yönetimi
-        window.openTab = function (url, title) {
+        function openTab(url, title) {
             url = normalizeNavigationUrl(url || dashboardUrl);
             title = title || 'Ana Sayfa';
-            console.log('[home_index] openTab called:', url);
-            // Mobil görünümde herhangi bir sekme açıldığında sidebar'ı kapat (Overlay'i kaldırmak için)
+            
+            // Mobil görünümde herhangi bir sekme açıldığında sidebar'ı kapat
             if (isMobileView()) {
                 collapseSidebar();
                 hideActiveSubmenu();
             }
 
-            const normalizeUrl = (u) => u.replace(/\/$/, '').toLowerCase();
-            const existingTab = openTabs.find(tab => normalizeUrl(tab.url) === normalizeUrl(url));
+            const normalizeUrlForComparison = (u) => {
+                if (!u) return '';
+                return u.split('?')[0].replace(/\/$/, '').toLowerCase();
+            };
 
-            if (existingTab) { switchTab(existingTab.id); return; }
+            const targetBaseUrl = normalizeUrlForComparison(url);
+            const existingTab = openTabs.find(tab => normalizeUrlForComparison(tab.url) === targetBaseUrl);
+
+            if (existingTab) { 
+                const frame = document.getElementById(existingTab.frameId);
+                if (frame) {
+                    const newUrl = url.includes('?') ? `${url}&noLayout=1` : `${url}?noLayout=1`;
+                    // Just reload the frame with new params
+                    frame.src = newUrl;
+                }
+                existingTab.url = url;
+                switchTab(existingTab.id); 
+                return; 
+            }
             if (openTabs.length >= MAX_TABS) { alert(`Maksimum ${MAX_TABS} sekme açabilirsiniz.`); return; }
 
             const tabId = generateId('tab');
@@ -840,6 +857,9 @@
 
             switchTab(tabId);
         };
+
+        // Global access for iframes and other modules
+        window.openTab = openTab;
 
         function switchTab(tabId, skipHistory) {
             const nativeContent = document.getElementById('native-content');
@@ -1062,6 +1082,13 @@
                 collapseSidebar();
             }
             lastWidth = currentWidth;
+        });
+
+        // Listen for messages from iframes (e.g., Dashboard deep linking)
+        window.addEventListener('message', (event) => {
+            if (event.data && event.data.type === 'openTab') {
+                window.openTab(event.data.url, event.data.title);
+            }
         });
     }
 

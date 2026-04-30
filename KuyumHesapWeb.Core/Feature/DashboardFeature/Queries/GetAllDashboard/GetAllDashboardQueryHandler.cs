@@ -30,8 +30,6 @@ namespace KuyumHesapWeb.Core.Feature.DashboardFeature.Queries.GetAllDashboard
 
             response.BankReport = bankReport.data;
 
-            //var balanceTotal = await _apiService.GetAsync<GetAllDashboardQueryResponse>("Report/GetAllReport");
-
             return new ResponseDto<GetAllDashboardQueryResponse>().Success(response);
         }
     }

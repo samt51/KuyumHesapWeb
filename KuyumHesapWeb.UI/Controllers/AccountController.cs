@@ -1,8 +1,10 @@
 using KuyumHesapWeb.Core.Commond.Abstract.Mapper;
+using KuyumHesapWeb.Core.Commond.Models;
 using KuyumHesapWeb.Core.Feature.AccountFeature.Command.Create;
 using KuyumHesapWeb.Core.Feature.AccountFeature.Command.Update;
 using KuyumHesapWeb.Core.Feature.AccountFeature.Dtos;
 using KuyumHesapWeb.Core.Feature.AccountFeature.Queries.GetAll;
+using KuyumHesapWeb.Core.Feature.AccountFeature.Queries.GetAllAccountByTypeId;
 using KuyumHesapWeb.Core.Feature.AccountFeature.Queries.GetById;
 using KuyumHesapWeb.Core.Feature.AccountTypeFeature.Queries.GetAll;
 using KuyumHesapWeb.Core.Feature.SettingsFeature.Queries.GetAll;
@@ -82,6 +84,12 @@ namespace KuyumHesapWeb.UI.Controllers
             var result = data.data.FirstOrDefault(c => c.Key == key);
             if (result == null || string.IsNullOrEmpty(result.Value)) return Ok(0);
             return Ok(Convert.ToInt32(result.Value));
+        }
+
+        [HttpGet("{accountTypeId}")]
+        public async Task<ResponseDto<List<GetAllAccountByTypeIdQueryResponse>>> GetAccountByTypeIdAsync(int accountTypeId, CancellationToken token)
+        {
+            return await _mediator.Send(new GetAllAccountByTypeIdQueryRequest { AccountTypeId = accountTypeId }, token);
         }
     }
 }

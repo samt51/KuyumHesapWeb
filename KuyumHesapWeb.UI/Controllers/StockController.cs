@@ -7,12 +7,15 @@ using KuyumHesapWeb.Core.Feature.StockFeature.Commands.Update;
 using KuyumHesapWeb.Core.Feature.StockFeature.Queries.GetAll;
 using KuyumHesapWeb.Core.Feature.StockFeature.Queries.GetById;
 using KuyumHesapWeb.Core.Feature.StockTypeFeature.Queries.GetAll;
+using KuyumHesapWeb.Core.Features.StockFeature.Queries.GetByGroupId;
 using KuyumHesapWeb.UI.Controllers.BaseCont;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace KuyumHesapWeb.UI.Controllers
 {
+    [Route("[controller]")]
     public class StockController : BaseController
     {
         private readonly IMediator _mediator;
@@ -76,6 +79,12 @@ namespace KuyumHesapWeb.UI.Controllers
         {
             var data = await _mediator.Send(request);
             return data;
+        }
+        [HttpGet("{groupId}")]
+ 
+        public async Task<ResponseDto<List<GetAllStockQueryResponse>>> GetStockByGroupId(int groupId, CancellationToken token)
+        {
+            return await _mediator.Send(new GetStockByGroupIdQueryRequest(groupId), token);
         }
 
     }

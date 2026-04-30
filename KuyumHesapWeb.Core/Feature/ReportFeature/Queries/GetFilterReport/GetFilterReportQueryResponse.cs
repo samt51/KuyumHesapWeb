@@ -1,29 +1,9 @@
-﻿namespace KuyumHesapWeb.Core.Feature.ReceiptFeature.Queries.GetEkstreByCustomer
+﻿namespace KuyumHesapWeb.Core.Features.ReportFeature.Queries.GetFilterReport
 {
-    public class GetEkstreByCustomerQueryResponse
+    public class GetFilterReportQueryResponse
     {
-        public List<EkstreBakiyeViewModel> DevredenBakiyeler { get; set; } = new();
-        public List<EkstreSatirViewModel> Hareketler { get; set; } = new();
-    }
-    public class EkstreBakiyeViewModel
-    {
-        /// <summary>
-        /// Döviz kodu (ör. HAS, USD, EUR)
-        /// </summary>
-        public string CurrencyCode { get; set; } = "";
-
-        /// <summary>
-        /// Döviz cinsinden bakiye
-        /// </summary>
-        public decimal Balance { get; set; }
-    }
-
-
-    /// <summary>
-    /// Ekstre satırının view modeli (vw_HesapEkstresi'den gelen satır karşılığı).
-    /// </summary>
-    public class EkstreSatirViewModel
-    {
+        public int DetailAccountId { get; set; }
+        public string DetailTypeName { get; set; }
         /// <summary>
         /// Cari Hesap Id
         /// </summary>
@@ -46,10 +26,12 @@
         /// İşlem tarihi
         /// </summary>
         public DateTime ReceiptDate { get; set; }
+
         /// <summary>
         /// İşlem/işlem tipi Id
         /// </summary>
         public int TransactionTypeId { get; set; }
+
         /// <summary>
         /// İşlem/işlem tipi adı
         /// </summary>
@@ -124,6 +106,10 @@
         /// İşçilik birimi (örn. adet, saat)
         /// </summary>
         public string? LaborUnit { get; set; }
+        /// <summary>
+        /// İşçilik adedi
+        /// </summary>
+        public int? LaborQuantity { get; set; }
 
         /// <summary>
         /// Mutabakat durumu (true = mutabakat sağlanmış)
@@ -159,6 +145,5 @@
         /// Stok birimi (view'deki StockUnit / UnitName)
         /// </summary>
         public string StockUnit { get; set; } = "";
-        public int? StockId { get; set; }
     }
 }

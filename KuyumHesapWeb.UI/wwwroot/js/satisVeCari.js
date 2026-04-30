@@ -1285,8 +1285,10 @@ document.addEventListener('DOMContentLoaded', () => {
         // Toplamları ekranda göster
         girenToplamSpan.textContent = `${formatCurrency(giren)} ${state.activeCurrency}`;
         cikanToplamSpan.textContent = `${formatCurrency(cikan)} ${state.activeCurrency}`;
-        farkToplamSpan.textContent = `${formatCurrency(fark)} ${state.activeCurrency}`;
-        farkToplamSpan.className = `font-extrabold text-sm ${fark >= 0 ? 'text-blue-700' : 'text-red-700'}`;
+        if (farkToplamSpan) {
+            farkToplamSpan.textContent = `${formatCurrency(fark)} ${state.activeCurrency}`;
+            farkToplamSpan.className = `font-extrabold text-sm ${fark >= 0 ? 'text-blue-700' : 'text-red-700'}`;
+        }
     };
     const showDefaultMessage = () => {
         isFormDirty = false;
@@ -4501,7 +4503,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     <div class="mt-4">
         <button id="btn-fill-remainder" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-1.5 px-4 rounded-md text-sm">
-            <i class="fas fa-calculator mr-1.5"></i>Kalanı Ekle (${formatCurrency(Math.abs(parseFormattedNumber(farkToplamSpan.textContent)))})
+            <i class="fas fa-calculator mr-1.5"></i>Kalanı Ekle (${formatCurrency(Math.abs(parseFormattedNumber(farkToplamSpan ? farkToplamSpan.textContent : '0')))})
         </button>
     </div>
 `;
@@ -7027,7 +7029,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const checkSatisFarki = () => {
             if (state.operationType === 'satis') {
-                const fark = parseFormattedNumber(farkToplamSpan.textContent);
+                const fark = parseFormattedNumber(farkToplamSpan ? farkToplamSpan.textContent : "0");
                 if (fark !== 0) {
                     showToast(`Satışta Giren ile Çıkan aynı değerde olmalıdır. Mevcut Fark: ${formatCurrency(fark)} ${state.activeCurrency}`, 'warning');
                     return true; // Fark var

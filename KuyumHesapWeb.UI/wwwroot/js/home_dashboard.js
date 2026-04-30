@@ -444,7 +444,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         const qty = Number(h.quantity ?? h.Quantity ?? 0);
                         const qtyUnit = h.stockUnit ?? h.StockUnit ?? 'Gr';
                         const netHas = Number(h.netProductValue ?? h.NetProductValue ?? h.finalBalance ?? 0);
-                        details.push({ stockName: sName, quantity: qty, unit: qtyUnit, netValue: netHas });
+                        details.push({ id: h.id || h.Id || h.stockId || h.StockId || 0, stockName: sName, quantity: qty, unit: qtyUnit, netValue: netHas });
                         accountTotalQty += qty;
                     });
                 }
@@ -532,7 +532,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         const qty = Number(h.quantity ?? h.Quantity ?? 0);
                         const qtyUnit = h.stockUnit ?? h.StockUnit ?? 'Adet';
                         const netHas = Number(h.netProductValue ?? h.NetProductValue ?? h.finalBalance ?? 0);
-                        details.push({ stockName: sName, quantity: qty, unit: qtyUnit, netValue: netHas });
+                        details.push({ id: h.id || h.Id || h.stockId || h.StockId || 0, stockName: sName, quantity: qty, unit: qtyUnit, netValue: netHas });
                         accountTotalQty += qty;
                     });
                 }
@@ -608,7 +608,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         const qty = Number(h.quantity ?? h.Quantity ?? 0);
                         const qtyUnit = h.stockUnit ?? h.StockUnit ?? 'Gr';
                         const netHas = Number(h.netProductValue ?? h.NetProductValue ?? h.finalBalance ?? 0);
-                        details.push({ stockName: sName, quantity: qty, unit: qtyUnit, netValue: netHas });
+                        details.push({ id: h.id || h.Id || h.stockId || h.StockId || 0, stockName: sName, quantity: qty, unit: qtyUnit, netValue: netHas });
                         accountTotalQty += qty;
                     });
                 }
@@ -722,22 +722,30 @@ document.addEventListener('DOMContentLoaded', async () => {
                                 <span class="font-bold text-gray-700 text-sm">${k.ad}</span>
                                 <span class="font-extrabold font-mono text-sm ${renk}">${fmt(k.hasToplamı, 2)} HAS (Net Değer)</span>
                             </div>
-                            <div class="space-y-2 mt-3">
-                                ${k.detaylar.map(d => {
-                                    return `<div class="flex justify-between items-center text-xs text-gray-500 border-b border-gray-200 pb-1">
-                                                <div class="flex flex-col">
-                                                    <span class="font-semibold text-gray-700">${d.stockName}</span>
-                                                </div>
-                                                <div class="text-right">
-                                                    <span class="font-mono text-[10px] text-gray-400 block leading-tight">Miktar</span>
-                                                    <span class="font-mono font-semibold text-blue-600">
-                                                        ${fmt(d.quantity, 2)} ${d.unit}
-                                                    </span>
-                                                </div>
-                                            </div>`;
-                                }).join('')}
-                                ${k.detaylar.length === 0 ? '<span class="text-xs text-gray-400">İşlem yok</span>' : ''}
-                            </div>
+                                <div class="space-y-2 mt-3">
+                                    ${k.detaylar.map(d => {
+                                        // Deep link to Cash Report with User provided mappings
+                                        let currentTypeId = 1; // Default to Mamul
+                                        if (cardId === 'maden-card') currentTypeId = 2;
+                                        if (cardId === 'hurda-card') currentTypeId = 3;
+
+                                        const link = `/Report/GetCashReport?typeId=${currentTypeId}&detailId=${d.id || 0}`;
+                                        
+                                        return `<div class="flex justify-between items-center text-xs text-gray-500 border-b border-gray-200 pb-1 hover:bg-blue-50/50 cursor-pointer rounded px-1 transition-colors" 
+                                                     onclick="window.parent.postMessage({type: 'openTab', title: 'Kasa Raporu', url: '${link}'}, '*')">
+                                                    <div class="flex flex-col">
+                                                        <span class="font-semibold text-blue-700 hover:underline">${d.stockName}</span>
+                                                    </div>
+                                                    <div class="text-right">
+                                                        <span class="font-mono text-[10px] text-gray-400 block leading-tight">Miktar</span>
+                                                        <span class="font-mono font-semibold text-blue-600">
+                                                            ${fmt(d.quantity, 2)} ${d.unit}
+                                                        </span>
+                                                    </div>
+                                                </div>`;
+                                    }).join('')}
+                                    ${k.detaylar.length === 0 ? '<span class="text-xs text-gray-400">İşlem yok</span>' : ''}
+                                </div>
                         </div>
                     `;
                 });
