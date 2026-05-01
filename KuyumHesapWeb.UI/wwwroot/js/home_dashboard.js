@@ -293,24 +293,35 @@ document.addEventListener('DOMContentLoaded', async () => {
             kasaDetaylar = [];
             accounts.forEach(acc => {
                 const accountName = acc.accountName || acc.AccountName || acc.hesapAdi || acc.HesapAdi || 'Bilinmeyen Kasa';
+                const accountId = acc.accountId || acc.AccountId || acc.id || acc.Id;
                 const accountTotalHas = Number(acc.totalHas ?? acc.TotalHas ?? acc.hasToplami ?? 0) || 0;
+                
                 const currentBalances = {};
                 const devreden = acc.devredenBakiyeler ?? acc.DevredenBakiyeler;
                 if (Array.isArray(devreden)) {
                     devreden.forEach(b => {
                         const code = b.dovizKodu ?? b.DovizKodu ?? b.currencyCode ?? b.CurrencyCode ?? b.birim ?? b.Birim ?? 'UNKNOWN';
-                        currentBalances[code] = Number(b.bakiye ?? b.Bakiye ?? b.amount ?? b.Amount ?? 0) || 0;
+                        const cId = b.foreignCurrencyId ?? b.ForeignCurrencyId ?? b.currencyId ?? b.CurrencyId;
+                        currentBalances[code] = { 
+                            miktar: Number(b.bakiye ?? b.Bakiye ?? b.amount ?? b.Amount ?? 0) || 0,
+                            currencyId: cId
+                        };
                     });
                 }
                 const hareketler = acc.hareketler ?? acc.Hareketler;
                 if (Array.isArray(hareketler)) {
                     hareketler.forEach(h => {
                         const birim = h.balanceCurrency ?? h.BalanceCurrency ?? h.unit ?? h.Unit ?? h.counterUnit ?? h.CounterUnit ?? h.birim ?? h.Birim ?? h.karsilikBirim ?? 'UNKNOWN';
-                        currentBalances[birim] = Number(h.finalBalance ?? h.FinalBalance ?? currentBalances[birim] ?? 0);
+                        const cId = h.foreignCurrencyId ?? h.ForeignCurrencyId ?? h.currencyId ?? h.CurrencyId;
+                        const miktar = Number(h.finalBalance ?? h.FinalBalance ?? (currentBalances[birim]?.miktar || 0));
+                        currentBalances[birim] = { miktar, currencyId: cId || currentBalances[birim]?.currencyId };
                     });
                 }
-                const bakiyeListesi = Object.entries(currentBalances).filter(([_, m])=>m!==0).map(([birim, miktar])=>({ birim, miktar }));
-                kasaDetaylar.push({ ad: accountName, bakiyeler: bakiyeListesi, hasToplamı: accountTotalHas });
+                const bakiyeListesi = Object.entries(currentBalances)
+                    .filter(([_, data]) => data.miktar !== 0)
+                    .map(([birim, data]) => ({ birim, miktar: data.miktar, currencyId: data.currencyId }));
+
+                kasaDetaylar.push({ id: accountId, ad: accountName, bakiyeler: bakiyeListesi, hasToplamı: accountTotalHas });
             });
             const fmt = v => v.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
             const renk = overallTotalHas >= 0 ? 'text-green-600' : 'text-red-600';
@@ -337,24 +348,35 @@ document.addEventListener('DOMContentLoaded', async () => {
             bankaDetaylar = [];
             accounts.forEach(acc => {
                 const accountName = acc.accountName || acc.AccountName || acc.hesapAdi || acc.HesapAdi || 'Bilinmeyen Banka';
+                const accountId = acc.accountId || acc.AccountId || acc.id || acc.Id;
                 const accountTotalHas = Number(acc.totalHas ?? acc.TotalHas ?? acc.hasToplami ?? 0) || 0;
+                
                 const currentBalances = {};
                 const devreden = acc.devredenBakiyeler ?? acc.DevredenBakiyeler;
                 if (Array.isArray(devreden)) {
                     devreden.forEach(b => {
                         const code = b.dovizKodu ?? b.DovizKodu ?? b.currencyCode ?? b.CurrencyCode ?? b.birim ?? b.Birim ?? 'UNKNOWN';
-                        currentBalances[code] = Number(b.bakiye ?? b.Bakiye ?? b.amount ?? b.Amount ?? 0) || 0;
+                        const cId = b.foreignCurrencyId ?? b.ForeignCurrencyId ?? b.currencyId ?? b.CurrencyId;
+                        currentBalances[code] = { 
+                            miktar: Number(b.bakiye ?? b.Bakiye ?? b.amount ?? b.Amount ?? 0) || 0,
+                            currencyId: cId
+                        };
                     });
                 }
                 const hareketler = acc.hareketler ?? acc.Hareketler;
                 if (Array.isArray(hareketler)) {
                     hareketler.forEach(h => {
                         const birim = h.balanceCurrency ?? h.BalanceCurrency ?? h.unit ?? h.Unit ?? h.counterUnit ?? h.CounterUnit ?? h.birim ?? h.Birim ?? h.karsilikBirim ?? 'UNKNOWN';
-                        currentBalances[birim] = Number(h.finalBalance ?? h.FinalBalance ?? currentBalances[birim] ?? 0);
+                        const cId = h.foreignCurrencyId ?? h.ForeignCurrencyId ?? h.currencyId ?? h.CurrencyId;
+                        const miktar = Number(h.finalBalance ?? h.FinalBalance ?? (currentBalances[birim]?.miktar || 0));
+                        currentBalances[birim] = { miktar, currencyId: cId || currentBalances[birim]?.currencyId };
                     });
                 }
-                const bakiyeListesi = Object.entries(currentBalances).filter(([_, m])=>m!==0).map(([birim, miktar])=>({ birim, miktar }));
-                bankaDetaylar.push({ ad: accountName, bakiyeler: bakiyeListesi, hasToplamı: accountTotalHas });
+                const bakiyeListesi = Object.entries(currentBalances)
+                    .filter(([_, data]) => data.miktar !== 0)
+                    .map(([birim, data]) => ({ birim, miktar: data.miktar, currencyId: data.currencyId }));
+
+                bankaDetaylar.push({ id: accountId, ad: accountName, bakiyeler: bakiyeListesi, hasToplamı: accountTotalHas });
             });
             const fmt = v => v.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
             const renk = overallTotalHas >= 0 ? 'text-green-600' : 'text-red-600';
@@ -381,24 +403,35 @@ document.addEventListener('DOMContentLoaded', async () => {
             posDetaylar = [];
             accounts.forEach(acc => {
                 const accountName = acc.accountName || acc.AccountName || acc.hesapAdi || acc.HesapAdi || 'Bilinmeyen Pos';
+                const accountId = acc.accountId || acc.AccountId || acc.id || acc.Id;
                 const accountTotalHas = Number(acc.totalHas ?? acc.TotalHas ?? acc.hasToplami ?? 0) || 0;
+                
                 const currentBalances = {};
                 const devreden = acc.devredenBakiyeler ?? acc.DevredenBakiyeler;
                 if (Array.isArray(devreden)) {
                     devreden.forEach(b => {
                         const code = b.dovizKodu ?? b.DovizKodu ?? b.currencyCode ?? b.CurrencyCode ?? b.birim ?? b.Birim ?? 'UNKNOWN';
-                        currentBalances[code] = Number(b.bakiye ?? b.Bakiye ?? b.amount ?? b.Amount ?? 0) || 0;
+                        const cId = b.foreignCurrencyId ?? b.ForeignCurrencyId ?? b.currencyId ?? b.CurrencyId;
+                        currentBalances[code] = { 
+                            miktar: Number(b.bakiye ?? b.Bakiye ?? b.amount ?? b.Amount ?? 0) || 0,
+                            currencyId: cId
+                        };
                     });
                 }
                 const hareketler = acc.hareketler ?? acc.Hareketler;
                 if (Array.isArray(hareketler)) {
                     hareketler.forEach(h => {
                         const birim = h.balanceCurrency ?? h.BalanceCurrency ?? h.unit ?? h.Unit ?? h.counterUnit ?? h.CounterUnit ?? h.birim ?? h.Birim ?? h.karsilikBirim ?? 'UNKNOWN';
-                        currentBalances[birim] = Number(h.finalBalance ?? h.FinalBalance ?? currentBalances[birim] ?? 0);
+                        const cId = h.foreignCurrencyId ?? h.ForeignCurrencyId ?? h.currencyId ?? h.CurrencyId;
+                        const miktar = Number(h.finalBalance ?? h.FinalBalance ?? (currentBalances[birim]?.miktar || 0));
+                        currentBalances[birim] = { miktar, currencyId: cId || currentBalances[birim]?.currencyId };
                     });
                 }
-                const bakiyeListesi = Object.entries(currentBalances).filter(([_, m])=>m!==0).map(([birim, miktar])=>({ birim, miktar }));
-                posDetaylar.push({ ad: accountName, bakiyeler: bakiyeListesi, hasToplamı: accountTotalHas });
+                const bakiyeListesi = Object.entries(currentBalances)
+                    .filter(([_, data]) => data.miktar !== 0)
+                    .map(([birim, data]) => ({ birim, miktar: data.miktar, currencyId: data.currencyId }));
+
+                posDetaylar.push({ id: accountId, ad: accountName, bakiyeler: bakiyeListesi, hasToplamı: accountTotalHas });
             });
             const fmt = v => v.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
             const renk = overallTotalHas >= 0 ? 'text-green-600' : 'text-red-600';
@@ -411,7 +444,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const ozet = document.getElementById('maden-ozet');
         if (!ozet) return;
         try {
-            const stockId = window.StockGroupIds?.MadenGrupId || 37;
+            const stockId = window.StockGroupIds?.MadenGrupId || 34;
             const url = `/Report/GetStockReport?stockGroupAccounId=${stockId}`;
             const res = await fetch(url, { method: 'GET', headers: getAuthHeaders(), credentials: 'same-origin' });
             if (!res.ok) { 
@@ -499,7 +532,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
         try {
-            const stockId = window.StockGroupIds?.MamulGrupId || 39;
+            const stockId = window.StockGroupIds?.MamulGrupId || 37;
             const url = `/Report/GetStockReport?stockGroupAccounId=${stockId}`;
             const res = await fetch(url, { method: 'GET', headers: getAuthHeaders(), credentials: 'same-origin' });
             if (!res.ok) { 
@@ -575,7 +608,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
         try {
-            const stockId = window.StockGroupIds?.HurdaGrupId || 34;
+            const stockId = window.StockGroupIds?.HurdaGrupId || 39;
             const url = `/Report/GetStockReport?stockGroupAccounId=${stockId}`;
             const res = await fetch(url, { method: 'GET', headers: getAuthHeaders(), credentials: 'same-origin' });
             if (!res.ok) {
@@ -671,8 +704,16 @@ document.addEventListener('DOMContentLoaded', async () => {
                             <div class="space-y-1">
                                 ${k.bakiyeler.map(b => {
                                     const r = b.miktar >= 0 ? 'text-green-600' : 'text-red-600';
-                                    return `<div class="flex justify-between text-xs text-gray-500">
-                                                <span>${b.birim}</span>
+                                    
+                                    let currentTypeId = 7; // Default Kasalar
+                                    if (cardId === 'bankalar-card') currentTypeId = 5;
+                                    if (cardId === 'poslar-card') currentTypeId = 6;
+                                    
+                                    const link = `/Report/GetCashReport?typeId=${currentTypeId}&detailId=${k.id || 0}&currencyId=${b.currencyId || 0}`;
+
+                                    return `<div class="flex justify-between items-center text-xs text-gray-500 border-b border-gray-100 pb-1 hover:bg-green-50 cursor-pointer transition-colors"
+                                                 onclick="window.parent.postMessage({type: 'openTab', title: 'Kasa Raporu', url: '${link}'}, '*')">
+                                                <span class="font-medium text-green-700">${b.birim}</span>
                                                 <span class="font-mono font-semibold ${r}">${fmt(b.miktar, 2)}</span>
                                             </div>`;
                                 }).join('')}

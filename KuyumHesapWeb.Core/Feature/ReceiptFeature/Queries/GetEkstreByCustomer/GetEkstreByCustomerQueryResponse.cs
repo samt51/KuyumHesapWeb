@@ -1,4 +1,4 @@
-﻿namespace KuyumHesapWeb.Core.Feature.ReceiptFeature.Queries.GetEkstreByCustomer
+namespace KuyumHesapWeb.Core.Feature.ReceiptFeature.Queries.GetEkstreByCustomer
 {
     public class GetEkstreByCustomerQueryResponse
     {
@@ -16,6 +16,7 @@
         /// Döviz cinsinden bakiye
         /// </summary>
         public decimal Balance { get; set; }
+        public int CurrencyId { get; set; }
     }
 
 
@@ -160,5 +161,6 @@
         /// </summary>
         public string StockUnit { get; set; } = "";
         public int? StockId { get; set; }
+        public int ForeignCurrencyId { get; set; }
     }
 }

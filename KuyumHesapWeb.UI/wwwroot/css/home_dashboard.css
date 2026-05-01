@@ -1,4 +1,4 @@
-﻿/* home_dashboard.css - Home\Dashboard.cshtml */
+/* home_dashboard.css - Home\Dashboard.cshtml */
 
 :root {
     --scrolling-ticker-bg: #343a40;
@@ -18,7 +18,18 @@ body.sidebar-pinned {
 body {
     font-family: 'Inter', sans-serif;
     background-color: #f8f9fa;
-    padding-bottom: 60px; /* Ticker height */
+    padding-bottom: 70px; /* Ticker height + safety margin */
+}
+
+/* Dashboard ana kapsayıcı mobil ayarı */
+@media (max-width: 768px) {
+    .p-6 {
+        padding: 1rem !important; /* p-4 equivalent */
+    }
+    
+    .pb-24 {
+        padding-bottom: 6rem !important; /* Ensure enough space for ticker */
+    }
 }
 
 /* Sidebar'ın her durumda ticker'ın üstünde kalmasını garantiye alıyoruz.
@@ -39,7 +50,7 @@ body {
     bottom: 0;
     left: 0;
     width: 100%;
-    z-index: 8; /* Sidebar'ın üstünde olmaması için düşük değer */
+    z-index: 100; /* Sidebar ve diğer her şeyin üstünde olmalı ama modalların altında */
     transition: left 0.28s ease, width 0.28s ease;
     box-sizing: border-box;
     background: var(--scrolling-ticker-bg);

@@ -234,7 +234,7 @@
             { Id: -2, Name: 'Satış Ve Cari', Code: 'SELLANDCARI_VIEW', Url: '/SellAndCari/Index', IconUrl: 'fas fa-shopping-cart w-6 text-center text-xl text-gray-500', OrderNo: 2 },
             { Id: -3, Name: 'Cari Raporlar', Code: 'REPORTS_ROOT', Url: '', IconUrl: 'fas fa-chart-line w-6 text-center text-xl text-gray-500', OrderNo: 3 },
             { Id: -31, ParentId: -3, Name: 'Kasa Raporu', Code: 'CASH_REPORT_VIEW', Url: '/Report/GetCashReport', IconUrl: 'fas fa-wallet', OrderNo: 1 },
-            { Id: -32, ParentId: -3, Name: 'Nakit Giriş Çıkış Raporu', Code: 'CASH_IN_OUT_REPORT_VIEW', Url: '/Report/GetCashReport', IconUrl: 'fas fa-exchange-alt', OrderNo: 2 },
+            { Id: -32, ParentId: -3, Name: 'Nakit Giriş Çıkış Raporu', Code: 'CASH_IN_OUT_REPORT_VIEW', Url: '/Raporlar/NakitGirisCikis', IconUrl: 'fas fa-exchange-alt', OrderNo: 2 },
             { Id: -4, Name: 'Tanımlamalar', Code: 'DEFINITIONS_ROOT', Url: '', IconUrl: 'fas fa-sitemap w-6 text-center text-xl text-gray-500', OrderNo: 4 },
             { Id: -41, ParentId: -4, Name: 'Hesap Tanımlama', Code: 'ACCOUNT_VIEW', Url: '/Account/Index', IconUrl: 'fas fa-tags', OrderNo: 1 },
             { Id: -42, ParentId: -4, Name: 'Hesap Tipleri Tanımlama', Code: 'ACCOUNT_TYPE_VIEW', Url: '/AccountType/Index', IconUrl: 'fas fa-tags', OrderNo: 2 },
@@ -249,23 +249,55 @@
         const mergeFallbackSidebarItems = (items, addMissingFallbackItems = false) => {
             const merged = Array.isArray(items) ? items.slice() : [];
             const normalizeCode = value => String(value || '').trim().toUpperCase();
+            const normalizeTitle = value => String(value || '').trim().toLocaleLowerCase('tr-TR');
+
             const byCode = new Map();
+            const byTitle = new Map();
 
             merged.forEach(item => {
                 const code = normalizeCode(getValue(item, 'code', 'Code'));
                 if (code) byCode.set(code, item);
+
+                const title = normalizeTitle(menuTitleOf(item));
+                if (title) byTitle.set(title, item);
             });
 
             fallbackSidebarItems.forEach(fallback => {
                 const fallbackCode = normalizeCode(fallback.Code);
-                const existing = byCode.get(fallbackCode);
+                const fallbackTitle = normalizeTitle(fallback.Name);
+
+                let existing = byCode.get(fallbackCode);
+                if (!existing && fallbackTitle) {
+                    existing = byTitle.get(fallbackTitle);
+                }
+
                 if (existing) {
-                    if (!menuUrlOf(existing) && fallback.Url) existing.Url = fallback.Url;
-                    if (!menuIconOf(existing) && fallback.IconUrl) existing.IconUrl = fallback.IconUrl;
+                    if (!menuUrlOf(existing) && fallback.Url) {
+                        if (existing.Url !== undefined) existing.Url = fallback.Url;
+                        else if (existing.url !== undefined) existing.url = fallback.Url;
+                        else existing.Url = fallback.Url;
+                    }
+                    if (!menuIconOf(existing) && fallback.IconUrl) {
+                        if (existing.IconUrl !== undefined) existing.IconUrl = fallback.IconUrl;
+                        else if (existing.iconUrl !== undefined) existing.iconUrl = fallback.IconUrl;
+                        else if (existing.Icon !== undefined) existing.Icon = fallback.IconUrl;
+                        else existing.IconUrl = fallback.IconUrl;
+                    }
+                    if (!normalizeCode(getValue(existing, 'code', 'Code')) && fallback.Code) {
+                        if (existing.Code !== undefined) existing.Code = fallback.Code;
+                        else if (existing.code !== undefined) existing.code = fallback.Code;
+                        else existing.Code = fallback.Code;
+                        byCode.set(fallbackCode, existing);
+                    }
                     return;
                 }
 
-                if (!addMissingFallbackItems) return;
+                // Canlı ortamda yetki senkronizasyon sorunlarını aşmak için:
+                // Cari Raporlar (ParentId: -3) çocuklarını ebeveyn mevcutsa her durumda ekle.
+                const isReportChild = fallback.ParentId === -3;
+                const canAddAnyway = isReportChild && byCode.has('REPORTS_ROOT');
+
+                if (!addMissingFallbackItems && !canAddAnyway) return;
 
                 const parentCode = fallback.ParentId === -3 ? 'REPORTS_ROOT' : fallback.ParentId === -4 ? 'DEFINITIONS_ROOT' : '';
                 if (parentCode) {
@@ -275,6 +307,7 @@
 
                 merged.push(fallback);
                 byCode.set(fallbackCode, fallback);
+                byTitle.set(fallbackTitle, fallback);
             });
 
             return merged;
@@ -379,7 +412,11 @@
             }
         };
 
-        const canUseFullFallbackMenu = roleIds => roleIds.includes('1') || roleIds.includes('3');
+        const canUseFullFallbackMenu = roleIds => {
+            const can = roleIds.includes('1') || roleIds.includes('3');
+            console.log('[home_index] canUseFullFallbackMenu check:', { roleIds, can });
+            return can;
+        };
         const hasSystemAdminRole = roleIds => roleIds.includes('1') || roleIds.includes('3');
 
         const isSystemAdminOnlyMenu = item => {

@@ -66,7 +66,7 @@
     </style>
 }
 
-<div class="p-3 md:p-6 flex flex-col gap-4 md:gap-6 min-h-full bg-[#f8fafc]">
+<div class="p-2 md:p-4 flex flex-col gap-2 md:gap-4 min-h-full bg-[#f8fafc]">
     <!-- Header Section -->
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div class="min-w-0">
@@ -88,7 +88,7 @@
 
     <!-- Filter Section (Top Panel) -->
     <div class="report-card animate-fade-in mb-6">
-        <div id="filter-header" class="p-4 border-b border-gray-100 bg-gray-50/50 flex items-center justify-between rounded-t-2xl cursor-pointer select-none">
+        <div id="filter-header" class="p-2.5 border-b border-gray-100 bg-gray-50/50 flex items-center justify-between rounded-t-2xl cursor-pointer select-none">
             <h3 class="text-sm font-bold text-gray-700 flex items-center gap-2 uppercase tracking-wider pointer-events-none">
                 <i class="fas fa-filter text-green-600"></i>
                 Filtreleme Seçenekleri
@@ -97,8 +97,8 @@
                 <i class="fas fa-chevron-up transition-transform duration-300" id="filter-chevron"></i>
             </button>
         </div>
-        <div class="p-4 md:p-6 transition-all duration-300 overflow-visible" id="filter-body">
-            <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4 items-end" id="filter-grid">
+        <div class="p-3 md:p-4 transition-all duration-300 overflow-visible" id="filter-body">
+            <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 items-end" id="filter-grid">
                 <!-- Tür Select -->
                 <div class="flex flex-col gap-1.5 col-span-1">
                     <label class="text-[10px] font-bold text-gray-400 uppercase ml-1">Kayıt Türü</label>
@@ -148,7 +148,7 @@
 
     <!-- Table Section -->
     <div class="report-card overflow-hidden animate-fade-in min-w-0" style="animation-delay: 0.1s;">
-        <div class="p-4 border-b border-gray-100 bg-gray-50/50 flex flex-wrap items-center justify-between gap-2">
+        <div class="p-2.5 border-b border-gray-100 bg-gray-50/50 flex flex-wrap items-center justify-between gap-2">
             <h3 class="font-bold text-gray-700 flex items-center gap-2 text-sm md:text-base">
                 <i class="fas fa-list-ul text-gray-400"></i>
                 Hareket Detayları
@@ -158,14 +158,14 @@
         <div class="table-container overflow-x-auto">
             <table class="w-full text-left border-collapse min-w-[800px]">
                 <thead>
-                    <tr class="bg-gray-50/80 text-gray-500 text-[11px] font-bold uppercase tracking-wider">
-                        <th class="px-6 py-4 border-b border-gray-100">Tarih</th>
-                        <th class="px-6 py-4 border-b border-gray-100">İşlem</th>
-                        <th class="px-6 py-4 border-b border-gray-100">Hesap</th>
-                        <th class="px-6 py-4 border-b border-gray-100">Açıklama</th>
-                        <th class="px-6 py-4 border-b border-gray-100 text-right">Giren</th>
-                        <th class="px-6 py-4 border-b border-gray-100 text-right">Çıkan</th>
-                        <th class="px-6 py-4 border-b border-gray-100 text-center">Birim</th>
+                    <tr class="bg-gray-50/80 text-gray-500 text-[10px] font-bold uppercase tracking-wider">
+                        <th class="px-3 py-2.5 border-b border-gray-100">Tarih</th>
+                        <th class="px-3 py-2.5 border-b border-gray-100">İşlem</th>
+                        <th class="px-3 py-2.5 border-b border-gray-100">Hesap</th>
+                        <th class="px-3 py-2.5 border-b border-gray-100">Açıklama</th>
+                        <th class="px-3 py-2.5 border-b border-gray-100 text-right">Giren</th>
+                        <th class="px-3 py-2.5 border-b border-gray-100 text-right">Çıkan</th>
+                        <th class="px-3 py-2.5 border-b border-gray-100 text-center">Birim</th>
                     </tr>
                 </thead>
                 <tbody id="report-body" class="text-sm text-gray-700 divide-y divide-gray-50">
@@ -180,7 +180,7 @@
         </div>
 
         <!-- Pagination Section -->
-        <div id="pagination-container" class="hidden p-4 border-t border-gray-100 bg-gray-50/30 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div id="pagination-container" class="hidden p-2.5 border-t border-gray-100 bg-gray-50/30 flex flex-col sm:flex-row items-center justify-between gap-3">
             <div class="text-[10px] md:text-xs text-gray-500 text-center sm:text-left">
                 Toplam <span id="total-count" class="font-bold text-gray-700">0</span> kayıttan 
                 <span id="showing-range" class="font-bold text-gray-700">0-0</span> arası gösteriliyor
@@ -225,6 +225,7 @@
             const urlParams = new URLSearchParams(window.location.search);
             const paramTypeId = urlParams.get('typeId');
             const paramDetailId = urlParams.get('detailId');
+            const paramCurrencyId = urlParams.get('currencyId');
 
             let allMovements = [];
             let currentPage = 1;
@@ -316,48 +317,57 @@
                 if (paramTypeId) {
                     console.log('[GetCashReport] Deep Link TypeId:', paramTypeId);
                     
-                    // Wait for typeSelect to have the specific option (e.g., Mamul=1)
                     let typeAttempts = 0;
                     const typeInterval = setInterval(() => {
                         const options = Array.from(typeSelect.options);
-                        const hasOption = options.some(opt => opt.value == paramTypeId); // Loose equality for string/number
+                        const hasOption = options.some(opt => opt.value == paramTypeId);
                         
                         if (hasOption) {
                             clearInterval(typeInterval);
                             typeSelect.value = paramTypeId;
-                            console.log('[GetCashReport] TypeId Selected:', paramTypeId);
-                            
-                            // Trigger change to load dependent filters (Stocks/Accounts)
                             typeSelect.dispatchEvent(new Event('change'));
                             
-                            // Now wait for detailSelect if a specific product was clicked
+                            const selectionsToWait = [];
+
                             if (paramDetailId && paramDetailId !== '0') {
-                                console.log('[GetCashReport] Waiting for DetailId:', paramDetailId);
-                                let detailAttempts = 0;
-                                const detailInterval = setInterval(() => {
-                                    const detailOptions = Array.from(detailSelect.options);
-                                    const hasDetailOption = detailOptions.some(opt => opt.value == paramDetailId);
-                                    
-                                    if (hasDetailOption) {
-                                        clearInterval(detailInterval);
-                                        detailSelect.value = paramDetailId;
-                                        detailSelect.dispatchEvent(new Event('change'));
-                                        console.log('[GetCashReport] DetailId Selected:', paramDetailId);
-                                        
-                                        // Auto-click query button after selection (longer delay for safety)
-                                        setTimeout(() => {
-                                            console.log('[GetCashReport] Auto-clicking Query Button...');
-                                            queryBtn.click();
-                                        }, 800);
-                                    }
-                                    
-                                    if (++detailAttempts > 60) {
-                                        clearInterval(detailInterval);
-                                        console.warn('[GetCashReport] DetailId option not found in time:', paramDetailId);
-                                    }
-                                }, 100);
+                                selectionsToWait.push(new Promise(resolve => {
+                                    let attempts = 0;
+                                    const interval = setInterval(() => {
+                                        const found = Array.from(detailSelect.options).some(opt => opt.value == paramDetailId);
+                                        if (found) {
+                                            clearInterval(interval);
+                                            detailSelect.value = paramDetailId;
+                                            detailSelect.dispatchEvent(new Event('change'));
+                                            resolve();
+                                        }
+                                        if (++attempts > 60) { clearInterval(interval); resolve(); }
+                                    }, 100);
+                                }));
+                            }
+
+                            if (paramCurrencyId && paramCurrencyId !== '0') {
+                                selectionsToWait.push(new Promise(resolve => {
+                                    let attempts = 0;
+                                    const interval = setInterval(() => {
+                                        const found = Array.from(currencySelect.options).some(opt => opt.value == paramCurrencyId);
+                                        if (found) {
+                                            clearInterval(interval);
+                                            currencySelect.value = paramCurrencyId;
+                                            resolve();
+                                        }
+                                        if (++attempts > 60) { clearInterval(interval); resolve(); }
+                                    }, 100);
+                                }));
+                            }
+
+                            if (selectionsToWait.length > 0) {
+                                Promise.all(selectionsToWait).then(() => {
+                                    setTimeout(() => {
+                                        console.log('[GetCashReport] Auto-clicking Query Button after selections...');
+                                        queryBtn.click();
+                                    }, 800);
+                                });
                             } else {
-                                // No specific detail, just query by type
                                 setTimeout(() => {
                                     console.log('[GetCashReport] Auto-clicking Query Button (Type Only)...');
                                     queryBtn.click();
@@ -411,7 +421,7 @@
                         if (currRes.isSuccess && currRes.data) {
                             currencySelect.innerHTML = '<option value="">Birim Seçiniz...</option>';
                             currRes.data.forEach(curr => {
-                                currencySelect.innerHTML += `<option value="${curr.currencyId}">${curr.currencyCode}</option>`;
+                                currencySelect.innerHTML += `<option value="${curr.id}">${curr.currencyCode}</option>`;
                             });
                         }
                     } catch (e) { console.error('Para birimleri yüklenemedi'); }
@@ -520,14 +530,14 @@
                 const fmt = (v) => v != null ? v.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0,00';
 
                 reportBody.innerHTML = pageItems.map(m => `
-                    <tr class="row-hover transition-colors">
-                        <td class="px-6 py-4 text-[12px] text-gray-500">${new Date(m.receiptDate).toLocaleDateString('tr-TR')}</td>
-                        <td class="px-6 py-4"><span class="px-2 py-1 rounded-md bg-gray-100 text-[10px] font-bold text-gray-600 uppercase">${m.transactionName}</span></td>
-                        <td class="px-6 py-4 text-xs font-medium text-gray-600">${m.accountName || '-'}</td>
-                        <td class="px-6 py-4 text-xs max-w-[200px] truncate" title="${m.description}">${m.description || '-'}</td>
-                        <td class="px-6 py-4 text-right font-semibold ${m.isEntry ? 'text-green-600' : 'text-gray-400'}">${m.isEntry ? fmt(m.quantity) : '-'}</td>
-                        <td class="px-6 py-4 text-right font-semibold ${!m.isEntry ? 'text-red-600' : 'text-gray-400'}">${!m.isEntry ? fmt(m.quantity) : '-'}</td>
-                        <td class="px-6 py-4 text-center"><span class="text-[10px] font-extrabold text-gray-400">${m.balanceCurrency}</span></td>
+                    <tr class="row-hover transition-colors border-b border-gray-50 last:border-0">
+                        <td class="px-3 py-2 text-[11px] text-gray-500">${new Date(m.receiptDate).toLocaleDateString('tr-TR')}</td>
+                        <td class="px-3 py-2"><span class="px-1.5 py-0.5 rounded-md bg-gray-100 text-[9px] font-bold text-gray-600 uppercase">${m.transactionName}</span></td>
+                        <td class="px-3 py-2 text-[11px] font-medium text-gray-600">${m.accountName || '-'}</td>
+                        <td class="px-3 py-2 text-[11px] max-w-[200px] truncate" title="${m.description}">${m.description || '-'}</td>
+                        <td class="px-3 py-2 text-right font-semibold text-[11px] ${m.isEntry ? 'text-green-600' : 'text-gray-400'}">${m.isEntry ? fmt(m.quantity) : '-'}</td>
+                        <td class="px-3 py-2 text-right font-semibold text-[11px] ${!m.isEntry ? 'text-red-600' : 'text-gray-400'}">${!m.isEntry ? fmt(m.quantity) : '-'}</td>
+                        <td class="px-3 py-2 text-center"><span class="text-[9px] font-extrabold text-gray-400">${m.balanceCurrency}</span></td>
                     </tr>
                 `).join('');
 
