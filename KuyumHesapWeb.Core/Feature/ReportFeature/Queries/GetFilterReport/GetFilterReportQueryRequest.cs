@@ -5,7 +5,7 @@ using MediatR;
 
 namespace KuyumHesapWeb.Core.Features.ReportFeature.Queries.GetFilterReport
 {
-    public class GetFilterReportQueryRequest : IRequest<ResponseDto<List<GetFilterReportQueryResponse>>>
+    public class GetFilterReportQueryRequest : IRequest<ResponseDto<GetFilterReportQueryResponse>>
     {
         /// <summary>
         /// Filter tipini gönderecek 1.Finansal 2.Stock

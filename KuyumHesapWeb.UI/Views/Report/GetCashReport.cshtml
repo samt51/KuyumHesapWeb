@@ -126,13 +126,13 @@
                 <!-- Başlangıç Tarihi -->
                 <div class="flex flex-col gap-1.5 col-span-1">
                     <label class="text-[10px] font-bold text-gray-400 uppercase ml-1">Başlangıç</label>
-                    <input type="date" id="start-date" class="w-full h-11 px-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500/20 focus:border-green-600 transition-all outline-none text-xs font-medium">
+                    <input type="date" id="start-date" value='@DateTime.Now.ToString("yyyy-MM-dd")' class="w-full h-11 px-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500/20 focus:border-green-600 transition-all outline-none text-xs font-medium">
                 </div>
 
                 <!-- Bitiş Tarihi -->
                 <div class="flex flex-col gap-1.5 col-span-1">
                     <label class="text-[10px] font-bold text-gray-400 uppercase ml-1">Bitiş</label>
-                    <input type="date" id="end-date" class="w-full h-11 px-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500/20 focus:border-green-600 transition-all outline-none text-xs font-medium">
+                    <input type="date" id="end-date" value='@DateTime.Now.ToString("yyyy-MM-dd")' class="w-full h-11 px-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500/20 focus:border-green-600 transition-all outline-none text-xs font-medium">
                 </div>
 
                 <!-- Sorgula Butonu -->
@@ -153,6 +153,12 @@
                 <i class="fas fa-list-ul text-gray-400"></i>
                 Hareket Detayları
             </h3>
+            <div id="balance-summary" class="hidden flex items-center gap-2 bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-100">
+                <span class="text-[10px] font-bold text-blue-400 uppercase tracking-wider">Devreden Bakiye:</span>
+                <div id="balance-values" class="flex flex-wrap gap-2">
+                    <!-- Values injected by JS -->
+                </div>
+            </div>
         </div>
 
         <div class="table-container overflow-x-auto">
@@ -162,7 +168,7 @@
                         <th class="px-3 py-2.5 border-b border-gray-100">Tarih</th>
                         <th class="px-3 py-2.5 border-b border-gray-100">İşlem</th>
                         <th class="px-3 py-2.5 border-b border-gray-100">Hesap</th>
-                        <th class="px-3 py-2.5 border-b border-gray-100">Açıklama</th>
+                        <th class="px-3 py-2.5 border-b border-gray-100">Gönderici Hesap</th>
                         <th class="px-3 py-2.5 border-b border-gray-100 text-right">Giren</th>
                         <th class="px-3 py-2.5 border-b border-gray-100 text-right">Çıkan</th>
                         <th class="px-3 py-2.5 border-b border-gray-100 text-center">Birim</th>
@@ -273,11 +279,6 @@
                 Toast.fire({ icon: icon, title: text });
             };
 
-            // Set default dates
-            const today = new Date().toISOString().split('T')[0];
-            const lastMonth = new Date(new Date().setMonth(new Date().getMonth() - 1)).toISOString().split('T')[0];
-            startDateInput.value = lastMonth;
-            endDateInput.value = today;
 
             const FilterEnum = {
                 FinancialSummary: 1,
@@ -485,7 +486,25 @@
                     }).then(r => r.json());
 
                     if (res.isSuccess) {
-                        allMovements = res.data || [];
+                        const reportData = res.data || {};
+                        allMovements = reportData.movements || [];
+                        
+                        const balanceSummary = document.getElementById('balance-summary');
+                        const balanceValues = document.getElementById('balance-values');
+                        const fmt = (v) => v != null ? v.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0,00';
+
+                        if (reportData.currencyCode || reportData.totalBalance !== undefined) {
+                            balanceSummary.classList.remove('hidden');
+                            balanceValues.innerHTML = `
+                                <div class="flex items-center gap-1.5">
+                                    <span class="text-sm font-bold text-blue-700">${fmt(reportData.totalBalance)}</span>
+                                    <span class="text-[10px] font-extrabold text-blue-400">${reportData.currencyCode || ''}</span>
+                                </div>
+                            `;
+                        } else {
+                            balanceSummary.classList.add('hidden');
+                        }
+
                         currentPage = 1;
                         renderPage();
                         
@@ -532,11 +551,11 @@
                 reportBody.innerHTML = pageItems.map(m => `
                     <tr class="row-hover transition-colors border-b border-gray-50 last:border-0">
                         <td class="px-3 py-2 text-[11px] text-gray-500">${new Date(m.receiptDate).toLocaleDateString('tr-TR')}</td>
-                        <td class="px-3 py-2"><span class="px-1.5 py-0.5 rounded-md bg-gray-100 text-[9px] font-bold text-gray-600 uppercase">${m.transactionName}</span></td>
+                        <td class="px-3 py-2"><span class="px-1.5 py-0.5 rounded-md text-[9px] font-bold uppercase ${m.transactionTypeId === 2 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}">${m.transactionName}</span></td>
                         <td class="px-3 py-2 text-[11px] font-medium text-gray-600">${m.accountName || '-'}</td>
-                        <td class="px-3 py-2 text-[11px] max-w-[200px] truncate" title="${m.description}">${m.description || '-'}</td>
-                        <td class="px-3 py-2 text-right font-semibold text-[11px] ${m.isEntry ? 'text-green-600' : 'text-gray-400'}">${m.isEntry ? fmt(m.quantity) : '-'}</td>
-                        <td class="px-3 py-2 text-right font-semibold text-[11px] ${!m.isEntry ? 'text-red-600' : 'text-gray-400'}">${!m.isEntry ? fmt(m.quantity) : '-'}</td>
+                        <td class="px-3 py-2 text-[11px] font-medium text-blue-700">${m.counterAccountName || '-'}</td>
+                        <td class="px-3 py-2 text-right font-semibold text-[11px] ${m.transactionTypeId === 2 ? 'text-green-600' : 'text-gray-400'}">${m.transactionTypeId === 2 ? fmt(m.balanceEffectAmount) : '-'}</td>
+                        <td class="px-3 py-2 text-right font-semibold text-[11px] ${m.transactionTypeId === 1 ? 'text-red-600' : 'text-gray-400'}">${m.transactionTypeId === 1 ? fmt(m.balanceEffectAmount) : '-'}</td>
                         <td class="px-3 py-2 text-center"><span class="text-[9px] font-extrabold text-gray-400">${m.balanceCurrency}</span></td>
                     </tr>
                 `).join('');
@@ -571,9 +590,9 @@
                     'Tarih': new Date(m.receiptDate).toLocaleDateString('tr-TR'),
                     'İşlem': m.transactionName,
                     'Hesap': m.accountName,
-                    'Açıklama': m.description,
-                    'Giriş': m.isEntry ? m.quantity : 0,
-                    'Çıkış': !m.isEntry ? m.quantity : 0,
+                    'Gönderici Hesap': m.counterAccountName,
+                    'Giriş': m.transactionTypeId === 2 ? m.balanceEffectAmount : 0,
+                    'Çıkış': m.transactionTypeId === 1 ? m.balanceEffectAmount : 0,
                     'Birim': m.balanceCurrency
                 }));
                 const ws = XLSX.utils.json_to_sheet(data);

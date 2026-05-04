@@ -65,7 +65,7 @@ namespace KuyumHesapWeb.UI.Controllers
         }
 
         [HttpPost]
-        public async Task<ResponseDto<List<GetFilterReportQueryResponse>>> GetFilterReport([FromBody] GetFilterReportQueryRequest request)
+        public async Task<ResponseDto<GetFilterReportQueryResponse>> GetFilterReport([FromBody] GetFilterReportQueryRequest request)
         {
             return await _mediator.Send(request);
         }
